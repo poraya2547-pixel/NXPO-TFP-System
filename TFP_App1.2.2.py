@@ -69,7 +69,7 @@ from TFP import (
 )
 from data_loader import load_data_gsheet
 
-st.set_page_config(page_title="สรุปผู้บริหาร TFP", layout="wide")
+st.set_page_config(page_title="ระบบวิเคราะห์ TFP", layout="wide")
 
 # ------------------------------------------------------------------------------
 # ฟอนต์ — เปลี่ยนหน้าเว็บให้ใช้ 'Prompt' (ฟอนต์ Thai sans-serif ที่เว็บ สอวช./NXPO
