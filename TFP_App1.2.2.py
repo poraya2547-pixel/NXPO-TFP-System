@@ -69,7 +69,31 @@ from TFP import (
 )
 from data_loader import load_data_gsheet
 
-st.set_page_config(page_title="ระบบวิเคราะห์ TFP", layout="wide")
+st.set_page_config(page_title="สรุปผู้บริหาร TFP", layout="wide")
+
+# ------------------------------------------------------------------------------
+# ซ่อนองค์ประกอบเริ่มต้นของ Streamlit ที่ไม่ต้องการให้ผู้ใช้เห็น เช่น เมนู
+# hamburger มุมขวาบน (#MainMenu), footer เดิม, แถบ header บนสุด และ badge
+# "Hosted with Streamlit" ที่ Streamlit Community Cloud ฉีดมาเองตอน deploy
+# (ถ้า deploy ที่อื่นที่ไม่ใช่ Community Cloud อาจไม่มี badge นี้ตั้งแต่แรกอยู่แล้ว)
+# ------------------------------------------------------------------------------
+st.markdown(
+    """
+    <style>
+    #MainMenu {visibility: hidden;}
+    footer {visibility: hidden;}
+    header {visibility: hidden;}
+    /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
+    [data-testid="stStatusWidget"],
+    div[class^="viewerBadge_container"],
+    div[class^="viewerBadge_link__"],
+    .viewerBadge_container__1QSob {
+        display: none !important;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ------------------------------------------------------------------------------
 # ฟอนต์ — เปลี่ยนหน้าเว็บให้ใช้ 'Prompt' (ฟอนต์ Thai sans-serif ที่เว็บ สอวช./NXPO
