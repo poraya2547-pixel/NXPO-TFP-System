@@ -1,7 +1,7 @@
 """
-===============================================================================
+================================================================================
 เว็บแอป TFP Executive Summary (Streamlit + Gemini API)
-===============================================================================
+================================================================================
 วิธีรัน:
     streamlit run app.py
 
@@ -85,12 +85,44 @@ st.markdown(
     header {visibility: hidden;}
     /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
     [data-testid="stStatusWidget"],
-    div[class^="viewerBadge_container"],
-    div[class^="viewerBadge_link__"],
-    .viewerBadge_container__1QSob {
+    [data-testid="stDecoration"],
+    [class^="viewerBadge_container"],
+    [class^="viewerBadge_link__"],
+    [class*="viewerBadge"],
+    .stAppDeployButton,
+    a[href*="streamlit.io"] {
         display: none !important;
+        visibility: hidden !important;
     }
     </style>
+    """,
+    unsafe_allow_html=True,
+)
+
+# badge "Hosted with Streamlit" บางเวอร์ชันถูกฉีดมาจากหน้าเว็บหลัก (parent frame)
+# ของ Streamlit Cloud เอง ไม่ใช่ element ในหน้าแอปที่ CSS ด้านบนเข้าถึงได้ตรงๆ
+# จึงต้องใช้ JS ไล่หา element นั้นใน parent document แล้วซ่อนทิ้งเป็น fallback
+st.markdown(
+    """
+    <script>
+    function hideStreamlitBadge() {
+        try {
+            const doc = window.parent.document;
+            const selectors = [
+                'a[href*="streamlit.io"]',
+                '[class*="viewerBadge"]',
+                '[data-testid="stStatusWidget"]',
+            ];
+            selectors.forEach(sel => {
+                doc.querySelectorAll(sel).forEach(el => {
+                    el.style.display = "none";
+                });
+            });
+        } catch (e) {}
+    }
+    hideStreamlitBadge();
+    setInterval(hideStreamlitBadge, 1000);
+    </script>
     """,
     unsafe_allow_html=True,
 )
