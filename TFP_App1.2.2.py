@@ -69,7 +69,7 @@ from TFP import (
 )
 from data_loader import load_data_gsheet
 
-st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพการผลิตรวม", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม", layout="wide", initial_sidebar_state="expanded")
 
 # ------------------------------------------------------------------------------
 # ซ่อนองค์ประกอบเริ่มต้นของ Streamlit ที่ไม่ต้องการให้ผู้ใช้เห็น เช่น เมนู
@@ -82,22 +82,24 @@ st.markdown(
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {visibility: hidden;}
-    /* ปุ่มลูกศรย่อ/ขยายแถบเมนูด้านซ้าย (sidebar) อยู่ภายใน <header> เดิม
-       การซ่อน header ทั้งก้อนด้านบนเลยพาลูกศรนี้หายไปด้วย ทำให้ถ้าแถบเมนู
-       ถูกย่อ (เช่น เปิดหน้าจอแคบ หรือมือถือไปกดพลาด) จะไม่มีทางกดขยายกลับ
-       คืนได้อีก ("แถบบาร์ด้านซ้ายหายไป") จึงต้องบังคับให้ปุ่มนี้ยังมองเห็น/
-       กดได้เสมอ แม้ตัว header ที่เหลือจะถูกซ่อนอยู่ */
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapsedControl"] {
-        visibility: visible !important;
-        display: flex !important;
-        opacity: 1 !important;
-        pointer-events: auto !important;
-        position: fixed !important;
-        top: 0.6rem !important;
-        left: 0.6rem !important;
-        z-index: 999990 !important;
+    /* เดิมใช้ header {visibility: hidden;} เพื่อซ่อนแถบบนสุดทั้งก้อน แต่ปุ่ม
+       ลูกศรย่อ/ขยายแถบเมนูซ้าย (sidebar) ก็อยู่ใน <header> เดียวกัน จึงหายไป
+       ด้วย ("แถบบาร์ด้านซ้ายหายไป") ปัญหาคือชื่อ data-testid ของปุ่มนี้เปลี่ยน
+       ไปเรื่อยๆ ในแต่ละเวอร์ชันของ Streamlit (เช่น collapsedControl เดิม ->
+       stSidebarCollapseButton ในเวอร์ชันใหม่กว่า) เดา selector เจาะจงไม่ชัวร์
+       100% ว่าตรงกับเวอร์ชันที่ deploy อยู่ จึงเปลี่ยนวิธีทั้งหมด: "ไม่ซ่อน
+       header" อีกต่อไป แต่ซ่อนเฉพาะส่วนที่ไม่ต้องการโชว์ข้างในมันแทน (แถบ
+       toolbar มุมขวาบน/สถานะ/decoration bar) แล้วทำพื้นหลัง header ให้โปร่งใส
+       จนแทบมองไม่เห็นว่ามี header อยู่ วิธีนี้ปุ่มลูกศรจะไม่ถูกแตะต้องเลย
+       ไม่ว่า Streamlit จะเปลี่ยนชื่อ testid ของมันเป็นอะไรก็ตาม */
+    header {
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+    header [data-testid="stToolbar"],
+    header [data-testid="stStatusWidget"],
+    header [data-testid="stDecoration"] {
+        visibility: hidden !important;
     }
     /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
     [data-testid="stStatusWidget"],
