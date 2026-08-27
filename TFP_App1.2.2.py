@@ -82,23 +82,41 @@ st.markdown(
     <style>
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    /* เดิมใช้ header {visibility: hidden;} เพื่อซ่อนแถบบนสุดทั้งก้อน แต่ปุ่ม
-       ลูกศรย่อ/ขยายแถบเมนูซ้าย (sidebar) ก็อยู่ใน <header> เดียวกัน จึงหายไป
-       ด้วย ("แถบบาร์ด้านซ้ายหายไป") ปัญหาคือชื่อ data-testid ของปุ่มนี้เปลี่ยน
-       ไปเรื่อยๆ ในแต่ละเวอร์ชันของ Streamlit (เช่น collapsedControl เดิม ->
-       stSidebarCollapseButton ในเวอร์ชันใหม่กว่า) เดา selector เจาะจงไม่ชัวร์
-       100% ว่าตรงกับเวอร์ชันที่ deploy อยู่ จึงเปลี่ยนวิธีทั้งหมด: "ไม่ซ่อน
-       header" อีกต่อไป แต่ซ่อนเฉพาะส่วนที่ไม่ต้องการโชว์ข้างในมันแทน (แถบ
-       toolbar มุมขวาบน/สถานะ/decoration bar) แล้วทำพื้นหลัง header ให้โปร่งใส
-       จนแทบมองไม่เห็นว่ามี header อยู่ วิธีนี้ปุ่มลูกศรจะไม่ถูกแตะต้องเลย
-       ไม่ว่า Streamlit จะเปลี่ยนชื่อ testid ของมันเป็นอะไรก็ตาม */
-    header {
-        background: transparent !important;
-        box-shadow: none !important;
+    header {visibility: hidden;}
+    /* แก้ปัญหา "แถบบาร์ด้านซ้ายหายไป" อย่างถาวร — ของเดิมพยายามหาวิธีทำให้
+       ปุ่มลูกศรย่อ/ขยาย sidebar ของ Streamlit ยังกดได้อยู่ แต่ปุ่มนี้เปลี่ยนชื่อ
+       (data-testid) ไปเรื่อยๆ ในแต่ละเวอร์ชัน ทำให้เดา selector ไม่แม่นยำ
+       (ลองมาแล้ว 2 รอบยังไม่เจอ) จึงเปลี่ยนวิธีทั้งหมด: "บังคับให้แถบเมนูซ้าย
+       เปิดค้างไว้ตลอด ห้ามหุบ" แทน — ตัดปัญหาที่ต้นเหตุ ไม่ว่าปุ่มลูกศรจะชื่อ
+       อะไร/ทำงานหรือไม่ก็ไม่มีผลอีกต่อไป เพราะ CSS ด้านล่างบังคับความกว้าง
+       ของแถบเมนูไว้ตรงๆ ทับสถานะ "หุบ" (aria-expanded="false") ของ Streamlit
+       เอง ผลข้างเคียง: ผู้ใช้จะกดหุบแถบเมนูเองไม่ได้อีกต่อไป (ซึ่งเหมาะกับแอป
+       แดชบอร์ดตัวนี้ที่ต้องใช้แถบเมนูตลอดเวลาอยู่แล้ว) */
+    section[data-testid="stSidebar"] {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        transform: none !important;
+        visibility: visible !important;
+        margin-left: 0px !important;
     }
-    header [data-testid="stToolbar"],
-    header [data-testid="stStatusWidget"],
-    header [data-testid="stDecoration"] {
+    section[data-testid="stSidebar"][aria-expanded="false"] {
+        min-width: 300px !important;
+        max-width: 300px !important;
+        width: 300px !important;
+        transform: none !important;
+        margin-left: 0px !important;
+    }
+    /* ปุ่มลูกศรย่อ/ขยายเดิม ไม่มีประโยชน์แล้วเพราะหุบไม่ได้อยู่ดี ซ่อนทิ้งกัน
+       ผู้ใช้กดแล้วงง (ใส่หลาย selector กันเหนียวเพราะไม่รู้ชื่อจริงที่ deploy
+       อยู่); ถ้า selector ไหนไม่ตรงเวอร์ชันก็แค่ไม่มีผล ไม่กระทบส่วนอื่น */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="baseButton-headerNoPadding"][aria-label*="idebar" i],
+    button[aria-label*="idebar" i],
+    div[aria-label*="idebar" i] {
+        display: none !important;
         visibility: hidden !important;
     }
     /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
