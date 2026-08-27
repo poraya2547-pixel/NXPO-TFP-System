@@ -69,7 +69,7 @@ from TFP import (
 )
 from data_loader import load_data_gsheet
 
-st.set_page_config(page_title="สรุปผู้บริหาร TFP", layout="wide", initial_sidebar_state="expanded")
+st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพการผลิตรวม", layout="wide", initial_sidebar_state="expanded")
 
 # ------------------------------------------------------------------------------
 # ซ่อนองค์ประกอบเริ่มต้นของ Streamlit ที่ไม่ต้องการให้ผู้ใช้เห็น เช่น เมนู
