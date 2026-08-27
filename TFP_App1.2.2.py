@@ -69,7 +69,7 @@ from TFP import (
 )
 from data_loader import load_data_gsheet
 
-st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพการผลิตรวม", layout="wide")
+st.set_page_config(page_title="สรุปผู้บริหาร TFP", layout="wide", initial_sidebar_state="expanded")
 
 # ------------------------------------------------------------------------------
 # ซ่อนองค์ประกอบเริ่มต้นของ Streamlit ที่ไม่ต้องการให้ผู้ใช้เห็น เช่น เมนู
@@ -83,6 +83,22 @@ st.markdown(
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {visibility: hidden;}
+    /* ปุ่มลูกศรย่อ/ขยายแถบเมนูด้านซ้าย (sidebar) อยู่ภายใน <header> เดิม
+       การซ่อน header ทั้งก้อนด้านบนเลยพาลูกศรนี้หายไปด้วย ทำให้ถ้าแถบเมนู
+       ถูกย่อ (เช่น เปิดหน้าจอแคบ หรือมือถือไปกดพลาด) จะไม่มีทางกดขยายกลับ
+       คืนได้อีก ("แถบบาร์ด้านซ้ายหายไป") จึงต้องบังคับให้ปุ่มนี้ยังมองเห็น/
+       กดได้เสมอ แม้ตัว header ที่เหลือจะถูกซ่อนอยู่ */
+    [data-testid="collapsedControl"],
+    [data-testid="stSidebarCollapsedControl"] {
+        visibility: visible !important;
+        display: flex !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        position: fixed !important;
+        top: 0.6rem !important;
+        left: 0.6rem !important;
+        z-index: 999990 !important;
+    }
     /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
     [data-testid="stStatusWidget"],
     [data-testid="stDecoration"],
