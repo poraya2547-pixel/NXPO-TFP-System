@@ -1,4 +1,4 @@
-"""
+ฃ"""
 ================================================================================
 เว็บแอป TFP Executive Summary (Streamlit + Gemini API)
 ================================================================================
@@ -29,6 +29,7 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from io import BytesIO
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from google import genai
 from google.genai import types
 from statsmodels.tsa.arima.model import ARIMA
@@ -68,6 +69,12 @@ from TFP import (
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
 )
 from data_loader import load_data_gsheet
+
+# เซิร์ฟเวอร์ที่ deploy จริง (เช่น Streamlit Community Cloud) ตั้งนาฬิการะบบเป็น UTC
+# ไม่ใช่เวลาไทย ถ้าเรียก datetime.now() เฉยๆ (ไม่ระบุ timezone) จะได้เวลาที่ช้ากว่า
+# เวลาไทยจริงอยู่ 7 ชั่วโมงเสมอ (เช่นนาฬิกาไทย 14:48 แต่ระบบจะได้ 07:48) จึงต้อง
+# ผูก timezone Asia/Bangkok ไว้ตรงๆ ทุกจุดที่ใช้เวลาปัจจุบันแสดงผลให้ผู้ใช้เห็น
+BKK_TZ = ZoneInfo("Asia/Bangkok")
 
 st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม", layout="wide", initial_sidebar_state="expanded")
 
@@ -809,7 +816,7 @@ THAI_MONTHS = ["", "มกราคม", "กุมภาพันธ์", "ม�
 
 
 def thai_timestamp() -> str:
-    now = datetime.now()
+    now = datetime.now(BKK_TZ)
     return (f"{now.day} {THAI_MONTHS[now.month]} {now.year + 543} "
             f"เวลา {now.strftime('%H:%M')} น.")
 
@@ -1969,7 +1976,7 @@ with st.sidebar:
         try:
             with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
                 st.session_state.gsheet_raw_df = load_data_gsheet()
-            st.session_state.gsheet_loaded_at = datetime.now()
+            st.session_state.gsheet_loaded_at = datetime.now(BKK_TZ)
         except Exception as e:
             st.session_state.gsheet_load_error = str(e)
             st.session_state.pop("gsheet_raw_df", None)
