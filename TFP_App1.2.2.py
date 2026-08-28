@@ -28,7 +28,18 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from io import BytesIO
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# เซิร์ฟเวอร์ของแอปมักตั้งเวลาไว้เป็น UTC (ไม่ใช่เวลาไทย) ทำให้เวลาที่แสดงในแอป
+# (เช่น "ดึงข้อมูลล่าสุดเมื่อ") ช้ากว่าเวลาจริง 7 ชั่วโมง — ใช้ TH_TZ แทน datetime.now()
+# ทุกจุดที่ต้องการแสดงเวลาให้ผู้ใช้เห็น เพื่อให้ตรงกับเวลาประเทศไทย (UTC+7)
+TH_TZ = timezone(timedelta(hours=7))
+
+
+def now_th() -> datetime:
+    """คืนค่าเวลาปัจจุบันตามเวลาประเทศไทย (UTC+7) แบบ naive datetime
+    (ตัด tzinfo ออกเพื่อให้ยังใช้ .strftime() ต่อได้เหมือนโค้ดเดิมทุกจุด)"""
+    return datetime.now(TH_TZ).replace(tzinfo=None)
 from google import genai
 from google.genai import types
 from statsmodels.tsa.arima.model import ARIMA
@@ -406,23 +417,23 @@ button[kind="primary"] { background: var(--brand-orange) !important; border-colo
 /* ----- ปุ่มดาวน์โหลด (st.download_button) ทั้งหมดในแอป -----
    ปกติปุ่มดาวน์โหลดของ Streamlit จะเป็นสไตล์ "secondary" (พื้นขาว ขอบเทาบาง
    ตัวหนังสือเทา) ทำให้ผู้ใช้มองไม่ออกว่ากดได้/เป็นปุ่มดาวน์โหลด — ด้านล่างนี้
-   ปรับให้เป็นปุ่มทึบสีส้มของแบรนด์ มีเงา ตัวหนังสือหนา เห็นชัดว่าเป็นปุ่มกดได้ */
+   ปรับเป็นพื้นขาว ขอบส้มของแบรนด์ ตัวหนังสือเทาเข้ม เห็นชัดว่าเป็นปุ่มกดได้ */
 div[data-testid="stDownloadButton"] button {
-    background: var(--brand-orange) !important;
-    border: 1.5px solid var(--brand-orange) !important;
-    color: #FFFFFF !important;
+    background: #FFFFFF !important;
+    border: 2px solid var(--brand-orange) !important;
+    color: #374151 !important;
     font-weight: 700 !important;
     border-radius: 10px !important;
     padding: 10px 20px !important;
-    box-shadow: var(--shadow-lift);
+    box-shadow: var(--shadow-soft);
     transition: all 0.15s ease;
 }
 div[data-testid="stDownloadButton"] button:hover {
-    background: var(--brand-orange-dark) !important;
+    background: #FFF6EC !important;
     border-color: var(--brand-orange-dark) !important;
-    color: #FFFFFF !important;
+    color: #374151 !important;
     transform: translateY(-1px);
-    box-shadow: 0 14px 28px rgba(22,50,74,0.14), 0 3px 8px rgba(22,50,74,0.08);
+    box-shadow: var(--shadow-lift);
 }
 div[data-testid="stDownloadButton"] button:active {
     transform: translateY(0px);
@@ -431,8 +442,18 @@ div[data-testid="stDownloadButton"] button:active {
    ไม่งั้นสีที่ตั้งไว้ที่ตัว <button> จะไม่ถูกนำไปใช้ */
 div[data-testid="stDownloadButton"] button p,
 div[data-testid="stDownloadButton"] button span {
-    color: #FFFFFF !important;
+    color: #374151 !important;
     font-weight: 700 !important;
+}
+/* เพิ่มคำอธิบายเล็กๆ ใต้ตัวหนังสือหลักของปุ่ม เพื่อบอกชัดเจนว่ากดเพื่อดาวน์โหลด
+   (ใช้ ::after ใส่ไว้ที่ตัว <p> ของปุ่ม ไม่ต้องแก้ label ทีละจุดในโค้ด Python) */
+div[data-testid="stDownloadButton"] button p::after {
+    content: "กดเพื่อดาวน์โหลด";
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: var(--brand-orange-dark);
+    margin-top: 2px;
 }
 
 /* ----- กันตัวอักษรไทยล้น/ฉีกกลางคำในทุกข้อความของแอป (คำอธิบาย, caption, ตัวเลข) -----
@@ -749,7 +770,7 @@ THAI_MONTHS = ["", "มกราคม", "กุมภาพันธ์", "ม�
 
 
 def thai_timestamp() -> str:
-    now = datetime.now()
+    now = now_th()
     return (f"{now.day} {THAI_MONTHS[now.month]} {now.year + 543} "
             f"เวลา {now.strftime('%H:%M')} น.")
 
@@ -1909,7 +1930,7 @@ with st.sidebar:
         try:
             with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
                 st.session_state.gsheet_raw_df = load_data_gsheet()
-            st.session_state.gsheet_loaded_at = datetime.now()
+            st.session_state.gsheet_loaded_at = now_th()
         except Exception as e:
             st.session_state.gsheet_load_error = str(e)
             st.session_state.pop("gsheet_raw_df", None)
