@@ -29,7 +29,6 @@ import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
 from io import BytesIO
 from datetime import datetime
-from zoneinfo import ZoneInfo
 from google import genai
 from google.genai import types
 from statsmodels.tsa.arima.model import ARIMA
@@ -67,109 +66,10 @@ from TFP import (
     build_model_frame, run_long_run, run_short_run,
     build_coefficient_tables, build_tfpi_yoy_summary, summary_adj_r2,
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
-    CANDIDATE_LONG_RUN_VARS, CANDIDATE_SHORT_RUN_SPEC,
 )
 from data_loader import load_data_gsheet
 
-# เซิร์ฟเวอร์ที่ deploy จริง (เช่น Streamlit Community Cloud) ตั้งนาฬิการะบบเป็น UTC
-# ไม่ใช่เวลาไทย ถ้าเรียก datetime.now() เฉยๆ (ไม่ระบุ timezone) จะได้เวลาที่ช้ากว่า
-# เวลาไทยจริงอยู่ 7 ชั่วโมงเสมอ (เช่นนาฬิกาไทย 14:48 แต่ระบบจะได้ 07:48) จึงต้อง
-# ผูก timezone Asia/Bangkok ไว้ตรงๆ ทุกจุดที่ใช้เวลาปัจจุบันแสดงผลให้ผู้ใช้เห็น
-BKK_TZ = ZoneInfo("Asia/Bangkok")
-
-st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม", layout="wide", initial_sidebar_state="expanded")
-
-# ------------------------------------------------------------------------------
-# ซ่อนองค์ประกอบเริ่มต้นของ Streamlit ที่ไม่ต้องการให้ผู้ใช้เห็น เช่น เมนู
-# hamburger มุมขวาบน (#MainMenu), footer เดิม, แถบ header บนสุด และ badge
-# "Hosted with Streamlit" ที่ Streamlit Community Cloud ฉีดมาเองตอน deploy
-# (ถ้า deploy ที่อื่นที่ไม่ใช่ Community Cloud อาจไม่มี badge นี้ตั้งแต่แรกอยู่แล้ว)
-# ------------------------------------------------------------------------------
-st.markdown(
-    """
-    <style>
-    #MainMenu {visibility: hidden;}
-    footer {visibility: hidden;}
-    header {visibility: hidden;}
-    /* แก้ปัญหา "แถบบาร์ด้านซ้ายหายไป" อย่างถาวร — ของเดิมพยายามหาวิธีทำให้
-       ปุ่มลูกศรย่อ/ขยาย sidebar ของ Streamlit ยังกดได้อยู่ แต่ปุ่มนี้เปลี่ยนชื่อ
-       (data-testid) ไปเรื่อยๆ ในแต่ละเวอร์ชัน ทำให้เดา selector ไม่แม่นยำ
-       (ลองมาแล้ว 2 รอบยังไม่เจอ) จึงเปลี่ยนวิธีทั้งหมด: "บังคับให้แถบเมนูซ้าย
-       เปิดค้างไว้ตลอด ห้ามหุบ" แทน — ตัดปัญหาที่ต้นเหตุ ไม่ว่าปุ่มลูกศรจะชื่อ
-       อะไร/ทำงานหรือไม่ก็ไม่มีผลอีกต่อไป เพราะ CSS ด้านล่างบังคับความกว้าง
-       ของแถบเมนูไว้ตรงๆ ทับสถานะ "หุบ" (aria-expanded="false") ของ Streamlit
-       เอง ผลข้างเคียง: ผู้ใช้จะกดหุบแถบเมนูเองไม่ได้อีกต่อไป (ซึ่งเหมาะกับแอป
-       แดชบอร์ดตัวนี้ที่ต้องใช้แถบเมนูตลอดเวลาอยู่แล้ว) */
-    section[data-testid="stSidebar"] {
-        min-width: 300px !important;
-        max-width: 300px !important;
-        width: 300px !important;
-        transform: none !important;
-        visibility: visible !important;
-        margin-left: 0px !important;
-    }
-    section[data-testid="stSidebar"][aria-expanded="false"] {
-        min-width: 300px !important;
-        max-width: 300px !important;
-        width: 300px !important;
-        transform: none !important;
-        margin-left: 0px !important;
-    }
-    /* ปุ่มลูกศรย่อ/ขยายเดิม ไม่มีประโยชน์แล้วเพราะหุบไม่ได้อยู่ดี ซ่อนทิ้งกัน
-       ผู้ใช้กดแล้วงง (ใส่หลาย selector กันเหนียวเพราะไม่รู้ชื่อจริงที่ deploy
-       อยู่); ถ้า selector ไหนไม่ตรงเวอร์ชันก็แค่ไม่มีผล ไม่กระทบส่วนอื่น */
-    [data-testid="collapsedControl"],
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="baseButton-headerNoPadding"][aria-label*="idebar" i],
-    button[aria-label*="idebar" i],
-    div[aria-label*="idebar" i] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    /* badge "Hosted with Streamlit" มุมขวาล่าง (Streamlit Community Cloud) */
-    [data-testid="stStatusWidget"],
-    [data-testid="stDecoration"],
-    [class^="viewerBadge_container"],
-    [class^="viewerBadge_link__"],
-    [class*="viewerBadge"],
-    .stAppDeployButton,
-    a[href*="streamlit.io"] {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    </style>
-    """,
-    unsafe_allow_html=True,
-)
-
-# badge "Hosted with Streamlit" บางเวอร์ชันถูกฉีดมาจากหน้าเว็บหลัก (parent frame)
-# ของ Streamlit Cloud เอง ไม่ใช่ element ในหน้าแอปที่ CSS ด้านบนเข้าถึงได้ตรงๆ
-# จึงต้องใช้ JS ไล่หา element นั้นใน parent document แล้วซ่อนทิ้งเป็น fallback
-st.markdown(
-    """
-    <script>
-    function hideStreamlitBadge() {
-        try {
-            const doc = window.parent.document;
-            const selectors = [
-                'a[href*="streamlit.io"]',
-                '[class*="viewerBadge"]',
-                '[data-testid="stStatusWidget"]',
-            ];
-            selectors.forEach(sel => {
-                doc.querySelectorAll(sel).forEach(el => {
-                    el.style.display = "none";
-                });
-            });
-        } catch (e) {}
-    }
-    hideStreamlitBadge();
-    setInterval(hideStreamlitBadge, 1000);
-    </script>
-    """,
-    unsafe_allow_html=True,
-)
+st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม", layout="wide")
 
 # ------------------------------------------------------------------------------
 # ฟอนต์ — เปลี่ยนหน้าเว็บให้ใช้ 'Prompt' (ฟอนต์ Thai sans-serif ที่เว็บ สอวช./NXPO
@@ -503,6 +403,38 @@ div[data-testid="stMultiSelect"] [data-baseweb="select"] { height: auto !importa
 div[data-testid="stFileUploader"] section { border-radius: 12px; border: 1.5px dashed #D9C2A6; }
 button[kind="primary"] { background: var(--brand-orange) !important; border-color: var(--brand-orange) !important; }
 
+/* ----- ปุ่มดาวน์โหลด (st.download_button) ทั้งหมดในแอป -----
+   ปกติปุ่มดาวน์โหลดของ Streamlit จะเป็นสไตล์ "secondary" (พื้นขาว ขอบเทาบาง
+   ตัวหนังสือเทา) ทำให้ผู้ใช้มองไม่ออกว่ากดได้/เป็นปุ่มดาวน์โหลด — ด้านล่างนี้
+   ปรับให้เป็นปุ่มทึบสีส้มของแบรนด์ มีเงา ตัวหนังสือหนา เห็นชัดว่าเป็นปุ่มกดได้ */
+div[data-testid="stDownloadButton"] button {
+    background: var(--brand-orange) !important;
+    border: 1.5px solid var(--brand-orange) !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+    padding: 10px 20px !important;
+    box-shadow: var(--shadow-lift);
+    transition: all 0.15s ease;
+}
+div[data-testid="stDownloadButton"] button:hover {
+    background: var(--brand-orange-dark) !important;
+    border-color: var(--brand-orange-dark) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(22,50,74,0.14), 0 3px 8px rgba(22,50,74,0.08);
+}
+div[data-testid="stDownloadButton"] button:active {
+    transform: translateY(0px);
+}
+/* ตัวหนังสือในปุ่มจริงๆ อยู่ใน <p>/<span> ซ้อนอยู่ข้างใน ต้องกำหนดสีตรงนี้ด้วย
+   ไม่งั้นสีที่ตั้งไว้ที่ตัว <button> จะไม่ถูกนำไปใช้ */
+div[data-testid="stDownloadButton"] button p,
+div[data-testid="stDownloadButton"] button span {
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+}
+
 /* ----- กันตัวอักษรไทยล้น/ฉีกกลางคำในทุกข้อความของแอป (คำอธิบาย, caption, ตัวเลข) -----
    ปัญหาเดิม: ข้อความไทยยาว ๆ ในกล่องแคบบางจุดล้นกรอบหรือถูกตัดขวางกลางคำ
    วิธีแก้: อนุญาตให้ตัดคำเมื่อจำเป็นเท่านั้น (ไม่บังคับตัดกลางคำถ้ายังพอมีที่บรรทัดปกติ)
@@ -817,7 +749,7 @@ THAI_MONTHS = ["", "มกราคม", "กุมภาพันธ์", "ม�
 
 
 def thai_timestamp() -> str:
-    now = datetime.now(BKK_TZ)
+    now = datetime.now()
     return (f"{now.day} {THAI_MONTHS[now.month]} {now.year + 543} "
             f"เวลา {now.strftime('%H:%M')} น.")
 
@@ -1977,7 +1909,7 @@ with st.sidebar:
         try:
             with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
                 st.session_state.gsheet_raw_df = load_data_gsheet()
-            st.session_state.gsheet_loaded_at = datetime.now(BKK_TZ)
+            st.session_state.gsheet_loaded_at = datetime.now()
         except Exception as e:
             st.session_state.gsheet_load_error = str(e)
             st.session_state.pop("gsheet_raw_df", None)
@@ -2255,15 +2187,11 @@ if st.session_state.page == "home":
         with st.expander("🛠️ ปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False):
             st.caption(
                 "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัด/เพิ่มตัวแปร "
-                "กลับเข้าสมการ (เช่น VIF สูงเกินไป) หรือต้องการลองเปิดใช้ตัวแปรสำรอง "
-                "(PCT/GDP, PATENT/GDP) ที่มีข้อมูลพร้อมอยู่แล้วแต่ยังไม่ได้ใช้ในสมการปัจจุบัน "
-                "การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะรอบการใช้งานนี้เท่านั้น และทุกครั้ง "
-                "ที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
+                "กลับเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
+                "รอบการใช้งานนี้เท่านั้น และทุกครั้งที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
             )
 
-            # ตัวเลือกในสมการระยะยาว = ตัวแปรที่ใช้อยู่จริงตอนนี้ (LONG_RUN_VARS) รวมกับ
-            # ตัวแปรสำรองที่มีข้อมูลพร้อมแล้ว (CANDIDATE_LONG_RUN_VARS) กันชื่อซ้ำด้วย dict.fromkeys
-            all_lr_vars = list(dict.fromkeys(list(LONG_RUN_VARS) + list(CANDIDATE_LONG_RUN_VARS)))
+            all_lr_vars = list(LONG_RUN_VARS)
             new_lr_vars = st.multiselect(
                 "ตัวแปรในสมการระยะยาว (Long-run)",
                 options=all_lr_vars,
@@ -2272,14 +2200,7 @@ if st.session_state.page == "home":
                 key="ms_lr_vars",
             )
 
-            # เช่นเดียวกัน รวม pool ของสเปกระยะสั้นทั้งชุดที่ active อยู่ + ชุดสำรอง ไว้ที่เดียว
-            # (ใช้ตอน build ตัวเลือกในกล่อง multiselect และตอนแปลงชื่อที่เลือกกลับเป็นสเปกจริง
-            # ด้านล่าง เพื่อไม่ต้อง maintain diff_order/lag ซ้ำสองที่)
-            ALL_SR_SPEC_POOL = SHORT_RUN_SPEC + [
-                spec for spec in CANDIDATE_SHORT_RUN_SPEC
-                if spec[0] not in {c for c, _, _ in SHORT_RUN_SPEC}
-            ]
-            all_sr_bases = [c for c, _, _ in ALL_SR_SPEC_POOL]
+            all_sr_bases = [c for c, _, _ in SHORT_RUN_SPEC]
             new_sr_bases = st.multiselect(
                 "ตัวแปรในสมการระยะสั้น (Short-run ECM)",
                 options=all_sr_bases,
@@ -2337,7 +2258,7 @@ if st.session_state.page == "home":
                     })
                     st.session_state.active_long_run_vars = new_lr_vars
                     st.session_state.active_short_run_spec = [
-                        spec for spec in ALL_SR_SPEC_POOL if spec[0] in new_sr_bases
+                        spec for spec in SHORT_RUN_SPEC if spec[0] in new_sr_bases
                     ]
                     st.success("บันทึกและปรับตัวแปรแล้ว กำลังรันโมเดลใหม่...")
                     st.rerun()
