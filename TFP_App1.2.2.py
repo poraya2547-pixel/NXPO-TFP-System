@@ -67,6 +67,7 @@ from TFP import (
     build_model_frame, run_long_run, run_short_run,
     build_coefficient_tables, build_tfpi_yoy_summary, summary_adj_r2,
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
+    CANDIDATE_LONG_RUN_VARS, CANDIDATE_SHORT_RUN_SPEC,
 )
 from data_loader import load_data_gsheet
 
@@ -2254,11 +2255,15 @@ if st.session_state.page == "home":
         with st.expander("🛠️ ปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False):
             st.caption(
                 "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัด/เพิ่มตัวแปร "
-                "กลับเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
-                "รอบการใช้งานนี้เท่านั้น และทุกครั้งที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
+                "กลับเข้าสมการ (เช่น VIF สูงเกินไป) หรือต้องการลองเปิดใช้ตัวแปรสำรอง "
+                "(PCT/GDP, PATENT/GDP) ที่มีข้อมูลพร้อมอยู่แล้วแต่ยังไม่ได้ใช้ในสมการปัจจุบัน "
+                "การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะรอบการใช้งานนี้เท่านั้น และทุกครั้ง "
+                "ที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
             )
 
-            all_lr_vars = list(LONG_RUN_VARS)
+            # ตัวเลือกในสมการระยะยาว = ตัวแปรที่ใช้อยู่จริงตอนนี้ (LONG_RUN_VARS) รวมกับ
+            # ตัวแปรสำรองที่มีข้อมูลพร้อมแล้ว (CANDIDATE_LONG_RUN_VARS) กันชื่อซ้ำด้วย dict.fromkeys
+            all_lr_vars = list(dict.fromkeys(list(LONG_RUN_VARS) + list(CANDIDATE_LONG_RUN_VARS)))
             new_lr_vars = st.multiselect(
                 "ตัวแปรในสมการระยะยาว (Long-run)",
                 options=all_lr_vars,
@@ -2267,7 +2272,14 @@ if st.session_state.page == "home":
                 key="ms_lr_vars",
             )
 
-            all_sr_bases = [c for c, _, _ in SHORT_RUN_SPEC]
+            # เช่นเดียวกัน รวม pool ของสเปกระยะสั้นทั้งชุดที่ active อยู่ + ชุดสำรอง ไว้ที่เดียว
+            # (ใช้ตอน build ตัวเลือกในกล่อง multiselect และตอนแปลงชื่อที่เลือกกลับเป็นสเปกจริง
+            # ด้านล่าง เพื่อไม่ต้อง maintain diff_order/lag ซ้ำสองที่)
+            ALL_SR_SPEC_POOL = SHORT_RUN_SPEC + [
+                spec for spec in CANDIDATE_SHORT_RUN_SPEC
+                if spec[0] not in {c for c, _, _ in SHORT_RUN_SPEC}
+            ]
+            all_sr_bases = [c for c, _, _ in ALL_SR_SPEC_POOL]
             new_sr_bases = st.multiselect(
                 "ตัวแปรในสมการระยะสั้น (Short-run ECM)",
                 options=all_sr_bases,
@@ -2325,7 +2337,7 @@ if st.session_state.page == "home":
                     })
                     st.session_state.active_long_run_vars = new_lr_vars
                     st.session_state.active_short_run_spec = [
-                        spec for spec in SHORT_RUN_SPEC if spec[0] in new_sr_bases
+                        spec for spec in ALL_SR_SPEC_POOL if spec[0] in new_sr_bases
                     ]
                     st.success("บันทึกและปรับตัวแปรแล้ว กำลังรันโมเดลใหม่...")
                     st.rerun()
