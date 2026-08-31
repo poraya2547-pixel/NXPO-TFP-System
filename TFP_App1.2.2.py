@@ -2090,6 +2090,19 @@ if st.session_state.page == "home":
             if _research_login_config_error:
                 st.error(_research_login_config_error)
             else:
+                # พื้นหลังกรอบฟอร์มล็อกอินเป็นสีขาว (เดิมกลืนไปกับพื้นหลังหน้าเว็บสีครีม)
+                # ส่วนช่องกรอกข้อความ (input) ยังคงเป็นสีเทาอ่อนตามเดิม
+                st.markdown(
+                    """
+                    <style>
+                    div[data-testid="stForm"] {
+                        background: #FFFFFF !important;
+                        border-radius: 14px;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
+                )
                 with st.form("research_login_form", clear_on_submit=False):
                     login_user = st.text_input("ชื่อผู้ใช้ (Username)")
                     login_pass = st.text_input("รหัสผ่าน (Password)", type="password")
