@@ -2784,11 +2784,31 @@ elif st.session_state.page == "dashboard":
         available_vars_lr = [v for v in active_lr_vars if v != "const" and v in model_df.columns]
         available_vars_sr = [v for v in active_sr_bases if v in model_df.columns]
 
-        def _var_trend_box(title_th: str, options: list, widget_key: str):
+        def _var_trend_box(title_th: str, options: list, widget_key: str, icon_name: str = "trend-up"):
             """วาดกล่อง selectbox + กราฟเส้นแนวโน้มของตัวแปร 1 ชุด (ยาว หรือ สั้น)
             คืนค่าตัวแปรที่ผู้ใช้เลือกอยู่ในกล่องนี้ (หรือ None ถ้าไม่มีตัวแปรให้เลือก)"""
-            st.markdown(f'<div style="font-weight:700;color:var(--brand-navy);'
-                        f'margin-bottom:8px;">{title_th}</div>', unsafe_allow_html=True)
+            # หัวข้อ: จัดกลาง ตัวใหญ่ขึ้น ใส่ไอคอน + พื้นหลังแบบ pill ไล่สี และเส้นคาดสี
+            # ด้านล่างให้ดูเป็นจุดเด่นของกล่อง แทนตัวหนังสือลอย ๆ ตัวเล็กแบบเดิม
+            st.markdown(
+                f"""
+                <div style="display:flex;flex-direction:column;align-items:center;
+                            margin-bottom:16px;">
+                    <div style="display:inline-flex;align-items:center;gap:9px;
+                                background:linear-gradient(135deg, rgba(47,111,237,0.12), rgba(22,50,74,0.05));
+                                border:1px solid rgba(47,111,237,0.18);
+                                padding:9px 22px;border-radius:999px;">
+                        <span style="display:flex;align-items:center;color:var(--blue);">
+                            {icon(icon_name, 20, 2)}
+                        </span>
+                        <span style="font-weight:800;font-size:1.18rem;color:var(--brand-navy);
+                                     letter-spacing:-0.01em;white-space:nowrap;">{title_th}</span>
+                    </div>
+                    <div style="width:52px;height:3px;border-radius:2px;margin-top:9px;
+                                background:linear-gradient(90deg,var(--blue),#A9C6FF);"></div>
+                </div>
+                """,
+                unsafe_allow_html=True,
+            )
             if not options:
                 st.info("ไม่พบข้อมูลตัวแปรอิสระในชุดนี้")
                 return None
@@ -2835,10 +2855,12 @@ elif st.session_state.page == "dashboard":
         with col_lr:
             chosen_var_lr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะยาว", available_vars_lr, "dashboard_var_select_lr",
+                icon_name="trend-up",
             )
         with col_sr:
             chosen_var_sr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
+                icon_name="trend-down",
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
