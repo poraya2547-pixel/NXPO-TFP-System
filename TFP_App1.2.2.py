@@ -2846,7 +2846,12 @@ elif st.session_state.page == "dashboard":
                 st.info("ไม่พบข้อมูลของตัวแปรนี้")
             else:
                 _nice_line_chart(series, color="#2F6FED", height=280)
-                st.caption(f"{var_label_with_abbr(picked)} — ข้อมูล {len(series)} ปี")
+                st.markdown(
+                    f'<div style="text-align:center;color:var(--brand-navy-soft);'
+                    f'font-size:0.85rem;margin-top:2px;">'
+                    f'{var_label_with_abbr(picked)} — ข้อมูล {len(series)} ปี</div>',
+                    unsafe_allow_html=True,
+                )
             return picked
 
         st.markdown(
