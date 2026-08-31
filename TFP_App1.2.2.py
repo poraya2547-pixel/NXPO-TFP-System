@@ -2078,8 +2078,10 @@ if st.session_state.page == "home":
     if not st.session_state.research_authenticated:
         # หน้าล็อกอิน — แสดงแทนเนื้อหาบทสรุปผู้บริหารจนกว่าจะกรอก user/password ถูกต้อง
         st.markdown(
-            f'<div class="section-card" style="max-width:420px;margin:40px auto;">'
-            f'<div class="section-title"><div class="section-num">🔒</div>'
+            f'<div class="section-card" style="max-width:420px;margin:40px auto;'
+            f'text-align:center;">'
+            f'<div class="section-title" style="justify-content:center;">'
+            f'<div class="section-num">🔒</div>'
             f'<div class="section-title-text"><h3>สำหรับคณะวิจัยเท่านั้น</h3></div></div>'
             f'<p style="color:var(--brand-navy-soft);font-size:0.9rem;margin-top:-6px;">'
             f'กรุณาเข้าสู่ระบบด้วยบัญชีคณะวิจัยเพื่อดูหน้านี้</p></div>',
