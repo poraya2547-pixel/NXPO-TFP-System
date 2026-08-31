@@ -2785,7 +2785,7 @@ elif st.session_state.page == "dashboard":
         available_vars_sr = [v for v in active_sr_bases if v in model_df.columns]
 
         def _var_trend_box(title_th: str, options: list, widget_key: str,
-                            icon_name: str = "trend-up", accent: str = "#F8A356"):
+                            icon_name: str = "trend-up", accent: str = "#D8A867"):
             """วาดกล่อง selectbox + กราฟเส้นแนวโน้มของตัวแปร 1 ชุด (ยาว หรือ สั้น)
             คืนค่าตัวแปรที่ผู้ใช้เลือกอยู่ในกล่องนี้ (หรือ None ถ้าไม่มีตัวแปรให้เลือก)"""
             # หัวข้อ: แคปซูลขอบสีส้มทั้งสองกล่อง (เดิมแยกส้ม/ฟ้า) + วงกลมไอคอนตันสีส้ม
@@ -2865,12 +2865,12 @@ elif st.session_state.page == "dashboard":
         with col_lr:
             chosen_var_lr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะยาว", available_vars_lr, "dashboard_var_select_lr",
-                icon_name="trend-up", accent="#F8A356",
+                icon_name="trend-up", accent="#D8A867",
             )
         with col_sr:
             chosen_var_sr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
-                icon_name="trend-down", accent="#F8A356",
+                icon_name="trend-down", accent="#D8A867",
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
