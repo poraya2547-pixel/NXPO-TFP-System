@@ -2882,7 +2882,7 @@ elif st.session_state.page == "dashboard":
                     unsafe_allow_html=True,
                 )
 
-                shock_col, result_col = st.columns([1.4, 1])
+                shock_col, result_col = st.columns([1, 1.3])
                 with shock_col:
                     with st.container(border=True):
                         if is_log:
