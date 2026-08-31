@@ -10,6 +10,10 @@
 
 ติดตั้ง library ที่ต้องใช้ (ถ้ายังไม่มี):
     pip install streamlit google-genai pandas numpy statsmodels openpyxl scipy reportlab python-pptx python-docx matplotlib
+
+หมายเหตุ (ส.ค. 2026): โมเดล gemini-2.5-flash เดิมจะถูก retire 16 ต.ค. 2026
+ไฟล์นี้อัปเดตให้ใช้ gemini-3.7-flash แล้ว — ก่อนรัน ให้อัปเกรด SDK เป็นเวอร์ชัน
+ล่าสุดด้วย: pip install -U google-genai
 ================================================================================
 """
 
@@ -22,6 +26,7 @@ import hmac
 import os
 import re
 import math
+import time
 import warnings
 import matplotlib
 matplotlib.use("Agg")
@@ -719,7 +724,14 @@ def icon(name: str, size: int = 18, stroke_width: float = 1.6) -> str:
 # ------------------------------------------------------------------------------
 # ตั้งค่า Gemini จาก secrets.toml
 # ------------------------------------------------------------------------------
-GEMINI_MODEL = "gemini-2.5-flash"  # เปลี่ยนเป็น "gemini-2.5-pro" ได้ถ้าอยากได้คุณภาพสูงขึ้น (ช้ากว่า)
+GEMINI_MODEL = "gemini-3.7-flash"  # รุ่นล่าสุด (13 ส.ค. 2026); เดิมใช้ "gemini-2.5-flash" ซึ่งจะถูก retire 16 ต.ค. 2026
+
+# โควตาฟรีของ Gemini API ต่ำมาก (RPD อาจแค่ 20 ครั้ง/วันในบาง project/tier) และ
+# เมื่อชนโควตา Google จะตอบ error รหัส 429 (RESOURCE_EXHAUSTED) กลับมา — ค่าด้านล่าง
+# ควบคุมการ retry อัตโนมัติเวลาเจอ 429 ก่อนที่จะยอมแพ้แล้วโชว์ข้อความแจ้งผู้ใช้
+_GEMINI_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
+_GEMINI_MAX_ATTEMPTS = 3
+_GEMINI_BASE_DELAY = 2.0  # วินาที (จะเว้น 2s, 4s, 8s ตาม exponential backoff)
 
 try:
     gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -807,12 +819,42 @@ Adj. R^2 = {summary_adj_r2(sr_res):.4f}
 
 โปรดเขียนบทสรุปผู้บริหารตามโครงสร้าง 3 ส่วนที่กำหนด"""
 
-    response = gemini_client.models.generate_content(
-        model=GEMINI_MODEL,
-        contents=user_prompt,
-        config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
-    )
-    return response.text
+    last_error = None
+    for attempt in range(1, _GEMINI_MAX_ATTEMPTS + 1):
+        try:
+            response = gemini_client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=user_prompt,
+                config=types.GenerateContentConfig(system_instruction=SYSTEM_PROMPT),
+            )
+            return response.text
+        except Exception as e:
+            # google-genai ห่อ error ของ Gemini API ไว้ใน exception ที่มักมี
+            # .code หรือ .status_code เป็นรหัส HTTP (เช่น 429) — ดึงออกมาแบบ
+            # กันเหนียวหลายทาง เพราะ SDK บางเวอร์ชันตั้งชื่อ attribute ไม่ตรงกัน
+            status_code = getattr(e, "code", None) or getattr(e, "status_code", None)
+            last_error = e
+            if status_code not in _GEMINI_RETRYABLE_STATUS_CODES or attempt == _GEMINI_MAX_ATTEMPTS:
+                break
+            time.sleep(_GEMINI_BASE_DELAY * (2 ** (attempt - 1)))
+
+    # retry ครบจำนวนครั้งแล้วยังไม่สำเร็จ (หรือเจอ error ที่ retry ซ้ำไปก็ไม่หาย
+    # เช่น API key ผิด) — แจ้งผู้ใช้ด้วยข้อความที่เข้าใจง่าย แทนที่จะโยน
+    # exception ดิบๆ ออกไปให้แอป crash
+    status_code = getattr(last_error, "code", None) or getattr(last_error, "status_code", None)
+    if status_code == 429:
+        st.error(
+            "ขณะนี้มีการเรียกใช้งาน Gemini API ถี่เกินโควตาที่กำหนดไว้ชั่วคราว "
+            "(rate limit / quota เต็ม) กรุณารอสักครู่แล้วลองใหม่อีกครั้ง "
+            "หากเกิดขึ้นบ่อย ควรพิจารณาเปิดใช้งาน billing เพื่อขยายโควตา "
+            "ใน Google AI Studio"
+        )
+    else:
+        st.error(
+            "ไม่สามารถสร้างบทสรุปผู้บริหารจาก Gemini API ได้ "
+            f"รายละเอียด error: {type(last_error).__name__}: {last_error}"
+        )
+    st.stop()
 
 
 # ------------------------------------------------------------------------------
