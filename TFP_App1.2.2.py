@@ -392,19 +392,15 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     background: #FFFDF9; box-shadow: 0 2px 10px rgba(217,109,15,0.08);
 }
 .tfp-table-cream th {
-    background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
-    color: #fff; text-align: center; padding: 11px 12px;
-    font-weight: 700; letter-spacing: 0.01em; border-right: 1px solid rgba(255,255,255,0.18);
+    background: var(--brand-orange); color: #fff; text-align: center; padding: 11px 12px;
+    font-weight: 700; letter-spacing: 0.01em; border-right: 1px solid rgba(255,255,255,0.25);
 }
-.tfp-table-cream th:first-child { text-align: left; padding-left: 16px; }
 .tfp-table-cream th:last-child { border-right: none; }
 .tfp-table-cream td {
     padding: 10px 12px; border-bottom: 1px solid #F3E7D6; color: var(--brand-navy-soft);
-    text-align: right; font-variant-numeric: tabular-nums; transition: background .12s ease;
+    text-align: center; font-variant-numeric: tabular-nums; transition: background .12s ease;
 }
-.tfp-table-cream td:first-child {
-    text-align: left; font-weight: 700; color: var(--brand-navy); padding-left: 16px;
-}
+.tfp-table-cream td:first-child { font-weight: 700; color: var(--brand-navy); }
 .tfp-table-cream tr:last-child td { border-bottom: none; }
 .tfp-table-cream tr:nth-child(odd) td { background: #FFFDF9; }
 .tfp-table-cream tr:nth-child(even) td { background: #FFF6E9; }
