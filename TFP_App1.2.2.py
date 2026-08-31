@@ -441,12 +441,16 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 /* ----- แก้ปัญหา multiselect ตัดชื่อตัวแปรด้วย "..." ----- */
 [data-baseweb="tag"] {
     max-width: none !important; height: auto !important; min-height: 28px;
-    white-space: normal !important; background-color: var(--brand-orange) !important;
+    white-space: normal !important;
+    background-color: #FFFFFF !important;
+    border: 1.5px solid var(--brand-orange) !important;
 }
 [data-baseweb="tag"] span {
     max-width: none !important; white-space: normal !important;
     overflow: visible !important; text-overflow: clip !important; word-break: break-word !important;
+    color: var(--brand-orange-dark) !important;
 }
+[data-baseweb="tag"] svg { fill: var(--brand-orange-dark) !important; }
 div[data-baseweb="select"] > div { flex-wrap: wrap !important; height: auto !important; }
 div[data-testid="stMultiSelect"] [data-baseweb="select"] { height: auto !important; }
 
@@ -2260,9 +2264,19 @@ if st.session_state.page == "home":
                     return '<span class="badge-pill badge-watch">🟡 พิจารณาเพิ่มเติม</span>'
                 return '<span class="badge-pill badge-fail">🔴 ไม่ผ่าน</span>'
 
+            def _wrap_short_long_run(v):
+                """ป้ายเช่น 'Stationarity (Short-run)' ตอนคอลัมน์แคบจะตัดคำกลางคำ
+                'Short-'/'run)' เพราะเบราว์เซอร์ตัดตรง '-' ได้ — แทรก <br> ก่อนวงเล็บ
+                ให้ '(Short-run)'/'(Long-run)' ทั้งก้อนตกบรรทัดใหม่แทน (ใช้แค่ตอนแสดงผล
+                ในตาราง HTML นี้เท่านั้น ไม่กระทบไฟล์ CSV ที่ดาวน์โหลด)"""
+                s = str(v)
+                s = s.replace(" (Short-run)", "<br>(Short-run)")
+                s = s.replace(" (Long-run)", "<br>(Long-run)")
+                return s
+
             rows_html = "".join(
                 "<tr>" + "".join(
-                    f"<td>{_status_badge(v) if col == 'สถานะ' else v}</td>"
+                    f"<td>{_status_badge(v) if col == 'สถานะ' else _wrap_short_long_run(v)}</td>"
                     for col, v in zip(diag_table_display.columns, row)
                 ) + "</tr>"
                 for row in diag_table_display.values.tolist()
@@ -2296,7 +2310,21 @@ if st.session_state.page == "home":
             '</div></div>',
             unsafe_allow_html=True,
         )
-        with st.expander("🛠️ ปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False):
+        # กรอบ expander นี้เดิมพื้นหลังใส (โปร่งเห็นสีครีมของพื้นหลังหน้าเว็บทะลุออกมา)
+        # ทำให้ดูกลืนไปกับพื้นหลัง — ใส่พื้นขาวให้ชัดเจนว่าเป็นกล่องเนื้อหาแยกต่างหาก
+        st.markdown(
+            """
+            <style>
+            .st-key-adjust_vars_expander {
+                background: #FFFFFF !important;
+                border-radius: 12px;
+            }
+            </style>
+            """,
+            unsafe_allow_html=True,
+        )
+        with st.expander("🛠️ ปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False,
+                          key="adjust_vars_expander"):
             st.caption(
                 "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัด/เพิ่มตัวแปร "
                 "กลับเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
