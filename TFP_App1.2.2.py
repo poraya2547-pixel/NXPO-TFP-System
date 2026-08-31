@@ -2792,7 +2792,24 @@ elif st.session_state.page == "dashboard":
             if not options:
                 st.info("ไม่พบข้อมูลตัวแปรอิสระในชุดนี้")
                 return None
-            with st.container(border=True):
+            # กรอบพื้นหลังสีขาวครอบกล่องทั้งก้อน + ช่อง selectbox ตรงกลางสีครีม
+            # (สไตล์เดียวกับกล่อง "สมมติตัวแปรเปลี่ยนแปลง" ด้านล่างของหน้านี้)
+            st.markdown(
+                f"""
+                <style>
+                .st-key-vartrend_box_{widget_key} {{
+                    background: #FFFFFF !important;
+                    padding: 22px 22px !important;
+                }}
+                .st-key-vartrend_box_{widget_key} div[data-baseweb="select"] > div {{
+                    background: var(--bg-page) !important;
+                    border-color: #E7DFCF !important;
+                }}
+                </style>
+                """,
+                unsafe_allow_html=True,
+            )
+            with st.container(border=True, key=f"vartrend_box_{widget_key}"):
                 picked = st.selectbox(
                     "เลือกตัวแปรอิสระที่ต้องการดูกราฟ",
                     options=options,
