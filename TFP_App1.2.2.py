@@ -768,8 +768,8 @@ GEMINI_MODEL = "gemini-3.7-flash"  # รุ่นล่าสุด (13 ส.ค.
 # เมื่อชนโควตา Google จะตอบ error รหัส 429 (RESOURCE_EXHAUSTED) กลับมา — ค่าด้านล่าง
 # ควบคุมการ retry อัตโนมัติเวลาเจอ 429 ก่อนที่จะยอมแพ้แล้วโชว์ข้อความแจ้งผู้ใช้
 _GEMINI_RETRYABLE_STATUS_CODES = {429, 500, 502, 503, 504}
-_GEMINI_MAX_ATTEMPTS = 3
-_GEMINI_BASE_DELAY = 2.0  # วินาที (จะเว้น 2s, 4s, 8s ตาม exponential backoff)
+_GEMINI_MAX_ATTEMPTS = 5
+_GEMINI_BASE_DELAY = 3.0  # วินาที (จะเว้น 3s, 6s, 12s, 24s ตาม exponential backoff)
 
 try:
     gemini_client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
@@ -886,6 +886,13 @@ Adj. R^2 = {summary_adj_r2(sr_res):.4f}
             "(rate limit / quota เต็ม) กรุณารอสักครู่แล้วลองใหม่อีกครั้ง "
             "หากเกิดขึ้นบ่อย ควรพิจารณาเปิดใช้งาน billing เพื่อขยายโควตา "
             "ใน Google AI Studio"
+        )
+    elif status_code in (500, 502, 503, 504):
+        st.error(
+            f"เซิร์ฟเวอร์ของ Gemini API กำลังมีผู้ใช้งานหนาแน่นชั่วคราว (รหัส {status_code} "
+            "— ปัญหาฝั่ง Google ไม่ใช่ข้อผิดพลาดของระบบนี้) ระบบได้ลองเรียกซ้ำอัตโนมัติ "
+            f"{_GEMINI_MAX_ATTEMPTS} ครั้งแล้วแต่ยังไม่สำเร็จ กรุณารอสัก 1-2 นาทีแล้วกดปุ่ม "
+            "สร้างรายงานสรุปอีกครั้ง"
         )
     else:
         st.error(
