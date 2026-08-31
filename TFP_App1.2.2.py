@@ -385,6 +385,31 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .tfp-table tr:nth-child(even) td { background: #EEF2F6; }
 .tfp-table tr:hover td { background: #FFF6EC; }
 
+/* ----- ตาราง HTML ธีมครีม-ส้ม สำหรับตัวเลขพยากรณ์ ARIMA ----- */
+.tfp-table-cream {
+    width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.86rem;
+    border-radius: 14px; overflow: hidden; border: 1px solid #F0DCC0;
+    background: #FFFDF9; box-shadow: 0 2px 10px rgba(217,109,15,0.08);
+}
+.tfp-table-cream th {
+    background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
+    color: #fff; text-align: center; padding: 11px 12px;
+    font-weight: 700; letter-spacing: 0.01em; border-right: 1px solid rgba(255,255,255,0.18);
+}
+.tfp-table-cream th:first-child { text-align: left; padding-left: 16px; }
+.tfp-table-cream th:last-child { border-right: none; }
+.tfp-table-cream td {
+    padding: 10px 12px; border-bottom: 1px solid #F3E7D6; color: var(--brand-navy-soft);
+    text-align: right; font-variant-numeric: tabular-nums; transition: background .12s ease;
+}
+.tfp-table-cream td:first-child {
+    text-align: left; font-weight: 700; color: var(--brand-navy); padding-left: 16px;
+}
+.tfp-table-cream tr:last-child td { border-bottom: none; }
+.tfp-table-cream tr:nth-child(odd) td { background: #FFFDF9; }
+.tfp-table-cream tr:nth-child(even) td { background: #FFF6E9; }
+.tfp-table-cream tr:hover td { background: #FFEBD1; }
+
 /* ----- แบนเนอร์ CTA สร้างสรุป AI ----- */
 .ai-banner {
     background-image: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
@@ -2708,7 +2733,22 @@ elif st.session_state.page == "dashboard":
                         columns={"mean": "ค่าพยากรณ์", "lower": "ขอบล่าง 95%", "upper": "ขอบบน 95%"}
                     ).round(4)
                     fc_display.index.name = "ปี"
-                    st.dataframe(fc_display, use_container_width=True)
+                    # ตาราง HTML ธีมครีม-ส้ม (คลาส tfp-table-cream) แทน st.dataframe
+                    # เดิม เพื่อให้ดีไซน์เข้ากับโทนสีส้ม/ครีมของกราฟพยากรณ์ในส่วนนี้
+                    fc_reset = fc_display.reset_index()
+                    fc_header_html = "".join(f"<th>{c}</th>" for c in fc_reset.columns)
+                    fc_rows_html = "".join(
+                        "<tr>" + "".join(
+                            f"<td>{int(v) if col == 'ปี' else f'{v:,.4f}'}</td>"
+                            for col, v in zip(fc_reset.columns, row)
+                        ) + "</tr>"
+                        for row in fc_reset.values.tolist()
+                    )
+                    st.markdown(
+                        f'<div style="overflow-x:auto;"><table class="tfp-table-cream"><thead><tr>'
+                        f'{fc_header_html}</tr></thead><tbody>{fc_rows_html}</tbody></table></div>',
+                        unsafe_allow_html=True,
+                    )
                     fc_csv = fc_display.to_csv().encode("utf-8-sig")
                     st.download_button(
                         "ดาวน์โหลดตัวเลขพยากรณ์เป็น CSV",
