@@ -2802,11 +2802,11 @@ elif st.session_state.page == "dashboard":
                                     padding:10px 26px 10px 10px;border-radius:999px;
                                     box-shadow:0 4px 14px rgba(22,50,74,0.08);">
                             <span style="display:flex;align-items:center;justify-content:center;
-                                         width:34px;height:34px;border-radius:50%;background:{accent};
+                                         width:30px;height:30px;border-radius:50%;background:{accent};
                                          color:#FFFFFF;flex-shrink:0;">
-                                {icon(icon_name, 18, 2)}
+                                {icon(icon_name, 16, 2)}
                             </span>
-                            <span style="font-weight:800;font-size:1.15rem;color:#000000;
+                            <span style="font-weight:700;font-size:0.98rem;color:#000000;
                                          letter-spacing:-0.01em;white-space:nowrap;">{title_th}</span>
                         </div>
                     </div>
