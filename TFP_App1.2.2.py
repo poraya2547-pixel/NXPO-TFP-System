@@ -177,10 +177,18 @@ st.markdown("""
     --amber: #F59E0B;
     --red: #EF4444;
     --blue: #2F6FED;
-    --shadow-soft: 0 2px 10px rgba(22,50,74,0.05), 0 1px 2px rgba(22,50,74,0.04);
-    --shadow-lift: 0 10px 24px rgba(22,50,74,0.08), 0 2px 6px rgba(22,50,74,0.05);
+    --shadow-soft: 0 4px 16px rgba(22,50,74,0.07), 0 1.5px 4px rgba(22,50,74,0.05);
+    --shadow-lift: 0 16px 36px rgba(22,50,74,0.13), 0 4px 10px rgba(22,50,74,0.07);
 }
-.stApp { background: var(--bg-page); }
+.stApp {
+    /* พื้นหลังไล่เฉดครีมเบา ๆ + จุดไล่สีส้มจางมากที่มุมบน แทนสีทึบเรียบเดียว
+       ให้ความลึกเล็กน้อยโดยไม่ให้สีเพี้ยนไปจากธีม เพื่อให้การ์ดสีขาวด้านบน
+       "ลอยเด่น" ขึ้นมาจากพื้นแทนที่จะกลืนไปกับมัน */
+    background:
+        radial-gradient(1100px 480px at 12% -6%, rgba(242,129,29,0.07), transparent 60%),
+        radial-gradient(900px 420px at 100% 0%, rgba(22,50,74,0.045), transparent 55%),
+        linear-gradient(180deg, #FAF8F4 0%, var(--bg-page) 320px);
+}
 
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
 section[data-testid="stSidebar"] {
@@ -283,9 +291,10 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     display: inline-flex; align-items: center; gap: 8px; max-width: 100%;
     background: #FFFFFF; border: 1px solid var(--card-border);
     padding: 8px 14px; border-radius: 12px; font-size: 0.85rem; color: var(--brand-navy-soft);
-    box-shadow: 0 1px 3px rgba(15,23,42,0.04); transition: box-shadow .15s ease, border-color .15s ease;
+    box-shadow: 0 2px 6px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
+    transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
 }
-.header-chip:hover { box-shadow: 0 3px 10px rgba(15,23,42,0.07); border-color: #DCD3C2; }
+.header-chip:hover { box-shadow: 0 6px 16px rgba(15,23,42,0.1); border-color: #DCD3C2; transform: translateY(-1px); }
 .header-chip span { overflow-wrap: break-word; }
 .header-chip svg { color: var(--brand-orange-dark); flex-shrink: 0; }
 
@@ -297,19 +306,21 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 
 /* ----- metric cards ----- */
 .metric-card {
-    background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 18px;
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFA 100%);
+    border: 1px solid var(--card-border); border-radius: 18px;
     padding: 18px 20px; display: flex; align-items: center; gap: 15px; height: 100%;
-    box-shadow: var(--shadow-soft); transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.9);
+    transition: box-shadow .18s ease, transform .18s ease, border-color .18s ease;
     animation: tfp-rise .4s ease both;
     position: relative; overflow: hidden;
 }
-.metric-card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); border-color: #E3D8C4; }
+.metric-card:hover { box-shadow: var(--shadow-lift), inset 0 1px 0 rgba(255,255,255,0.9); transform: translateY(-3px); border-color: #E3D8C4; }
 .metric-icon {
     width: 46px; height: 46px; border-radius: 50%;
     display: flex; align-items: center; justify-content: center;
     font-size: 1.25rem; flex-shrink: 0; color: #fff;
     background-image: linear-gradient(155deg, rgba(255,255,255,0.28), rgba(255,255,255,0));
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.18), 0 4px 10px rgba(22,50,74,0.14);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.22), 0 6px 14px rgba(22,50,74,0.18), 0 0 0 4px rgba(255,255,255,0.6);
     transition: transform .25s ease;
 }
 .metric-card:hover .metric-icon { transform: scale(1.06) rotate(-4deg); }
@@ -321,18 +332,20 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 
 /* ----- section card ----- */
 .section-card {
-    background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 18px;
-    padding: 11px 22px; margin-bottom: 22px; box-shadow: var(--shadow-soft);
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFA 100%);
+    border: 1px solid var(--card-border); border-radius: 18px;
+    padding: 11px 22px; margin-bottom: 22px;
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.9);
     position: relative; overflow: hidden;
     transition: box-shadow .2s ease;
     animation: tfp-rise .45s ease both;
 }
-.section-card:hover { box-shadow: var(--shadow-lift); }
+.section-card:hover { box-shadow: var(--shadow-lift), inset 0 1px 0 rgba(255,255,255,0.9); }
 /* เส้นไล่สีบาง ๆ ด้านบนการ์ด — จุดสังเกตเล็ก ๆ ให้ดูมีมิติขึ้น ไม่แย่งความสนใจจากเนื้อหา */
 .section-card::before {
-    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    content: ""; position: absolute; top: 0; left: 0; right: 0; height: 4px;
     background-image: linear-gradient(90deg, var(--brand-orange) 0%, var(--brand-orange-dark) 35%, transparent 100%);
-    opacity: 0.85;
+    opacity: 0.9;
 }
 .section-title { display: flex; align-items: center; gap: 14px; margin-bottom: 0; }
 .section-num {
@@ -340,7 +353,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
     color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center;
     flex-shrink: 0; font-size: 1.2rem;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.2), 0 3px 8px rgba(217,109,15,0.28);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.25), 0 5px 12px rgba(217,109,15,0.35), 0 0 0 4px rgba(255,255,255,0.6);
 }
 .section-title-text { min-width: 0; }
 .section-title h3 {
@@ -389,7 +402,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .tfp-table-cream {
     width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.86rem;
     border-radius: 14px; overflow: hidden; border: 1px solid #F0DCC0;
-    background: #FFFDF9; box-shadow: 0 2px 10px rgba(217,109,15,0.08);
+    background: #FFFDF9; box-shadow: 0 6px 20px rgba(217,109,15,0.12), 0 1.5px 4px rgba(217,109,15,0.08);
 }
 .tfp-table-cream th {
     background: var(--brand-orange); color: #fff; text-align: center; padding: 11px 12px;
@@ -2880,8 +2893,8 @@ elif st.session_state.page == "dashboard":
                             )
                             pct_effect = coef * shock
                             formula_text = (
-                                f"ค่าความยืดหยุ่น (elasticity) จากสมการระยะยาว = {coef:.4f}"
-                                f"<br>→ TFP เปลี่ยนแปลง ≈ {coef:.4f} × {shock:g}%"
+                                f'<div>ค่าความยืดหยุ่น (elasticity) จากสมการระยะยาว = {coef:.4f}</div>'
+                                f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ {coef:.4f} × {shock:g}%</div>'
                             )
                         else:
                             shock = st.number_input(
@@ -2891,9 +2904,10 @@ elif st.session_state.page == "dashboard":
                             )
                             pct_effect = (math.exp(coef * shock) - 1) * 100
                             formula_text = (
-                                f"สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} (ตัวแปรนี้ไม่ได้อยู่ในรูป log "
-                                f"จึงตีความเป็น semi-elasticity)"
-                                f"<br>→ TFP เปลี่ยนแปลง ≈ (e^({coef:.4f}×{shock:g}) − 1) × 100%"
+                                f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
+                                f'(ตัวแปรนี้ไม่ได้อยู่ในรูป log จึงตีความเป็น semi-elasticity)</div>'
+                                f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
+                                f'(e^({coef:.4f}×{shock:g}) − 1) × 100%</div>'
                             )
                         st.markdown(
                             '<div style="font-size:0.82rem;color:var(--brand-navy-soft);'
@@ -2934,13 +2948,16 @@ elif st.session_state.page == "dashboard":
                         f'{pct_effect:+.2f}%</span>'
                         f'</div>'
                         f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);margin-top:10px;'
-                        f'line-height:1.5;">{formula_text}</div>'
+                        f'line-height:1.6;">{formula_text}</div>'
                         f'<div style="height:1px;background:var(--card-border);margin:14px 0 12px;"></div>'
-                        f'<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">'
+                        f'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;'
+                        f'row-gap:8px;">'
                         f'<span style="background:{badge_bg};color:{badge_color};font-size:0.74rem;'
-                        f'font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap;">'
+                        f'font-weight:700;padding:5px 12px;border-radius:999px;line-height:1.4;'
+                        f'display:inline-block;">'
                         f'{badge_text}</span>'
-                        f'<span style="font-size:0.74rem;color:var(--brand-navy-soft);">{p_text}</span>'
+                        f'<span style="font-size:0.74rem;color:var(--brand-navy-soft);white-space:nowrap;">'
+                        f'{p_text}</span>'
                         f'</div>'
                         f'</div>',
                         unsafe_allow_html=True,
