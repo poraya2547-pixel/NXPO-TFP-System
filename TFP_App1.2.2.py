@@ -2806,7 +2806,7 @@ elif st.session_state.page == "dashboard":
                                          color:#FFFFFF;flex-shrink:0;">
                                 {icon(icon_name, 16, 2)}
                             </span>
-                            <span style="font-weight:700;font-size:0.98rem;color:#000000;
+                            <span style="font-weight:400;font-size:0.98rem;color:#000000;
                                          letter-spacing:-0.01em;white-space:nowrap;">{title_th}</span>
                         </div>
                     </div>
