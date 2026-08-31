@@ -2785,12 +2785,11 @@ elif st.session_state.page == "dashboard":
         available_vars_sr = [v for v in active_sr_bases if v in model_df.columns]
 
         def _var_trend_box(title_th: str, options: list, widget_key: str,
-                            icon_name: str = "trend-up", accent: str = "var(--blue)"):
+                            icon_name: str = "trend-up", accent: str = "var(--brand-orange)"):
             """วาดกล่อง selectbox + กราฟเส้นแนวโน้มของตัวแปร 1 ชุด (ยาว หรือ สั้น)
             คืนค่าตัวแปรที่ผู้ใช้เลือกอยู่ในกล่องนี้ (หรือ None ถ้าไม่มีตัวแปรให้เลือก)"""
-            # หัวข้อ: แคปซูลขอบสี + วงกลมไอคอนตันสี + ตัวหนังสือสีเดียวกัน จัดกลาง
-            # ตัวใหญ่ขึ้น พร้อมเส้นคาดสีแอบโผล่อยู่ใต้แคปซูลเพื่อให้ดูเด่นเป็นจุดสนใจ
-            # (โทนส้ม = ระยะยาว / โทนฟ้า = ระยะสั้น ให้แยกออกจากกันได้ง่ายตั้งแต่มองแวบแรก)
+            # หัวข้อ: แคปซูลขอบสีส้มทั้งสองกล่อง (เดิมแยกส้ม/ฟ้า) + วงกลมไอคอนตันสีส้ม
+            # + ตัวหนังสือสีดำ จัดกลาง ตัวใหญ่ขึ้น พร้อมเส้นคาดสีส้มแอบโผล่ใต้แคปซูล
             st.markdown(
                 f"""
                 <div style="display:flex;justify-content:center;margin-bottom:20px;">
@@ -2807,7 +2806,7 @@ elif st.session_state.page == "dashboard":
                                          color:#FFFFFF;flex-shrink:0;">
                                 {icon(icon_name, 18, 2)}
                             </span>
-                            <span style="font-weight:800;font-size:1.15rem;color:{accent};
+                            <span style="font-weight:800;font-size:1.15rem;color:#000000;
                                          letter-spacing:-0.01em;white-space:nowrap;">{title_th}</span>
                         </div>
                     </div>
@@ -2866,7 +2865,7 @@ elif st.session_state.page == "dashboard":
         with col_sr:
             chosen_var_sr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
-                icon_name="trend-down", accent="var(--blue)",
+                icon_name="trend-down", accent="var(--brand-orange)",
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
