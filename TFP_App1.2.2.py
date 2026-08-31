@@ -2862,21 +2862,52 @@ elif st.session_state.page == "dashboard":
                     "": "ยังไม่มีนัยสำคัญทางสถิติในระดับที่ยอมรับได้ทั่วไป — ควรตีความตัวเลขด้วยความระมัดระวัง",
                 }[star]
 
-                # กรอบสีฟ้าอ่อน-ขาว ครอบฝั่ง input ให้จับกลุ่มกับผลลัพธ์ฝั่งขวาชัดเจนขึ้น
+                # กรอบพื้นหลังสีขาวครอบกล่อง input ทั้งก้อน + ช่องตัวเลขตรงกลางสีครีม
+                # ให้ตัดกับกรอบขาวรอบนอก + ปุ่ม +/- เป็นสีเขียว/แดงค้างไว้ตลอด (ไม่ใช่แค่
+                # ตอน hover) ให้ผู้ใช้เห็นชัดว่าปุ่มไหนเพิ่ม/ปุ่มไหนลดค่าโดยไม่ต้องอ่านสัญลักษณ์
                 st.markdown(
                     """
                     <style>
-                    div[data-testid="stNumberInput"] div[data-baseweb="input"] {
+                    .st-key-shock_input_box {
                         background: #FFFFFF !important;
-                        border: 1.5px solid #D6DCE5 !important;
+                        padding: 22px 22px !important;
+                    }
+                    div[data-testid="stNumberInput"] div[data-baseweb="input"] {
+                        background: var(--bg-page) !important;
+                        border: 1.5px solid #E7DFCF !important;
                         border-radius: 8px !important;
                         box-shadow: none !important;
                     }
                     div[data-testid="stNumberInput"] div[data-baseweb="input"]:focus-within {
-                        border: 1.5px solid #9AA9BD !important;
+                        border: 1.5px solid var(--brand-orange) !important;
                         box-shadow: none !important;
                     }
+                    div[data-testid="stNumberInput"] input {
+                        background: transparent !important;
+                        color: var(--brand-navy) !important;
+                        font-weight: 700 !important;
                     }
+                    /* ปุ่ม + สีเขียว / ปุ่ม − สีแดง ค้างไว้ตลอดเวลา (ไม่ใช่แค่ตอน hover) */
+                    button[data-testid="stNumberInputStepUp"],
+                    button[aria-label="Increment"] {
+                        background: #16A34A !important; border-color: #16A34A !important;
+                    }
+                    button[data-testid="stNumberInputStepUp"]:hover,
+                    button[aria-label="Increment"]:hover {
+                        background: #128A3B !important; border-color: #128A3B !important;
+                    }
+                    button[data-testid="stNumberInputStepUp"] svg,
+                    button[aria-label="Increment"] svg { color: #FFFFFF !important; fill: #FFFFFF !important; }
+                    button[data-testid="stNumberInputStepDown"],
+                    button[aria-label="Decrement"] {
+                        background: #EF4444 !important; border-color: #EF4444 !important;
+                    }
+                    button[data-testid="stNumberInputStepDown"]:hover,
+                    button[aria-label="Decrement"]:hover {
+                        background: #D63A3A !important; border-color: #D63A3A !important;
+                    }
+                    button[data-testid="stNumberInputStepDown"] svg,
+                    button[aria-label="Decrement"] svg { color: #FFFFFF !important; fill: #FFFFFF !important; }
                     </style>
                     """,
                     unsafe_allow_html=True,
@@ -2884,7 +2915,7 @@ elif st.session_state.page == "dashboard":
 
                 shock_col, result_col = st.columns([1, 1.3])
                 with shock_col:
-                    with st.container(border=True):
+                    with st.container(border=True, key="shock_input_box"):
                         if is_log:
                             shock = st.number_input(
                                 f"สมมติ {full_name} เปลี่ยนแปลง (%)",
