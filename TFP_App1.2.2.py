@@ -2792,7 +2792,7 @@ elif st.session_state.page == "dashboard":
             # + ตัวหนังสือสีดำ จัดกลาง ตัวใหญ่ขึ้น พร้อมเส้นคาดสีส้มแอบโผล่ใต้แคปซูล
             st.markdown(
                 f"""
-                <div style="display:flex;justify-content:center;margin-bottom:20px;">
+                <div style="display:flex;justify-content:center;margin-bottom:2px;">
                     <div style="position:relative;">
                         <div style="position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);
                                     width:70%;height:9px;border-radius:6px;background:{accent};
@@ -2825,6 +2825,7 @@ elif st.session_state.page == "dashboard":
                 .st-key-vartrend_box_{widget_key} {{
                     background: #FFFFFF !important;
                     padding: 22px 22px !important;
+                    margin-top: -14px !important;
                 }}
                 .st-key-vartrend_box_{widget_key} div[data-baseweb="select"] > div {{
                     background: var(--bg-page) !important;
