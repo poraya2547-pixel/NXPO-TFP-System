@@ -379,7 +379,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     font-weight: 600; letter-spacing: 0.01em; border-right: 1px solid rgba(255,255,255,0.12);
 }
 .tfp-table th:last-child { border-right: none; }
-.tfp-table td { padding: 9px 10px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy-soft); transition: background .12s ease; }
+.tfp-table td { padding: 9px 10px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy-soft); transition: background .12s ease; text-align: center; }
 .tfp-table tr:last-child td { border-bottom: none; }
 .tfp-table tr:nth-child(odd) td { background: #FFFFFF; }
 .tfp-table tr:nth-child(even) td { background: #EEF2F6; }
@@ -3036,7 +3036,21 @@ elif st.session_state.page == "dashboard":
                         table_display = infl_df[["label", "std_beta", "สัดส่วน (%)", "ทิศทาง"]].rename(
                             columns={"label": "ตัวแปร", "std_beta": "Standardized coefficient"}
                         ).round({"Standardized coefficient": 4, "สัดส่วน (%)": 2})
-                        st.dataframe(table_display, use_container_width=True, hide_index=True)
+                        # ใช้ตาราง HTML แบบเดียวกับตาราง Diagnostics (คลาส tfp-table)
+                        # แทน st.dataframe เพราะ st.dataframe จัดตำแหน่งตัวอักษรราย
+                        # คอลัมน์เองไม่ได้ ส่วน tfp-table กำหนด text-align: center
+                        # ให้ทุกคอลัมน์ไว้แล้วในสไตล์ชีตด้านบน (ดูตรงคอมเมนต์
+                        # "ตาราง HTML สำหรับ Diagnostics")
+                        infl_header_html = "".join(f"<th>{c}</th>" for c in table_display.columns)
+                        infl_rows_html = "".join(
+                            "<tr>" + "".join(f"<td>{v}</td>" for v in row) + "</tr>"
+                            for row in table_display.values.tolist()
+                        )
+                        st.markdown(
+                            f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
+                            f'{infl_header_html}</tr></thead><tbody>{infl_rows_html}</tbody></table></div>',
+                            unsafe_allow_html=True,
+                        )
                         st.download_button(
                             "ดาวน์โหลดตาราง (.csv)",
                             data=table_display.to_csv(index=False).encode("utf-8-sig"),
