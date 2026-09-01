@@ -404,7 +404,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
    และคอลัมน์ตัวเลขสัมประสิทธิ์ยังกึ่งกลางตามปกติ (สืบทอดจาก .tfp-table เดิม)
    เพราะตัวเลขอ่านง่ายกว่าเมื่อกึ่งกลาง (ใช้เฉพาะตารางนี้ผ่านคลาสเสริมนี้ ไม่กระทบ
    ตาราง Diagnostics/สัดส่วนอิทธิพลอื่น ๆ ที่ใช้แค่คลาส .tfp-table เฉยๆ) ----- */
-.tfp-table-left td:first-child { text-align: left; }
+.tfp-table-left td:first-child { text-align: left; padding-left: calc(10px + 1.5in); }
 
 /* ----- ตาราง HTML ธีมครีม-ส้ม สำหรับตัวเลขพยากรณ์ ARIMA ----- */
 .tfp-table-cream {
