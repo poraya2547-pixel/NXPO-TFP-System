@@ -419,23 +419,79 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .tfp-table-cream tr:nth-child(even) td { background: #FFF6E9; }
 .tfp-table-cream tr:hover td { background: #FFEBD1; }
 
-/* ----- แบนเนอร์ CTA สร้างสรุป AI ----- */
-.ai-banner {
-    background-image: linear-gradient(135deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%);
-    border-radius: 14px; padding: 14px 20px; color: #fff; margin-bottom: 18px;
-    box-shadow: 0 8px 20px rgba(217,109,15,0.22);
-    position: relative; overflow: hidden;
+/* ----- การ์ด CTA สร้างสรุป AI (ธีม "Exclusive") -----
+   ปรับจากแบนเนอร์สีส้มสดเดิม เป็นพื้นกรมท่าเข้ม (โทนเดียวกับ sidebar card มืด
+   ที่ใช้อยู่แล้วในหน้าเว็บ) + เส้นขอบ/แสงส้มบาง ๆ แทน เพื่อให้รู้สึกถึงฟีเจอร์
+   วิเคราะห์อัตโนมัติด้วย AI ระดับพรีเมียม สงบตา ไม่ใช่ป้ายโฆษณาสีจัด แต่ยังอยู่
+   ในธีมส้ม-กรมท่าเดิมของแอปทั้งหมด (ครอบด้วย st.container(key="ai_cta_card")
+   เพื่อให้ selector .st-key-ai_cta_card ด้านล่างจับกลุ่มการ์ด+ปุ่มเข้าด้วยกัน) */
+.st-key-ai_cta_card {
+    background-image: linear-gradient(155deg, var(--brand-navy) 0%, #0E2436 100%);
+    border-radius: 18px;
+    border: 1px solid rgba(242,129,29,0.28);
+    padding: 26px 30px 24px;
+    margin-bottom: 20px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 22px 46px rgba(11,26,40,0.32), 0 2px 8px rgba(11,26,40,0.16);
 }
-/* วงกลมจาง ๆ ตกแต่งมุมขวา — ลูกเล่นเล็ก ๆ ให้แบนเนอร์ดูมีมิติ ไม่แย่งตัวหนังสือ */
-.ai-banner::after {
-    content: ""; position: absolute; right: -30px; top: -40px; width: 140px; height: 140px;
-    border-radius: 50%; background: rgba(255,255,255,0.08); pointer-events: none;
+/* เส้นบาง ๆ สีทอง/ส้มด้านซ้าย + แสงฟุ้งมุมขวาบน แทนวงกลมทึบเดิม ให้ดูมีมิติ
+   แบบพรีเมียมเนียนตา ไม่แย่งตัวหนังสือ */
+.st-key-ai_cta_card::before {
+    content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px;
+    background: linear-gradient(180deg, var(--brand-orange), transparent 85%);
 }
-.ai-banner h3 { margin: 0; font-size: 1.08rem; letter-spacing: -0.01em; overflow-wrap: break-word; line-height: 1.3; }
-.ai-banner p { margin: 2px 0 0 0; font-size: 0.85rem; opacity: 0.92; line-height: 1.4; overflow-wrap: break-word; white-space: nowrap; }
+.st-key-ai_cta_card::after {
+    content: ""; position: absolute; right: -70px; top: -90px; width: 300px; height: 300px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(242,129,29,0.20), transparent 70%);
+    pointer-events: none;
+}
+.ai-cta-eyebrow {
+    display: inline-flex; align-items: center; gap: 7px;
+    color: var(--brand-orange); font-size: 0.72rem; font-weight: 700;
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px;
+    position: relative; z-index: 1;
+}
+.ai-cta-card-inner { position: relative; z-index: 1; }
+.ai-cta-card-inner h3 {
+    margin: 0; color: #FFFFFF; font-size: 1.2rem; font-weight: 600;
+    letter-spacing: -0.01em; line-height: 1.45; max-width: 620px; overflow-wrap: break-word;
+}
+.ai-cta-card-inner p {
+    margin: 8px 0 0 0; color: rgba(255,255,255,0.6); font-size: 0.86rem;
+    line-height: 1.6; max-width: 560px; overflow-wrap: break-word;
+}
+
+/* ปุ่มภายในการ์ดนี้โดยเฉพาะ — ทับสไตล์ button[kind="primary"] ทั่วไปของแอป
+   (ซึ่งเป็นพื้นส้มทึบ) ด้วยปุ่มทรงแคปซูลขอบบาง โปร่งแสงบนพื้นกรมท่า กดแล้วค่อย
+   ติดสีส้มเต็ม ให้ความรู้สึก "กดเพื่อปลดล็อกการวิเคราะห์" มากกว่าปุ่มทั่วไป */
+.st-key-ai_cta_card div[data-testid="stButton"] { margin-top: 20px; position: relative; z-index: 1; }
+.st-key-ai_cta_card div[data-testid="stButton"] button {
+    background: rgba(255,255,255,0.05) !important;
+    border: 1.5px solid var(--brand-orange) !important;
+    color: #FFFFFF !important;
+    border-radius: 999px !important;
+    padding: 11px 28px !important;
+    font-weight: 600 !important;
+    font-size: 0.9rem !important;
+    letter-spacing: 0.01em;
+    box-shadow: none !important;
+    transition: all 0.18s ease;
+}
+.st-key-ai_cta_card div[data-testid="stButton"] button:hover {
+    background: var(--brand-orange) !important;
+    border-color: var(--brand-orange) !important;
+    color: #FFFFFF !important;
+    transform: translateY(-1px);
+    box-shadow: 0 10px 26px rgba(242,129,29,0.32) !important;
+}
+.st-key-ai_cta_card div[data-testid="stButton"] button:active {
+    transform: translateY(0);
+}
 
 @media (max-width: 700px) {
-    .ai-banner p { white-space: normal; }
+    .st-key-ai_cta_card { padding: 22px 20px; }
 }
 
 /* ----- แก้ปัญหา multiselect ตัดชื่อตัวแปรด้วย "..." ----- */
@@ -743,6 +799,10 @@ _ICON_PATHS = {
         '<circle cx="10" cy="10" r="7.2"/>'
         '<line x1="10" y1="9" x2="10" y2="14" stroke-linecap="round"/>'
         '<circle cx="10" cy="6.3" r="0.9" fill="currentColor" stroke="none"/>'
+    ),
+    "sparkle": (
+        '<path d="M10,3.5 L11.6,8.4 L16.5,10 L11.6,11.6 L10,16.5 L8.4,11.6 L3.5,10 L8.4,8.4 Z" fill="currentColor" stroke="none"/>'
+        '<path d="M16,2 L16.4,3.6 L18,4 L16.4,4.4 L16,6 L15.6,4.4 L14,4 L15.6,3.6 Z" fill="currentColor" stroke="none" opacity="0.85"/>'
     ),
 }
 
@@ -2431,12 +2491,25 @@ if st.session_state.page == "home":
         st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= หมวด 4: สร้าง Executive Summary ด้วย AI =================
-        st.markdown(
-            '<div class="ai-banner"><div><h3> สร้างรายงานสรุปและสไลด์นำเสนอผู้บริหารอัตโนมัติด้วยปัญญาประดิษฐ์ </h3>'
-            '<p>สรุปผลการวิเคราะห์ พร้อมข้อเสนอแนะเชิงนโยบายอย่างชัดเจน ดาวน์โหลดได้ทั้ง Word และ PPTX</p></div></div>',
-            unsafe_allow_html=True,
-        )
-        if st.button("📑คลิกเพื่อสร้างรายงานสรุปและสไลด์นำเสนอผู้บริหารอัตโนมัติด้วยปัญญาประดิษฐ์ ", type="primary"):
+        # การ์ดนี้ถูกครอบด้วย st.container(key="ai_cta_card") เพื่อให้ CSS
+        # ".st-key-ai_cta_card ..." ด้านบน (ธีมกรมท่าเข้ม+ขอบทอง แบบ Exclusive)
+        # จับกลุ่มทั้งข้อความและปุ่มด้านล่างเป็นการ์ดเดียวกัน — ห้ามแยก markdown
+        # กับ button ออกจาก with-block นี้ ไม่งั้นปุ่มจะหลุดสไตล์กลับไปเป็นปุ่ม
+        # primary สีส้มทึบแบบทั่วไปของแอป
+        with st.container(key="ai_cta_card"):
+            st.markdown(
+                '<div class="ai-cta-eyebrow">' + icon("sparkle", 13, 1.8) +
+                'AI ANALYSIS · EXECUTIVE SUMMARY</div>'
+                '<div class="ai-cta-card-inner">'
+                '<h3>สร้างรายงานสรุปและสไลด์นำเสนอผู้บริหารอัตโนมัติด้วยปัญญาประดิษฐ์</h3>'
+                '<p>สรุปผลการวิเคราะห์ พร้อมข้อเสนอแนะเชิงนโยบายอย่างชัดเจน '
+                'ดาวน์โหลดได้ทั้ง Word และ PPTX</p></div>',
+                unsafe_allow_html=True,
+            )
+            gen_summary_clicked = st.button(
+                "✦  สร้างรายงานสรุปอัตโนมัติด้วย AI", type="primary", key="ai_cta_button",
+            )
+        if gen_summary_clicked:
             with st.spinner("กำลังสรุปผลอัตโนมัติ..."):
                 try:
                     summary_text = generate_summary_gemini(lr_res, sr_res, model_df, dep_ln)
