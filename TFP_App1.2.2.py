@@ -398,6 +398,14 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .tfp-table tr:nth-child(even) td { background: #EEF2F6; }
 .tfp-table tr:hover td { background: #FFF6EC; }
 
+/* ----- ตัวปรับแต่ง (modifier) สำหรับตารางค่าสัมประสิทธิ์ (หมวดผลการทดสอบ ววน.)
+   โดยเฉพาะ — คอลัมน์ "ตัวแปร" มีข้อความยาวไม่เท่ากันมาก พอจัดกึ่งกลาง
+   (text-align:center) แล้วขอบซ้ายของแต่ละแถวเยื้องไปมา ดูไม่เป็นระเบียบ/แปลกตา
+   จึงจัดชิดซ้ายทั้งตารางแทน ให้ขอบซ้ายเรียงเป็นแนวเดียวกันอ่านง่ายขึ้น (ใช้เฉพาะ
+   ตารางนี้ผ่านการเติมคลาสเสริมนี้ต่อท้าย ไม่กระทบตาราง Diagnostics/สัดส่วนอิทธิพล
+   อื่น ๆ ที่ยังใช้แค่คลาส .tfp-table เฉยๆ และยังจัดกึ่งกลางเหมือนเดิม) ----- */
+.tfp-table-left th, .tfp-table-left td { text-align: left; }
+
 /* ----- ตาราง HTML ธีมครีม-ส้ม สำหรับตัวเลขพยากรณ์ ARIMA ----- */
 .tfp-table-cream {
     width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.86rem;
@@ -2310,7 +2318,7 @@ if st.session_state.page == "home":
             for row in combined_table.values.tolist()
         )
         st.markdown(
-            f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
+            f'<div style="overflow-x:auto;"><table class="tfp-table tfp-table-left"><thead><tr>'
             f'{combined_header_html}</tr></thead><tbody>{combined_rows_html}</tbody></table></div>',
             unsafe_allow_html=True,
         )
