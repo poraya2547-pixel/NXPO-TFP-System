@@ -494,21 +494,44 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     .st-key-ai_cta_card { padding: 24px 22px; }
 }
 
-/* ----- แก้ปัญหา multiselect ตัดชื่อตัวแปรด้วย "..." ----- */
+/* ----- ชิปตัวแปรใน multiselect (เช่นตัวแปรสมการระยะยาว/ระยะสั้น) -----
+   เดิมชิปเป็นพื้นส้มเข้ม/แดงทึบเต็มตัว พอมีหลายตัวเรียงต่อกันหลายแถวจะดูจัดจ้าน
+   รกตา และหลุดโทนครีม-กรมท่าของเว็บ — เปลี่ยนเป็นชิปพื้นขาว ขอบสีครีม/ทองบาง
+   (โทนเดียวกับ .tfp-table-cream ที่ใช้อยู่แล้ว) ตัวหนังสือกรมท่า อ่านง่าย
+   เว้นระยะห่างระหว่างชิปมากขึ้น ให้แต่ละชิปแยกจากกันชัดเจนแทนที่จะดูเป็นก้อนสีเดียว
+   และไฮไลต์ส้มเฉพาะตอน hover เพื่อบอกว่ากดลบ (x) ได้ */
 [data-baseweb="tag"] {
-    max-width: none !important; height: auto !important; min-height: 28px;
+    max-width: none !important; height: auto !important; min-height: 30px;
     white-space: normal !important;
-    background-color: #FFFFFF !important;
-    border: 1.5px solid var(--brand-orange) !important;
+    background-color: #FFFDF9 !important;
+    border: 1px solid #F0DCC0 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 1px 3px rgba(22,50,74,0.05);
+    margin: 4px 6px 4px 0 !important;
+    padding: 2px 2px 2px 4px !important;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+[data-baseweb="tag"]:hover {
+    border-color: var(--brand-orange) !important;
+    box-shadow: 0 2px 6px rgba(217,109,15,0.12);
 }
 [data-baseweb="tag"] span {
     max-width: none !important; white-space: normal !important;
     overflow: visible !important; text-overflow: clip !important; word-break: break-word !important;
-    color: var(--brand-orange-dark) !important;
+    color: var(--brand-navy) !important; font-size: 0.85rem !important; font-weight: 500 !important;
 }
-[data-baseweb="tag"] svg { fill: var(--brand-orange-dark) !important; }
-div[data-baseweb="select"] > div { flex-wrap: wrap !important; height: auto !important; }
+[data-baseweb="tag"] svg { fill: var(--brand-navy-soft) !important; transition: fill .15s ease; }
+[data-baseweb="tag"]:hover svg { fill: var(--brand-orange-dark) !important; }
+/* ตัวกล่อง select ที่ครอบชิปทั้งหมด: เว้นช่องไฟระหว่างชิปให้เป็นระเบียบ ไม่แน่นติดกัน */
+div[data-baseweb="select"] > div {
+    flex-wrap: wrap !important; height: auto !important; gap: 2px; padding: 6px 8px !important;
+}
 div[data-testid="stMultiSelect"] [data-baseweb="select"] { height: auto !important; }
+/* เว้นระยะระหว่างกลุ่มตัวแปรระยะยาว/ระยะสั้น ให้แยกเป็นสัดส่วนชัดเจน ไม่ติดกันแน่น */
+div[data-testid="stMultiSelect"] { margin-bottom: 10px; }
+div[data-testid="stMultiSelect"] label p {
+    color: var(--brand-navy) !important; font-weight: 600 !important;
+}
 
 div[data-testid="stFileUploader"] section { border-radius: 12px; border: 1.5px dashed #D9C2A6; }
 button[kind="primary"] { background: var(--brand-orange) !important; border-color: var(--brand-orange) !important; }
@@ -569,8 +592,8 @@ div[data-testid="stExpander"] p {
 }
 [data-testid="stCaptionContainer"] { line-height: 1.55 !important; }
 
-/* จังหวะเข้าฉากของแบนเนอร์ AI ให้เข้าชุดกับการ์ดอื่น ๆ */
-.ai-banner { animation: tfp-rise .4s ease both; }
+/* จังหวะเข้าฉากของการ์ด AI ให้เข้าชุดกับการ์ดอื่น ๆ */
+.st-key-ai_cta_card { animation: tfp-rise .4s ease both; }
 
 /* ----- theme widget พื้นฐานของ Streamlit ให้เข้าโทนส้ม/กรมท่าของแบรนด์
    (ปกติ slider/checkbox/radio ใช้สีแดงเริ่มต้นของ Streamlit ซึ่งหลุดโทน) ----- */
@@ -2390,7 +2413,7 @@ if st.session_state.page == "home":
             """,
             unsafe_allow_html=True,
         )
-        with st.expander("🛠️ ปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False,
+        with st.expander("🛠️ กดเพื่อปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False,
                           key="adjust_vars_expander"):
             st.caption(
                 "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัด/เพิ่มตัวแปร "
