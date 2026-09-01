@@ -2507,7 +2507,7 @@ if st.session_state.page == "home":
                 unsafe_allow_html=True,
             )
             gen_summary_clicked = st.button(
-                "✦  สร้างรายงานสรุปอัตโนมัติด้วย AI", type="primary", key="ai_cta_button",
+                "✦  กดเพื่อสร้างรายงานสรุปอัตโนมัติด้วย AI", type="primary", key="ai_cta_button",
             )
         if gen_summary_clicked:
             with st.spinner("กำลังสรุปผลอัตโนมัติ..."):
