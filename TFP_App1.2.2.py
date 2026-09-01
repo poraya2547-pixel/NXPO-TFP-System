@@ -429,7 +429,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     background-image: linear-gradient(155deg, var(--brand-navy) 0%, #0E2436 100%);
     border-radius: 18px;
     border: 1px solid rgba(242,129,29,0.28);
-    padding: 26px 30px 24px;
+    padding: 30px 34px;
     margin-bottom: 20px;
     position: relative;
     overflow: hidden;
@@ -448,33 +448,33 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     pointer-events: none;
 }
 .ai-cta-eyebrow {
-    display: inline-flex; align-items: center; gap: 7px;
+    display: inline-flex; align-items: center; gap: 8px;
     color: var(--brand-orange); font-size: 0.72rem; font-weight: 700;
-    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 12px;
+    letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 16px;
     position: relative; z-index: 1;
 }
 .ai-cta-card-inner { position: relative; z-index: 1; }
 .ai-cta-card-inner h3 {
     margin: 0; color: #FFFFFF; font-size: 1.2rem; font-weight: 600;
-    letter-spacing: -0.01em; line-height: 1.45; max-width: 620px; overflow-wrap: break-word;
+    letter-spacing: -0.01em; line-height: 1.5; max-width: 620px; overflow-wrap: break-word;
 }
 .ai-cta-card-inner p {
-    margin: 8px 0 0 0; color: rgba(255,255,255,0.6); font-size: 0.86rem;
-    line-height: 1.6; max-width: 560px; overflow-wrap: break-word;
+    margin: 12px 0 0 0; color: rgba(255,255,255,0.6); font-size: 0.86rem;
+    line-height: 1.65; max-width: 560px; overflow-wrap: break-word;
 }
 
 /* ปุ่มภายในการ์ดนี้โดยเฉพาะ — ทับสไตล์ button[kind="primary"] ทั่วไปของแอป
    (ซึ่งเป็นพื้นส้มทึบ) ด้วยปุ่มทรงแคปซูลขอบบาง โปร่งแสงบนพื้นกรมท่า กดแล้วค่อย
    ติดสีส้มเต็ม ให้ความรู้สึก "กดเพื่อปลดล็อกการวิเคราะห์" มากกว่าปุ่มทั่วไป */
-.st-key-ai_cta_card div[data-testid="stButton"] { margin-top: 20px; position: relative; z-index: 1; }
+.st-key-ai_cta_card div[data-testid="stButton"] { margin-top: 26px; position: relative; z-index: 1; }
 .st-key-ai_cta_card div[data-testid="stButton"] button {
     background: rgba(255,255,255,0.05) !important;
     border: 1.5px solid var(--brand-orange) !important;
     color: #FFFFFF !important;
     border-radius: 999px !important;
-    padding: 11px 28px !important;
+    padding: 12px 26px !important;
     font-weight: 600 !important;
-    font-size: 0.9rem !important;
+    font-size: 0.88rem !important;
     letter-spacing: 0.01em;
     box-shadow: none !important;
     transition: all 0.18s ease;
@@ -491,7 +491,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 }
 
 @media (max-width: 700px) {
-    .st-key-ai_cta_card { padding: 22px 20px; }
+    .st-key-ai_cta_card { padding: 24px 22px; }
 }
 
 /* ----- แก้ปัญหา multiselect ตัดชื่อตัวแปรด้วย "..." ----- */
