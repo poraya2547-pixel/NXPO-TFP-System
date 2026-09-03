@@ -165,25 +165,31 @@ except FileNotFoundError:
 st.markdown("""
 <style>
 :root {
-    --brand-orange: #F2811D;
-    --brand-orange-dark: #D96D0F;
+    /* ธีมเดิมเป็นโทนส้ม เปลี่ยนเป็นโทนทอง/แชมเปญ (gold) ให้ความรู้สึกเรียบหรูขึ้น
+       ตัวแปรอื่นที่อ้างอิง --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะ
+       เปลี่ยนสีตามอัตโนมัติโดยไม่ต้องแก้จุดอื่น */
+    --brand-orange: #C99A4B;
+    --brand-orange-dark: #8A6416;
     --brand-navy: #16324A;
     --brand-navy-soft: #5B6B7C;
     --bg-page: #F7F5F1;
     --card-border: #E7E1D6;
+    --gold-tint: #F6EFDC;
     --green: #16A34A;
     --amber: #F59E0B;
     --red: #EF4444;
     --blue: #2F6FED;
+    --font-elegant: 'Noto Serif Thai', 'Prompt', serif;
     --shadow-soft: 0 4px 16px rgba(22,50,74,0.07), 0 1.5px 4px rgba(22,50,74,0.05);
     --shadow-lift: 0 16px 36px rgba(22,50,74,0.13), 0 4px 10px rgba(22,50,74,0.07);
 }
+@import url('https://fonts.googleapis.com/css2?family=Noto+Serif+Thai:wght@500;600&display=swap');
 .stApp {
-    /* พื้นหลังไล่เฉดครีมเบา ๆ + จุดไล่สีส้มจางมากที่มุมบน แทนสีทึบเรียบเดียว
+    /* พื้นหลังไล่เฉดครีมเบา ๆ + จุดไล่สีทองจางมากที่มุมบน แทนสีทึบเรียบเดียว
        ให้ความลึกเล็กน้อยโดยไม่ให้สีเพี้ยนไปจากธีม เพื่อให้การ์ดสีขาวด้านบน
        "ลอยเด่น" ขึ้นมาจากพื้นแทนที่จะกลืนไปกับมัน */
     background:
-        radial-gradient(1100px 480px at 12% -6%, rgba(242,129,29,0.07), transparent 60%),
+        radial-gradient(1100px 480px at 12% -6%, rgba(201,154,75,0.09), transparent 60%),
         radial-gradient(900px 420px at 100% 0%, rgba(22,50,74,0.045), transparent 55%),
         linear-gradient(180deg, #FAF8F4 0%, var(--bg-page) 320px);
 }
@@ -251,7 +257,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="second
     font-weight: 500 !important;
 }
 section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover {
-    background: #FFF6EC !important;
+    background: var(--gold-tint) !important;
     border-color: var(--brand-orange) !important;
     color: var(--brand-orange-dark) !important;
 }
@@ -282,7 +288,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     display: flex; justify-content: space-between; align-items: center;
     flex-wrap: wrap; gap: 14px; margin-bottom: 18px;
 }
-.app-header h1 { font-size: 1.65rem; margin: 0; color: var(--brand-navy); font-weight: 800; letter-spacing: -0.01em; overflow-wrap: break-word; }
+.app-header h1 { font-family: var(--font-elegant); font-size: 1.75rem; margin: 0; color: var(--brand-navy); font-weight: 600; letter-spacing: -0.01em; overflow-wrap: break-word; }
 .app-header p { margin: 4px 0 0 0; color: var(--brand-navy-soft); font-size: 0.92rem; line-height: 1.6; overflow-wrap: break-word; max-width: 68ch; }
 .app-header p.app-header-desc { max-width: none; white-space: nowrap; }
 .header-chip {
@@ -292,7 +298,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     box-shadow: 0 2px 6px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.9);
     transition: box-shadow .15s ease, border-color .15s ease, transform .15s ease;
 }
-.header-chip:hover { box-shadow: 0 6px 16px rgba(15,23,42,0.1); border-color: #DCD3C2; transform: translateY(-1px); }
+.header-chip:hover { box-shadow: 0 6px 16px rgba(15,23,42,0.1); border-color: #D9CBAE; transform: translateY(-1px); }
 .header-chip span { overflow-wrap: break-word; }
 .header-chip svg { color: var(--brand-orange-dark); flex-shrink: 0; }
 
@@ -355,7 +361,8 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 }
 .section-title-text { min-width: 0; }
 .section-title h3 {
-    margin: 0; color: var(--brand-navy); font-size: 1.22rem; font-weight: 800; letter-spacing: -0.01em;
+    font-family: var(--font-elegant);
+    margin: 0; color: var(--brand-navy); font-size: 1.22rem; font-weight: 600; letter-spacing: -0.01em;
     line-height: 1.4; overflow-wrap: break-word; word-break: normal;
 }
 
@@ -394,7 +401,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .tfp-table tr:last-child td { border-bottom: none; }
 .tfp-table tr:nth-child(odd) td { background: #FFFFFF; }
 .tfp-table tr:nth-child(even) td { background: #EEF2F6; }
-.tfp-table tr:hover td { background: #FFF6EC; }
+.tfp-table tr:hover td { background: var(--gold-tint); }
 
 /* ----- ตัวปรับแต่ง (modifier) สำหรับตารางค่าสัมประสิทธิ์ (หมวดผลการทดสอบ ววน.)
    โดยเฉพาะ — เฉพาะคอลัมน์ "ตัวแปร" (คอลัมน์แรก) เท่านั้นที่ชิดซ้าย เพราะข้อความ
@@ -416,7 +423,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 }
 .tfp-table-cream th:last-child { border-right: none; }
 .tfp-table-cream td {
-    padding: 10px 12px; border-bottom: 1px solid #F3E7D6; color: var(--brand-navy-soft);
+    padding: 10px 12px; border-bottom: 1px solid #EFE3C6; color: var(--brand-navy-soft);
     text-align: center; font-variant-numeric: tabular-nums; transition: background .12s ease;
 }
 .tfp-table-cream td:first-child { font-weight: 700; color: var(--brand-navy); }
@@ -557,7 +564,7 @@ div[data-testid="stDownloadButton"] button {
     transition: all 0.15s ease;
 }
 div[data-testid="stDownloadButton"] button:hover {
-    background: #FFF6EC !important;
+    background: var(--gold-tint) !important;
     border-color: var(--brand-orange-dark) !important;
     color: #374151 !important;
     transform: translateY(-1px);
@@ -626,7 +633,7 @@ div[data-baseweb="select"]:focus-within > div {
     border-color: var(--brand-orange) !important;
     box-shadow: 0 0 0 1px var(--brand-orange) !important;
 }
-[data-baseweb="menu"] li[aria-selected="true"] { background: #FFF6EC !important; color: var(--brand-orange-dark) !important; }
+[data-baseweb="menu"] li[aria-selected="true"] { background: var(--gold-tint) !important; color: var(--brand-orange-dark) !important; }
 
 /* number/text input: โฟกัสสีส้มแทนสีแดงเริ่มต้น */
 div[data-testid="stTextInput"] input:focus,
@@ -650,7 +657,7 @@ div[data-testid="stExpander"] summary {
     border-radius: 12px !important; font-weight: 600; color: var(--brand-navy);
     transition: background .15s ease;
 }
-div[data-testid="stExpander"] summary:hover { background: #FFF6EC !important; }
+div[data-testid="stExpander"] summary:hover { background: var(--gold-tint) !important; }
 
 /* progress bar / spinner: สีส้มแบรนด์ */
 div[data-testid="stSpinner"] > div { border-top-color: var(--brand-orange) !important; }
@@ -1351,7 +1358,7 @@ def _build_tfpi_chart_png(tfpi_series: pd.Series) -> bytes:
     ไม่มีกราฟ native แบบ python-pptx จึงต้อง render เป็นรูปภาพแทน"""
     _register_thai_font_matplotlib()
     navy = "#0F2B46"
-    orange = "#F2811D"
+    orange = "#C99A4B"
 
     x_labels = [str(y) for y in tfpi_series.index]
     y_vals = tfpi_series.values.astype(float)
@@ -2610,7 +2617,7 @@ elif st.session_state.page == "dashboard":
         unsafe_allow_html=True,
     )
 
-    def _nice_line_chart(series: pd.Series, color: str = "#F2811D", height: int = 340):
+    def _nice_line_chart(series: pd.Series, color: str = "#C99A4B", height: int = 340):
         """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
         ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
         และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
@@ -2742,7 +2749,7 @@ elif st.session_state.page == "dashboard":
         return forecast_df, best_order
 
     def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
-                                        color: str = "#F2811D", forecast_color: str = "#2F6FED",
+                                        color: str = "#C99A4B", forecast_color: str = "#2F6FED",
                                         height: int = 340):
         """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
         ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
@@ -2872,7 +2879,7 @@ elif st.session_state.page == "dashboard":
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
 
                 _nice_line_chart_with_forecast(
-                    tfp_series, forecast_df, color="#F2811D", forecast_color="#2F6FED", height=340,
+                    tfp_series, forecast_df, color="#C99A4B", forecast_color="#2F6FED", height=340,
                 )
                 p, d, q = arima_order
                 last_fc_year = forecast_df.index.max()
@@ -2918,7 +2925,7 @@ elif st.session_state.page == "dashboard":
                         mime="text/csv",
                     )
             else:
-                _nice_line_chart(tfp_series, color="#F2811D", height=340)
+                _nice_line_chart(tfp_series, color="#C99A4B", height=340)
                 st.caption(
                     f"ข้อมูล {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) "
                     f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
