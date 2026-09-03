@@ -11,9 +11,7 @@
 ติดตั้ง library ที่ต้องใช้ (ถ้ายังไม่มี):
     pip install streamlit google-genai pandas numpy statsmodels openpyxl scipy reportlab python-pptx python-docx matplotlib
 
-หมายเหตุ (ส.ค. 2026): โมเดล gemini-2.5-flash เดิมจะถูก retire 16 ต.ค. 2026
-ไฟล์นี้อัปเดตให้ใช้ gemini-3.7-flash แล้ว — ก่อนรัน ให้อัปเกรด SDK เป็นเวอร์ชัน
-ล่าสุดด้วย: pip install -U google-genai
+หมายเหตุ: ไฟล์นี้ใช้โมเดล gemini-2.5-flash
 ================================================================================
 """
 
@@ -853,7 +851,7 @@ def icon(name: str, size: int = 18, stroke_width: float = 1.6) -> str:
 # ------------------------------------------------------------------------------
 # ตั้งค่า Gemini จาก secrets.toml
 # ------------------------------------------------------------------------------
-GEMINI_MODEL = "gemini-3.7-flash"  # รุ่นล่าสุด (13 ส.ค. 2026); เดิมใช้ "gemini-2.5-flash" ซึ่งจะถูก retire 16 ต.ค. 2026
+GEMINI_MODEL = "gemini-2.5-flash"
 
 # โควตาฟรีของ Gemini API ต่ำมาก (RPD อาจแค่ 20 ครั้ง/วันในบาง project/tier) และ
 # เมื่อชนโควตา Google จะตอบ error รหัส 429 (RESOURCE_EXHAUSTED) กลับมา — ค่าด้านล่าง
