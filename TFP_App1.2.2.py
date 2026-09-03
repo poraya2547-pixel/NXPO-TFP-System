@@ -165,11 +165,11 @@ except FileNotFoundError:
 st.markdown("""
 <style>
 :root {
-    /* ธีมเดิมเป็นโทนส้ม เปลี่ยนเป็นโทนทอง/แชมเปญ (gold) ให้ความรู้สึกเรียบหรูขึ้น
-       ตัวแปรอื่นที่อ้างอิง --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะ
-       เปลี่ยนสีตามอัตโนมัติโดยไม่ต้องแก้จุดอื่น */
-    --brand-orange: #C99A4B;
-    --brand-orange-dark: #8A6416;
+    /* ย้อนกลับเป็นธีมโทนส้มเดิม (ตามสีโลโก้ สอวช.) ตัวแปรอื่นที่อ้างอิง
+       --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะเปลี่ยนสีตามอัตโนมัติ
+       โดยไม่ต้องแก้จุดอื่น */
+    --brand-orange: #ED7423;
+    --brand-orange-dark: #C4570F;
     --brand-navy: #16324A;
     --brand-navy-soft: #5B6B7C;
     --bg-page: #F7F5F1;
@@ -1358,7 +1358,7 @@ def _build_tfpi_chart_png(tfpi_series: pd.Series) -> bytes:
     ไม่มีกราฟ native แบบ python-pptx จึงต้อง render เป็นรูปภาพแทน"""
     _register_thai_font_matplotlib()
     navy = "#0F2B46"
-    orange = "#C99A4B"
+    orange = "#ED7423"
 
     x_labels = [str(y) for y in tfpi_series.index]
     y_vals = tfpi_series.values.astype(float)
@@ -2617,7 +2617,7 @@ elif st.session_state.page == "dashboard":
         unsafe_allow_html=True,
     )
 
-    def _nice_line_chart(series: pd.Series, color: str = "#C99A4B", height: int = 340):
+    def _nice_line_chart(series: pd.Series, color: str = "#ED7423", height: int = 340):
         """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
         ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
         และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
@@ -2749,7 +2749,7 @@ elif st.session_state.page == "dashboard":
         return forecast_df, best_order
 
     def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
-                                        color: str = "#C99A4B", forecast_color: str = "#2F6FED",
+                                        color: str = "#ED7423", forecast_color: str = "#2F6FED",
                                         height: int = 340):
         """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
         ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
@@ -2879,7 +2879,7 @@ elif st.session_state.page == "dashboard":
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
 
                 _nice_line_chart_with_forecast(
-                    tfp_series, forecast_df, color="#C99A4B", forecast_color="#2F6FED", height=340,
+                    tfp_series, forecast_df, color="#ED7423", forecast_color="#2F6FED", height=340,
                 )
                 p, d, q = arima_order
                 last_fc_year = forecast_df.index.max()
@@ -2925,7 +2925,7 @@ elif st.session_state.page == "dashboard":
                         mime="text/csv",
                     )
             else:
-                _nice_line_chart(tfp_series, color="#C99A4B", height=340)
+                _nice_line_chart(tfp_series, color="#ED7423", height=340)
                 st.caption(
                     f"ข้อมูล {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) "
                     f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
@@ -2944,7 +2944,7 @@ elif st.session_state.page == "dashboard":
         available_vars_sr = [v for v in active_sr_bases if v in model_df.columns]
 
         def _var_trend_box(title_th: str, options: list, widget_key: str,
-                            icon_name: str = "trend-up", accent: str = "#D8A867"):
+                            icon_name: str = "trend-up", accent: str = "#F0954C"):
             """วาดกล่อง selectbox + กราฟเส้นแนวโน้มของตัวแปร 1 ชุด (ยาว หรือ สั้น)
             คืนค่าตัวแปรที่ผู้ใช้เลือกอยู่ในกล่องนี้ (หรือ None ถ้าไม่มีตัวแปรให้เลือก)"""
             # หัวข้อ: แคปซูลขอบสีส้มทั้งสองกล่อง (เดิมแยกส้ม/ฟ้า) + วงกลมไอคอนตันสีส้ม
@@ -3025,12 +3025,12 @@ elif st.session_state.page == "dashboard":
         with col_lr:
             chosen_var_lr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะยาว", available_vars_lr, "dashboard_var_select_lr",
-                icon_name="trend-up", accent="#D8A867",
+                icon_name="trend-up", accent="#F0954C",
             )
         with col_sr:
             chosen_var_sr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
-                icon_name="trend-down", accent="#D8A867",
+                icon_name="trend-down", accent="#F0954C",
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
