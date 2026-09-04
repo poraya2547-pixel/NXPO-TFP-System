@@ -334,6 +334,38 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     overflow-wrap: break-word; line-height: 1.45;
 }
 
+/* ----- บังคับแถวการ์ด KPI (st.columns) ให้พยายามอยู่บรรทัดเดียวเสมอ -----
+   ปกติ Streamlit จะปล่อยให้แถว column ตกบรรทัดใหม่ (wrap) เมื่อพื้นที่แคบลง
+   ทำให้การ์ดใบสุดท้ายหล่นไปอยู่แถวถัดไป — เปลี่ยนพฤติกรรมเป็น "ย่อขนาดตัวการ์ด
+   ลงก่อน" ด้วย clamp() แล้วถ้าย่อจนสุดแล้วยังไม่พอ (จอแคบมาก เช่นมือถือ) ค่อย
+   ปล่อยให้ scroll แนวนอนแทน (ดีกว่าปล่อยให้ตัวหนังสือเล็กจนอ่านไม่ออก)
+   ใช้ :has(.metric-card) เพื่อจำกัดผลแค่แถว KPI การ์ดเท่านั้น ไม่กระทบ
+   st.columns จุดอื่นในแอปที่อยากให้ wrap ตามปกติ (เช่นปุ่มดาวน์โหลดท้ายหน้า) ----- */
+div[data-testid="stHorizontalBlock"]:has(.metric-card) {
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    padding-bottom: 4px;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
+    min-width: 132px !important;
+    flex: 1 1 0 !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card {
+    padding: 14px 12px;
+    gap: 10px;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-icon {
+    width: 38px; height: 38px; font-size: 1.05rem; flex-shrink: 0;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-value {
+    font-size: clamp(1.0rem, 1.6vw, 1.5rem);
+    white-space: nowrap;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-label {
+    font-size: clamp(0.66rem, 1.1vw, 0.8rem);
+    white-space: nowrap;
+}
+
 /* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
    แทนที่ caption ข้อความล้วนเดิมด้วยแถบไล่สีเข้ม (โทนเดียวกับหัวตาราง .tfp-table)
    แบ่งเป็นช่อง ๆ ให้ตัวเลขสำคัญ (ค่าพยากรณ์ / ขอบล่าง-บน 95% / ปีที่พยากรณ์ถึง)
