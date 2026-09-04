@@ -367,6 +367,14 @@ div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-label {
     overflow: hidden;
     text-overflow: ellipsis; /* ถ้าเล็กสุดแล้วยังยาวไป ให้ตัดจบด้วย ... แทนล้นออกนอกการ์ด */
 }
+/* กล่อง <div> ที่ห่อ .metric-value/.metric-label (ไม่มีคลาสของมันเอง) เป็น flex
+   item ข้าง .metric-icon — ถ้าไม่ตั้ง min-width:0 มันจะไม่ยอมหดตามการ์ด ทำให้
+   ข้อความ (โดยเฉพาะ label ยาว ๆ อย่าง "(2023–2027)") ล้นออกนอกขอบการ์ดแทนที่จะ
+   โดน ellipsis ตัดแบบที่ตั้งใจไว้ */
+div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card > div:not([class]) {
+    min-width: 0;
+    overflow: hidden;
+}
 
 /* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
    แทนที่ caption ข้อความล้วนเดิมด้วยแถบไล่สีเข้ม (โทนเดียวกับหัวตาราง .tfp-table)
