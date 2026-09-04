@@ -378,20 +378,18 @@ div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card > div:not([c
 }
 /* ----- ทำให้การ์ด KPI ทั้ง 4 ใบสูงเท่ากันเสมอ ไม่ว่า label จะตกบรรทัดใหม่กี่บรรทัด -----
    .metric-card มี height:100% อยู่แล้ว แต่จะเท่ากับความสูงของใบที่สูงสุดได้ก็ต่อเมื่อ
-   ทุกชั้นของ DOM ฝั่ง Streamlit ที่ครอบมันอยู่ (column -> stVerticalBlock ->
-   element-container -> ตัว markdown wrapper) สูงเต็ม 100% ตามกันไปด้วย ไม่งั้นแต่ละ
-   คอลัมน์จะสูงแค่ตามเนื้อหาของตัวเอง ทำให้ใบที่ label สั้นกว่าดูเตี้ยกว่าใบอื่น */
+   ทุก <div> ที่ครอบมันอยู่ (ไล่ตั้งแต่ column ลงมา) สูงเต็ม 100% ตามกันเป็นทอด ๆ
+   ด้วย ไม่งั้นแต่ละคอลัมน์จะสูงแค่ตามเนื้อหาของตัวเอง ทำให้ใบที่ label สั้นกว่าดู
+   เตี้ยกว่าใบอื่น (เดิมเคยล็อกด้วยชื่อ data-testid ตรงๆ เช่น "element-container"/
+   "stMarkdown" แต่ Streamlit เปลี่ยนชื่อ testid พวกนี้ไปในแต่ละเวอร์ชัน ทำให้กฎ
+   เดิมไม่ตรงกับ DOM จริงบนแอปที่ deploy อยู่ — เปลี่ยนมาใช้ :has() เลือก "ทุก div
+   ที่มี .metric-card ซ้อนอยู่ข้างในไม่ว่าจะลึกแค่ไหน" แทน ไม่ต้องพึ่งชื่อ testid
+   เจาะจง จึงทำงานได้ไม่ว่า Streamlit เวอร์ชันไหน) */
 div[data-testid="stHorizontalBlock"]:has(.metric-card) {
     align-items: stretch !important;
 }
-div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
-    display: flex !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] > div,
-div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stVerticalBlock"],
-div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="element-container"],
-div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stMarkdown"],
-div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stMarkdownContainer"] {
+div[data-testid="stHorizontalBlock"]:has(.metric-card) div:has(> .metric-card),
+div[data-testid="stHorizontalBlock"]:has(.metric-card) div:has(.metric-card) {
     height: 100% !important;
     display: flex !important;
     flex-direction: column !important;
