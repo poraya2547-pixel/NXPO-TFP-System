@@ -167,8 +167,8 @@ st.markdown("""
 :root {
     /* กลับมาใช้ธีมส้มเดิม (สีเดียวกับที่ใช้งานจริงบน Streamlit Cloud) ตัวแปรอื่น
        ที่อ้างอิง --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะเปลี่ยนสี
-       ตามอัตโนมัติโดยไม่ต้องแก้จุดอื่น */
-    --brand-orange: #EA580C;
+       ตามอัตโนมัติโดยไม่ต้องแก้จุดอื่น — ปรับให้อ่อนลงอีกนิดตามที่ขอ */
+    --brand-orange: #F97316;
     --brand-orange-dark: #C2410C;
     --brand-navy: #16324A;
     --brand-navy-soft: #5B6B7C;
@@ -1380,7 +1380,7 @@ def _build_tfpi_chart_png(tfpi_series: pd.Series) -> bytes:
     ไม่มีกราฟ native แบบ python-pptx จึงต้อง render เป็นรูปภาพแทน"""
     _register_thai_font_matplotlib()
     navy = "#0F2B46"
-    orange = "#EA580C"
+    orange = "#F97316"
 
     x_labels = [str(y) for y in tfpi_series.index]
     y_vals = tfpi_series.values.astype(float)
@@ -2639,7 +2639,7 @@ elif st.session_state.page == "dashboard":
         unsafe_allow_html=True,
     )
 
-    def _nice_line_chart(series: pd.Series, color: str = "#EA580C", height: int = 340):
+    def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
         """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
         ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
         และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
@@ -2771,7 +2771,7 @@ elif st.session_state.page == "dashboard":
         return forecast_df, best_order
 
     def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
-                                        color: str = "#EA580C", forecast_color: str = "#2F6FED",
+                                        color: str = "#F97316", forecast_color: str = "#2F6FED",
                                         height: int = 340):
         """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
         ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
@@ -2952,7 +2952,7 @@ elif st.session_state.page == "dashboard":
                 st.write("")
 
                 _nice_line_chart_with_forecast(
-                    tfp_series, forecast_df, color="#EA580C", forecast_color="#2F6FED", height=340,
+                    tfp_series, forecast_df, color="#F97316", forecast_color="#2F6FED", height=340,
                 )
 
                 # ----- แถบไฮไลต์ค่าพยากรณ์ปีสุดท้ายของช่วงที่เลือก แทนประโยคยาว
@@ -3013,7 +3013,7 @@ elif st.session_state.page == "dashboard":
                         mime="text/csv",
                     )
             else:
-                _nice_line_chart(tfp_series, color="#EA580C", height=340)
+                _nice_line_chart(tfp_series, color="#F97316", height=340)
                 st.caption(
                     f"ข้อมูล {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) "
                     f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
