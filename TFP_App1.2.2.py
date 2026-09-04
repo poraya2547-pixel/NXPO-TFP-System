@@ -2631,8 +2631,8 @@ elif st.session_state.page == "dashboard":
         """
         <div class="app-header">
             <div>
-                <h1>Dashboard</h1>
-                <p>แนวโน้มผลิตภาพการผลิตรวม (TFP) และตัวแปรอิสระ จากข้อมูลที่ดึงมาล่าสุด</p>
+                <h1 style="font-size:2.05rem;">Dashboard</h1>
+                <p style="font-size:1.05rem;line-height:1.6;">ภาพรวมแนวโน้มผลิตภาพการผลิตรวม (TFP) และปัจจัยที่เกี่ยวข้องจากข้อมูลล่าสุด</p>
             </div>
         </div>
         """,
