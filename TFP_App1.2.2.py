@@ -2936,7 +2936,7 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--brand-navy)", icon("clock", 21, 1.8),
                             f"{horizon} ปี",
-                            f"ช่วงพยากรณ์ล่วงหน้า (ปี {tfp_series.index.max() + 1}–{last_fc_year})",
+                            f"พยากรณ์ล่วงหน้า ({tfp_series.index.max() + 1}–{last_fc_year})",
                         ),
                         unsafe_allow_html=True,
                     )
@@ -2945,7 +2945,7 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--green)", icon("check", 21, 2),
                             f"ARIMA({p},{d},{q})",
-                            "โมเดลที่เลือกอัตโนมัติ (AIC ต่ำสุด, CI 95%)",
+                            "เลือกอัตโนมัติ (AIC ต่ำสุด)",
                         ),
                         unsafe_allow_html=True,
                     )
