@@ -2962,7 +2962,8 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--brand-orange)", icon("database", 21, 1.8),
                             f"{len(tfp_series)} ปี",
-                            f"ข้อมูลย้อนหลัง (ปี {tfp_series.index.min()}–{tfp_series.index.max()})",
+                            f"ข้อมูลย้อนหลัง<br><span style='white-space:nowrap;'>"
+                            f"(ปี {tfp_series.index.min()}–{tfp_series.index.max()})</span>",
                         ),
                         unsafe_allow_html=True,
                     )
@@ -2980,7 +2981,8 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--brand-navy)", icon("clock", 21, 1.8),
                             f"{horizon} ปี",
-                            f"พยากรณ์ล่วงหน้า ({tfp_series.index.max() + 1}–{last_fc_year})",
+                            f"พยากรณ์ล่วงหน้า<br><span style='white-space:nowrap;'>"
+                            f"({tfp_series.index.max() + 1}–{last_fc_year})</span>",
                         ),
                         unsafe_allow_html=True,
                     )
