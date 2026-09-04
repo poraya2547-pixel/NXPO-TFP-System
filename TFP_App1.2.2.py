@@ -340,20 +340,21 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
    เด่นขึ้นและอ่านง่ายกว่าประโยคยาวเดิม ----- */
 .fc-highlight-bar {
     display: flex; flex-wrap: wrap; margin-top: 16px; border-radius: 16px; overflow: hidden;
-    background-image: linear-gradient(120deg, var(--brand-navy) 0%, #0E2436 100%);
-    box-shadow: var(--shadow-soft); animation: tfp-rise .4s ease both;
+    background: #FFFDF9; border: 1px solid #F0DCC0;
+    box-shadow: 0 6px 20px rgba(217,109,15,0.12), 0 1.5px 4px rgba(217,109,15,0.08);
+    animation: tfp-rise .4s ease both;
 }
 .fc-highlight-item {
     flex: 1 1 150px; min-width: 150px; display: flex; align-items: center; gap: 11px;
-    padding: 14px 18px; border-right: 1px solid rgba(255,255,255,0.12);
+    padding: 14px 18px; border-right: 1px solid #EFE3C6;
 }
 .fc-highlight-item:last-child { border-right: none; }
 .fc-highlight-icon {
-    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; color: #F3D9A8;
-    background: rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center;
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; color: #6B4118;
+    background: #F6E4C8; display: flex; align-items: center; justify-content: center;
 }
-.fc-highlight-value { font-size: 1.05rem; font-weight: 800; color: #FFFFFF; line-height: 1.2; overflow-wrap: break-word; }
-.fc-highlight-label { font-size: 0.72rem; color: rgba(255,255,255,0.72); margin-top: 1px; overflow-wrap: break-word; }
+.fc-highlight-value { font-size: 1.05rem; font-weight: 800; color: #5B3A14; line-height: 1.2; overflow-wrap: break-word; }
+.fc-highlight-label { font-size: 0.72rem; color: #8A6B4A; margin-top: 1px; overflow-wrap: break-word; }
 
 /* ----- section card ----- */
 .section-card {
