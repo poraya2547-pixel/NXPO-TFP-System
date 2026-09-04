@@ -165,11 +165,11 @@ except FileNotFoundError:
 st.markdown("""
 <style>
 :root {
-    /* ย้อนกลับเป็นธีมโทนส้มเดิม (ตามสีโลโก้ สอวช.) ตัวแปรอื่นที่อ้างอิง
-       --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะเปลี่ยนสีตามอัตโนมัติ
-       โดยไม่ต้องแก้จุดอื่น */
-    --brand-orange: #ED7423;
-    --brand-orange-dark: #C4570F;
+    /* ธีมเดิมเป็นโทนส้ม เปลี่ยนเป็นโทนทอง/แชมเปญ (gold) ให้ความรู้สึกเรียบหรูขึ้น
+       ตัวแปรอื่นที่อ้างอิง --brand-orange / --brand-orange-dark ทั่วทั้งไฟล์จะ
+       เปลี่ยนสีตามอัตโนมัติโดยไม่ต้องแก้จุดอื่น */
+    --brand-orange: #C99A4B;
+    --brand-orange-dark: #8A6416;
     --brand-navy: #16324A;
     --brand-navy-soft: #5B6B7C;
     --bg-page: #F7F5F1;
@@ -333,6 +333,27 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     font-size: 0.8rem; color: var(--brand-navy-soft); margin-top: 2px;
     overflow-wrap: break-word; line-height: 1.45;
 }
+
+/* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
+   แทนที่ caption ข้อความล้วนเดิมด้วยแถบไล่สีเข้ม (โทนเดียวกับหัวตาราง .tfp-table)
+   แบ่งเป็นช่อง ๆ ให้ตัวเลขสำคัญ (ค่าพยากรณ์ / ขอบล่าง-บน 95% / ปีที่พยากรณ์ถึง)
+   เด่นขึ้นและอ่านง่ายกว่าประโยคยาวเดิม ----- */
+.fc-highlight-bar {
+    display: flex; flex-wrap: wrap; margin-top: 16px; border-radius: 16px; overflow: hidden;
+    background-image: linear-gradient(120deg, var(--brand-navy) 0%, #0E2436 100%);
+    box-shadow: var(--shadow-soft); animation: tfp-rise .4s ease both;
+}
+.fc-highlight-item {
+    flex: 1 1 150px; min-width: 150px; display: flex; align-items: center; gap: 11px;
+    padding: 14px 18px; border-right: 1px solid rgba(255,255,255,0.12);
+}
+.fc-highlight-item:last-child { border-right: none; }
+.fc-highlight-icon {
+    width: 34px; height: 34px; border-radius: 50%; flex-shrink: 0; color: #F3D9A8;
+    background: rgba(255,255,255,0.14); display: flex; align-items: center; justify-content: center;
+}
+.fc-highlight-value { font-size: 1.05rem; font-weight: 800; color: #FFFFFF; line-height: 1.2; overflow-wrap: break-word; }
+.fc-highlight-label { font-size: 0.72rem; color: rgba(255,255,255,0.72); margin-top: 1px; overflow-wrap: break-word; }
 
 /* ----- section card ----- */
 .section-card {
@@ -1358,7 +1379,7 @@ def _build_tfpi_chart_png(tfpi_series: pd.Series) -> bytes:
     ไม่มีกราฟ native แบบ python-pptx จึงต้อง render เป็นรูปภาพแทน"""
     _register_thai_font_matplotlib()
     navy = "#0F2B46"
-    orange = "#ED7423"
+    orange = "#C99A4B"
 
     x_labels = [str(y) for y in tfpi_series.index]
     y_vals = tfpi_series.values.astype(float)
@@ -2617,7 +2638,7 @@ elif st.session_state.page == "dashboard":
         unsafe_allow_html=True,
     )
 
-    def _nice_line_chart(series: pd.Series, color: str = "#ED7423", height: int = 340):
+    def _nice_line_chart(series: pd.Series, color: str = "#C99A4B", height: int = 340):
         """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
         ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
         และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
@@ -2749,7 +2770,7 @@ elif st.session_state.page == "dashboard":
         return forecast_df, best_order
 
     def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
-                                        color: str = "#ED7423", forecast_color: str = "#2F6FED",
+                                        color: str = "#C99A4B", forecast_color: str = "#2F6FED",
                                         height: int = 340):
         """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
         ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
@@ -2862,7 +2883,15 @@ elif st.session_state.page == "dashboard":
             st.info("ไม่พบข้อมูล TFP ในชุดข้อมูลที่ดึงมา")
         else:
             MIN_POINTS_FOR_ARIMA = 8  # จำนวนปีขั้นต่ำที่พอจะ fit ARIMA ได้อย่างมีความหมาย
+
+            def _dash_kpi_card(bg, icon_svg, value, label):
+                return (
+                    f'<div class="metric-card"><div class="metric-icon" style="background:{bg};">{icon_svg}</div>'
+                    f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
+                )
+
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
+                # ----- แถบเลือกช่วงพยากรณ์ล่วงหน้า (slider) -----
                 fc_col1, fc_col2 = st.columns([3, 1])
                 with fc_col1:
                     horizon = st.slider(
@@ -2877,21 +2906,79 @@ elif st.session_state.page == "dashboard":
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
-
-                _nice_line_chart_with_forecast(
-                    tfp_series, forecast_df, color="#ED7423", forecast_color="#2F6FED", height=340,
-                )
                 p, d, q = arima_order
                 last_fc_year = forecast_df.index.max()
-                # ใช้ st.markdown + word-wrap แทน st.caption บรรทัดเดียวยาว ๆ
-                # กันข้อความตกขอบขวาในหน้าจอแคบ
+
+                # ----- แถบสรุปตัวเลขสำคัญ (KPI) เหนือกราฟ — สรุปให้เห็นภาพรวมได้
+                # ในสายตาเดียว ก่อนลงรายละเอียดในกราฟด้านล่าง -----
+                kpi1, kpi2, kpi3, kpi4 = st.columns(4)
+                with kpi1:
+                    st.markdown(
+                        _dash_kpi_card(
+                            "var(--brand-orange)", icon("database", 21, 1.8),
+                            f"{len(tfp_series)} ปี",
+                            f"ข้อมูลย้อนหลัง (ปี {tfp_series.index.min()}–{tfp_series.index.max()})",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                with kpi2:
+                    st.markdown(
+                        _dash_kpi_card(
+                            "var(--blue)", icon("trend-up", 21, 1.8),
+                            f"{tfp_series.iloc[-1]:.4f}",
+                            f"ค่า TFP ล่าสุด (ปี {tfp_series.index.max()})",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                with kpi3:
+                    st.markdown(
+                        _dash_kpi_card(
+                            "var(--brand-navy)", icon("clock", 21, 1.8),
+                            f"{horizon} ปี",
+                            f"ช่วงพยากรณ์ล่วงหน้า (ปี {tfp_series.index.max() + 1}–{last_fc_year})",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                with kpi4:
+                    st.markdown(
+                        _dash_kpi_card(
+                            "var(--green)", icon("check", 21, 2),
+                            f"ARIMA({p},{d},{q})",
+                            "โมเดลที่เลือกอัตโนมัติ (AIC ต่ำสุด, CI 95%)",
+                        ),
+                        unsafe_allow_html=True,
+                    )
+                st.write("")
+
+                _nice_line_chart_with_forecast(
+                    tfp_series, forecast_df, color="#C99A4B", forecast_color="#2F6FED", height=340,
+                )
+
+                # ----- แถบไฮไลต์ค่าพยากรณ์ปีสุดท้ายของช่วงที่เลือก แทนประโยคยาว
+                # เดิมที่อ่านยาก — เน้นตัวเลขสำคัญ 3 ค่า (พยากรณ์ / ขอบล่าง-บน 95%)
+                # พร้อมปีที่พยากรณ์ถึงไว้ในแถบเดียวให้เห็นชัดเจน -----
+                fc_last = forecast_df.loc[last_fc_year]
                 st.markdown(
-                    f'<div style="font-size:0.82rem;color:var(--brand-navy-soft);'
-                    f'line-height:1.6;overflow-wrap:break-word;">'
-                    f'ข้อมูลจริง {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) '
-                    f'| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f} '
-                    f'| พยากรณ์ด้วย ARIMA({p},{d},{q}) ถึงปี {last_fc_year} '
-                    f'(เลือก order ด้วยค่า AIC ต่ำสุดจากการลอง grid search อัตโนมัติ)'
+                    '<div class="fc-highlight-bar">'
+                    f'<div class="fc-highlight-item"><div class="fc-highlight-icon">{icon("bars", 17, 1.8)}</div>'
+                    f'<div><div class="fc-highlight-value">{fc_last["mean"]:.4f}</div>'
+                    f'<div class="fc-highlight-label">ค่าพยากรณ์ปี {last_fc_year}</div></div></div>'
+                    f'<div class="fc-highlight-item"><div class="fc-highlight-icon">{icon("trend-down", 17, 1.8)}</div>'
+                    f'<div><div class="fc-highlight-value">{fc_last["lower"]:.4f}</div>'
+                    f'<div class="fc-highlight-label">ขอบล่าง 95%</div></div></div>'
+                    f'<div class="fc-highlight-item"><div class="fc-highlight-icon">{icon("trend-up", 17, 1.8)}</div>'
+                    f'<div><div class="fc-highlight-value">{fc_last["upper"]:.4f}</div>'
+                    f'<div class="fc-highlight-label">ขอบบน 95%</div></div></div>'
+                    f'<div class="fc-highlight-item"><div class="fc-highlight-icon">{icon("sparkle", 17, 1.8)}</div>'
+                    f'<div><div class="fc-highlight-value">95%</div>'
+                    f'<div class="fc-highlight-label">ความเชื่อมั่นของช่วงพยากรณ์</div></div></div>'
+                    '</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown(
+                    f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);'
+                    f'line-height:1.6;overflow-wrap:break-word;margin-top:10px;">'
+                    f'เลือก order ของ ARIMA ด้วยค่า AIC ต่ำสุดจากการลอง grid search อัตโนมัติ'
                     f'</div>',
                     unsafe_allow_html=True,
                 )
@@ -2925,7 +3012,7 @@ elif st.session_state.page == "dashboard":
                         mime="text/csv",
                     )
             else:
-                _nice_line_chart(tfp_series, color="#ED7423", height=340)
+                _nice_line_chart(tfp_series, color="#C99A4B", height=340)
                 st.caption(
                     f"ข้อมูล {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) "
                     f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
@@ -2944,7 +3031,7 @@ elif st.session_state.page == "dashboard":
         available_vars_sr = [v for v in active_sr_bases if v in model_df.columns]
 
         def _var_trend_box(title_th: str, options: list, widget_key: str,
-                            icon_name: str = "trend-up", accent: str = "#F0954C"):
+                            icon_name: str = "trend-up", accent: str = "#D8A867"):
             """วาดกล่อง selectbox + กราฟเส้นแนวโน้มของตัวแปร 1 ชุด (ยาว หรือ สั้น)
             คืนค่าตัวแปรที่ผู้ใช้เลือกอยู่ในกล่องนี้ (หรือ None ถ้าไม่มีตัวแปรให้เลือก)"""
             # หัวข้อ: แคปซูลขอบสีส้มทั้งสองกล่อง (เดิมแยกส้ม/ฟ้า) + วงกลมไอคอนตันสีส้ม
@@ -3025,12 +3112,12 @@ elif st.session_state.page == "dashboard":
         with col_lr:
             chosen_var_lr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะยาว", available_vars_lr, "dashboard_var_select_lr",
-                icon_name="trend-up", accent="#F0954C",
+                icon_name="trend-up", accent="#D8A867",
             )
         with col_sr:
             chosen_var_sr = _var_trend_box(
                 "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
-                icon_name="trend-down", accent="#F0954C",
+                icon_name="trend-down", accent="#D8A867",
             )
         st.markdown('</div>', unsafe_allow_html=True)
 
