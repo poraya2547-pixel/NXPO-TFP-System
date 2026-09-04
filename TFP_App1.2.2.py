@@ -2855,7 +2855,7 @@ elif st.session_state.page == "dashboard":
         # flex-wrap:wrap กัน legend ตกขอบขวาเวลาหน้าจอแคบ (แทนที่จะโดนตัดหาย
         # ก็ให้มันขึ้นบรรทัดใหม่แทน), row-gap เผื่อกรณีตัดบรรทัด
         st.markdown(
-            f'<div style="display:flex;flex-wrap:wrap;column-gap:18px;row-gap:6px;'
+            f'<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:18px;row-gap:6px;'
             f'font-size:0.82rem;color:var(--brand-navy-soft);margin-top:-6px;">'
             f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
             f'border-radius:50%;background:{color};margin-right:5px;"></span>ข้อมูลจริง</span>'
