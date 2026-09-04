@@ -376,6 +376,26 @@ div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-label {
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card > div:not([class]) {
     min-width: 0;
 }
+/* ----- ทำให้การ์ด KPI ทั้ง 4 ใบสูงเท่ากันเสมอ ไม่ว่า label จะตกบรรทัดใหม่กี่บรรทัด -----
+   .metric-card มี height:100% อยู่แล้ว แต่จะเท่ากับความสูงของใบที่สูงสุดได้ก็ต่อเมื่อ
+   ทุกชั้นของ DOM ฝั่ง Streamlit ที่ครอบมันอยู่ (column -> stVerticalBlock ->
+   element-container -> ตัว markdown wrapper) สูงเต็ม 100% ตามกันไปด้วย ไม่งั้นแต่ละ
+   คอลัมน์จะสูงแค่ตามเนื้อหาของตัวเอง ทำให้ใบที่ label สั้นกว่าดูเตี้ยกว่าใบอื่น */
+div[data-testid="stHorizontalBlock"]:has(.metric-card) {
+    align-items: stretch !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
+    display: flex !important;
+}
+div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] > div,
+div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stVerticalBlock"],
+div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="element-container"],
+div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stMarkdown"],
+div[data-testid="stHorizontalBlock"]:has(.metric-card) [data-testid="stMarkdownContainer"] {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
 
 /* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
    แทนที่ caption ข้อความล้วนเดิมด้วยแถบไล่สีเข้ม (โทนเดียวกับหัวตาราง .tfp-table)
