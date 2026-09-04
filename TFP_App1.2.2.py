@@ -345,35 +345,36 @@ div[data-testid="stHorizontalBlock"]:has(.metric-card) {
     flex-wrap: nowrap !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
-    min-width: 0 !important;   /* อนุญาตให้คอลัมน์หดแคบได้ไม่จำกัด แทนที่จะเปลี่ยนไป scroll */
+    min-width: 0 !important;   /* อนุญาตให้คอลัมน์หดแคบได้ไม่จำกัด */
     flex: 1 1 0 !important;
 }
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card {
     padding: clamp(8px, 1.6vw, 18px) clamp(8px, 1.6vw, 20px);
     gap: clamp(6px, 1.2vw, 15px);
     overflow: visible; /* กันเงา/ขอบการ์ดถูกตัด */
+    align-items: center;
 }
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-icon {
-    width: clamp(28px, 3.6vw, 46px); height: clamp(28px, 3.6vw, 46px);
-    font-size: clamp(0.85rem, 1.4vw, 1.25rem); flex-shrink: 0;
+    width: clamp(24px, 3.2vw, 46px); height: clamp(24px, 3.2vw, 46px);
+    font-size: clamp(0.7rem, 1.3vw, 1.25rem); flex-shrink: 0;
 }
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-value {
-    font-size: clamp(0.82rem, 1.5vw, 1.5rem);
-    white-space: nowrap;
+    font-size: clamp(0.68rem, 1.4vw, 1.5rem);
+    white-space: nowrap; /* ตัวเลขไม่ตัดขึ้นบรรทัดใหม่ เพราะยังไม่เคยยาวจนล้น */
 }
+/* label เอาการตัดคำแบบ ellipsis ("...") ออก — ผู้ใช้ต้องการเห็นข้อความครบเสมอ
+   ปล่อยให้ตัวหนังสือย่อเล็กลงได้ตามพื้นที่ (clamp) ก่อน แล้วถ้ายังไม่พอจริง ๆ
+   ค่อยให้ตกไปบรรทัดที่ 2 แทนการตัดทิ้ง (การ์ดจะสูงขึ้นเล็กน้อยแทน ไม่เสียเนื้อหา) */
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-label {
-    font-size: clamp(0.56rem, 1vw, 0.8rem);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* ถ้าเล็กสุดแล้วยังยาวไป ให้ตัดจบด้วย ... แทนล้นออกนอกการ์ด */
+    font-size: clamp(0.5rem, 1vw, 0.8rem);
+    white-space: normal;
+    overflow-wrap: break-word;
+    line-height: 1.3;
 }
 /* กล่อง <div> ที่ห่อ .metric-value/.metric-label (ไม่มีคลาสของมันเอง) เป็น flex
-   item ข้าง .metric-icon — ถ้าไม่ตั้ง min-width:0 มันจะไม่ยอมหดตามการ์ด ทำให้
-   ข้อความ (โดยเฉพาะ label ยาว ๆ อย่าง "(2023–2027)") ล้นออกนอกขอบการ์ดแทนที่จะ
-   โดน ellipsis ตัดแบบที่ตั้งใจไว้ */
+   item ข้าง .metric-icon — ต้องตั้ง min-width:0 ไม่งั้นมันจะไม่ยอมหดตามการ์ด */
 div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card > div:not([class]) {
     min-width: 0;
-    overflow: hidden;
 }
 
 /* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
