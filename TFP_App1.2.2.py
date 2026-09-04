@@ -2267,7 +2267,7 @@ if st.session_state.page == "home":
         f"""
         <div class="app-header">
             <div>
-                <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมด้วยแบบจำลองเศรษฐมิติ</h1>
+                <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมมหภาคด้วยแบบจำลองเศรษฐมิติ</h1>
                 <p class="app-header-desc">และสร้างรายงานสรุปผลสำหรับผู้บริหารด้วยปัญญาประดิษฐ์เพื่อสนับสนุนการติดตามผลและประเมินผลนโยบายด้านวิทยาศาสตร์ วิจัย และนวัตกรรม (ววน.) ของสอวช.</p>
                 <p class="app-header-desc" style="margin-top:4px;"><strong>ขอบเขต:</strong> ระบบนี้วิเคราะห์เฉพาะ<strong>ระดับเศรษฐกิจมหภาค (Macro Level)</strong> ด้วยแบบจำลอง Error-Correction Model (ECM) เท่านั้น</p>
             </div>
@@ -2296,10 +2296,10 @@ if st.session_state.page == "home":
         st.markdown(metric_card("var(--red)", icon("x", 21, 2), n_fail if result_ready else "-", "ไม่ผ่านเกณฑ์"), unsafe_allow_html=True)
     with m4:
         r2_display = f"{adj_r2_lr:.4f}" if adj_r2_lr is not None else "-"
-        st.markdown(metric_card("var(--blue)", icon("trend-up", 21, 1.8), r2_display, "Adj. R² (ระยะยาว)"), unsafe_allow_html=True)
+        st.markdown(metric_card("var(--blue)", icon("trend-up", 21, 1.8), r2_display, "Adj. R² ระยะยาว"), unsafe_allow_html=True)
     with m5:
         r2_sr_display = f"{adj_r2_sr:.4f}" if adj_r2_sr is not None else "-"
-        st.markdown(metric_card("var(--blue)", icon("trend-down", 21, 1.8), r2_sr_display, "Adj. R² (ระยะสั้น)"), unsafe_allow_html=True)
+        st.markdown(metric_card("var(--blue)", icon("trend-down", 21, 1.8), r2_sr_display, "Adj. R² ระยะสั้น"), unsafe_allow_html=True)
 
     st.write("")
 
