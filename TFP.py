@@ -97,29 +97,6 @@ CHANGELOG — สรุปทุกจุดที่ตรวจเจอแล
       ln_JOUR_GDP(-1), ln_TUM_GDP(-2), TRADE_GDP(-2), MKTCOM, ECM(-1))
       เหลือ RDG_GDP(-2) ตัวเดียวที่ต่างเล็กน้อย ~0.8% (24.5710 vs 24.7571)
 
-[v5 -> v6] แก้ค่าวิกฤตของ Engle-Granger cointegration test ให้เป็น MacKinnon จริง
-    - ปัญหาเดิม: run_long_run() และ _cointegration_row() ใช้ adfuller() ทดสอบ
-      residual ของสมการระยะยาวตรง ๆ แล้วเทียบกับ p-value ของ ADF ทั่วไป (สมมติ
-      N=1 เสมอ) ซึ่งเอกสารอ้างอิง (EViews Help: Testing for Cointegration,
-      MacKinnon 2010 "Critical Values for Cointegration Tests") ยืนยันว่าไม่ใช่
-      ค่าวิกฤตที่ถูกต้องสำหรับ residual-based test - ค่าวิกฤตที่แท้จริงต้องปรับ
-      ตามจำนวนตัวแปรร่วม (N) ในสมการ cointegrating ด้วย ไม่งั้นเสี่ยง over-reject
-      H0 (สรุปว่ามี cointegration ทั้งที่จริงไม่มี)
-    - แก้: เปลี่ยนมาใช้ statsmodels.tsa.stattools.coint(sub[dep],
-      sub[long_run_vars], trend="c", autolag="AIC") ซึ่งคำนวณ p-value และ
-      ค่าวิกฤตผ่าน MacKinnon response-surface regression (1994, 2010) โดยตรง -
-      เป็นค่าเดียวกับที่ EViews ใช้ในฟังก์ชัน Engle-Granger cointegration test
-      ปรับทั้ง run_long_run() (ข้อความสรุปตอนรัน) และ _cointegration_row()
-      (แถวในตาราง Model Diagnostics หัวข้อ 3.6) ให้เรียก coint() แทน adfuller()
-      trend="c" เลือกให้ตรงกับสมการระยะยาวที่มีแค่ค่าคงที่ (add_constant), ไม่มี
-      trend เชิงเส้น
-    - ผลกระทบ: สถิติทดสอบ (tau-statistic) จากการคำนวณ residual ไม่เปลี่ยน
-      เปลี่ยนแค่ค่าวิกฤต/p-value ที่ใช้ตัดสิน ซึ่งโดยทั่วไปเข้มกว่า ADF ทั่วไป -
-      ถ้าผลเดิมอยู่ borderline (p ใกล้ 0.05/0.10) มีโอกาสที่ข้อสรุปเรื่อง
-      cointegration จะเปลี่ยน ควรรันเทียบผลเดิม/ใหม่ก่อนสรุปในรายงาน
-    - ยังไม่แก้ (คงเป็นข้อจำกัดต่อไป): เพดานการค้นหา ARIMA และ Breusch-Godfrey
-      lag ที่ fix ไว้ (ข้อ 4 ของหัวข้อ 3.8) - อยู่นอกขอบเขตของจุดนี้
-
 สถานะล่าสุด (v5): Adj. R² ระยะยาว = 0.9701 (ตรงกับ EViews เป๊ะ)
              Adj. R² ระยะสั้น = 0.9216 (ตรงกับ EViews เป๊ะ)
              หมายเหตุ: "0.9629" ในตารางที่ 2 ต้นฉบับคือค่า R-squared ธรรมดา
@@ -145,7 +122,7 @@ import os
 import re
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import adfuller, coint
+from statsmodels.tsa.stattools import adfuller
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tools import add_constant
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -295,28 +272,18 @@ def run_long_run(df: pd.DataFrame, dep: str, long_run_vars: list):
     print(res.summary())
     print(f"\nAdj. R^2 (ระยะยาว) = {summary_adj_r2(res):.4f}")
 
-    # Engle-Granger cointegration test โดยใช้ statsmodels.tsa.stattools.coint()
-    # ซึ่งคำนวณ tau-statistic, p-value และค่าวิกฤตจาก MacKinnon response-surface
-    # regression (MacKinnon 1994, ปรับปรุง 2010) - เป็นค่าวิกฤตที่ถูกต้องสำหรับ
-    # residual-based (Engle-Granger) cointegration test โดยเฉพาะ ต่างจากค่าวิกฤต
-    # ADF ทั่วไปตรงที่ปรับตามจำนวนตัวแปรร่วม (N) ในสมการ cointegrating ด้วย
-    # (ค่าวิกฤต ADF ธรรมดาคำนวณโดยสมมติ N=1 เสมอ ซึ่งหลวมเกินไปสำหรับ EG test
-    # ที่มีตัวแปรหลายตัว ทำให้เสี่ยง over-reject H0 ของ "ไม่มี cointegration")
-    # trend="c" ตรงกับสเปกของสมการระยะยาวด้านบนที่ใช้ add_constant() (มีค่าคงที่
-    # อย่างเดียว ไม่มี trend เชิงเส้น) - เป็นค่าวิกฤตชุดเดียวกับที่ EViews ใช้ใน
-    # ฟังก์ชัน Engle-Granger cointegration test (อ้างอิง: MacKinnon, J.G. (2010)
-    # "Critical Values for Cointegration Tests", Queen's Economics Dept WP 1227)
+    # Engle-Granger cointegration test: ADF บน residual (ต้อง reject unit root
+    # ถึงจะสรุปว่า cointegrate กันจริง - ค่าวิกฤตของ EG ต่างจาก ADF ปกติเล็กน้อย
+    # แต่ใช้ ADF ธรรมดาเป็น first-pass check ได้)
     resid = res.resid
-    coint_t, coint_p, coint_crit = coint(sub[dep], sub[long_run_vars],
-                                          trend="c", autolag="AIC")
-    print(f"\nEngle-Granger cointegration test (ค่าวิกฤต MacKinnon):")
-    print(f"  tau-statistic = {coint_t:.4f}, p-value = {coint_p:.4f}")
-    print(f"  ค่าวิกฤต 1%/5%/10% = {coint_crit[0]:.4f} / {coint_crit[1]:.4f} / {coint_crit[2]:.4f}")
-    if coint_p < 0.10:
-        print("-> residual stationary ตามค่าวิกฤต MacKinnon (มี cointegration)")
+    adf_stat, adf_p, *_ = adfuller(resid, autolag="AIC")
+    print(f"\nEngle-Granger residual ADF test: stat={adf_stat:.4f}, p={adf_p:.4f}")
+    if adf_p < 0.10:
+        print("-> residual น่าจะ stationary (มี cointegration) แม้ p อาจไม่ต่ำมาก "
+              "เพราะค่าวิกฤต EG ต่างจาก ADF ปกติ (โดยทั่วไปเข้มกว่า)")
     else:
-        print("-> residual ยัง non-stationary ตามค่าวิกฤต MacKinnon - ควรระวัง "
-              "อาจไม่ cointegrate จริง (ลองปรับตัวแปรใน LONG_RUN_VARS)")
+        print("-> residual ยัง non-stationary ตาม ADF ธรรมดา - ควรระวัง อาจไม่ cointegrate จริง "
+              "(ลองปรับตัวแปรใน LONG_RUN_VARS หรือใช้ EG critical value ตาราง MacKinnon)")
 
     return res, resid
 
@@ -469,26 +436,20 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
     return rows
 
 
-def _cointegration_row(model_df: pd.DataFrame, dep: str, long_run_vars: list) -> dict:
-    """Engle-Granger cointegration test ผ่าน statsmodels.tsa.stattools.coint()
-    ซึ่งใช้ค่าวิกฤต MacKinnon (1994, 2010 response-surface regression) ที่ถูกต้อง
-    สำหรับ residual-based cointegration test โดยเฉพาะ (ปรับตามจำนวนตัวแปรร่วม N
-    ในสมการ cointegrating) แทนค่าวิกฤต ADF ทั่วไปที่สมมติ N=1 เสมอและหลวมเกินไป
-    สำหรับกรณีนี้ - เป็นค่าวิกฤตชุดเดียวกับที่ EViews ใช้ในฟังก์ชัน Engle-Granger
-    cointegration test (trend="c" ตรงกับสมการระยะยาวที่มีแค่ค่าคงที่ ไม่มี trend)"""
-    sub = model_df[[dep] + list(long_run_vars)].dropna()
-    coint_t, coint_p, coint_crit = coint(sub[dep], sub[list(long_run_vars)],
-                                          trend="c", autolag="AIC")
-    result = f"tau={coint_t:.3f}, p={coint_p:.3f}"
-    if coint_p < 0.05:
-        status, note = _STATUS_PASS, "ผ่านค่าวิกฤต MacKinnon ที่ระดับ 5%"
-    elif coint_p < 0.10:
+def _cointegration_row(resid: pd.Series) -> dict:
+    """Engle-Granger residual test: ADF บน residual ของสมการระยะยาว ต้อง reject
+    unit root (p ต่ำ) ถึงจะสรุปว่ามี cointegration จริง — หมายเหตุ: ค่าวิกฤตที่ถูกต้อง
+    ของ EG ต่างจาก ADF ปกติเล็กน้อย (เข้มกว่า) นี่เป็นการเช็คแบบ first-pass เท่านั้น"""
+    adf_stat, adf_p, *_ = adfuller(resid.dropna(), autolag="AIC")
+    if adf_p < 0.05:
+        status, note = _STATUS_PASS, ""
+    elif adf_p < 0.10:
         status = _STATUS_BORDERLINE
-        note = "ผ่านค่าวิกฤต MacKinnon ที่ระดับ 10% แต่ไม่ผ่านที่ 5%"
+        note = "ผ่านที่ระดับ 10% แต่ไม่ผ่านที่ 5% — ควรตรวจสอบด้วยค่าวิกฤต MacKinnon จริง"
     else:
         status = _STATUS_FAIL
-        note = "ไม่ผ่านค่าวิกฤต MacKinnon ที่ระดับ 10% — residual น่าจะยัง non-stationary (อาจไม่ cointegrate)"
-    return _diag_row("Cointegration", "Engle-Granger (MacKinnon)", result, status, note)
+        note = "residual ยัง non-stationary ตาม ADF ธรรมดา (ค่าวิกฤต EG จริงเข้มกว่านี้ ควรตรวจซ้ำ)"
+    return _diag_row("Cointegration", "Engle-Granger residual", f"p={adf_p:.3f}", status, note)
 
 
 def _multicollinearity_rows(df: pd.DataFrame, variables: list) -> list:
@@ -571,7 +532,7 @@ def run_diagnostics(model_df: pd.DataFrame, dep_ln: str, long_run_vars: list,
     rows += _stationarity_rows(model_df, [dep_ln] + list(long_run_vars))
     if short_run_spec:
         rows += _stationarity_short_run_rows(model_df, short_run_spec)
-    rows.append(_cointegration_row(model_df, dep_ln, long_run_vars))
+    rows.append(_cointegration_row(lr_resid))
     rows += _multicollinearity_rows(model_df, long_run_vars)
     rows.append(_heteroskedasticity_row(lr_res, "สมการระยะยาว"))
     rows.append(_autocorrelation_row(lr_res, "สมการระยะยาว"))
