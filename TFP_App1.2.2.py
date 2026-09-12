@@ -82,6 +82,27 @@ from TFP import (
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
 )
 from data_loader import load_data_gsheet
+import inspect
+from typing import Optional
+
+
+def _load_data_gsheet_with_optional_url(url: Optional[str] = None):
+    """เรียก load_data_gsheet() ตามปกติ แต่ถ้าคณะวิจัยกรอกลิงก์ Google Sheet เอง
+    ไว้ในหน้า "จัดการข้อมูลอัตโนมัติ" (เก็บใน session_state["custom_gsheet_url"])
+    จะส่งลิงก์นั้นเข้าไปให้ load_data_gsheet(url=...) ด้วย (data_loader.py
+    รองรับพารามิเตอร์ url ที่รับได้ทั้งลิงก์ Google Sheet เต็มรูปแบบและ Sheet ID
+    ล้วนๆ — ถ้าไม่ได้กรอกอะไรมา จะใช้ SHEET_ID เริ่มต้นในไฟล์ data_loader.py แทน)"""
+    if not url:
+        return load_data_gsheet()
+    try:
+        sig_params = inspect.signature(load_data_gsheet).parameters
+    except (TypeError, ValueError):
+        sig_params = {}
+    for param_name in ("url", "sheet_url", "gsheet_url", "link"):
+        if param_name in sig_params:
+            return load_data_gsheet(**{param_name: url})
+    # ฟังก์ชันเดิมยังไม่รองรับการกำหนดลิงก์เอง -> ใช้ค่าเริ่มต้นในไฟล์ data_loader.py ไปก่อน
+    return load_data_gsheet()
 
 st.set_page_config(page_title="ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม", layout="wide")
 
@@ -1332,6 +1353,101 @@ VARIABLE_LABELS = {
 }
 
 
+# ------------------------------------------------------------------------------
+# คำอธิบายตัวแปรแบบละเอียด (ใช้ในหน้า "ข้อมูลและตัวแปร") — แต่ละตัวแปรอธิบาย 4 ส่วน:
+# ความหมาย (คืออะไร), ความสำคัญ (สำคัญแบบไหนต่อผลิตภาพ), ที่มาข้อมูล และ
+# ทิศทางที่ตัวแปรนี้ "โดยทั่วไป" ควรส่งผลต่อ TFP ตามทฤษฎีเศรษฐศาสตร์ — ทิศทาง/
+# ขนาดผลกระทบจริงในสมการชุดปัจจุบันให้ดูจากค่าสัมประสิทธิ์ในหน้า "ผลการวิเคราะห์"
+# แทน เพราะอาจไม่ตรงกับทฤษฎีเสมอไป (ขึ้นกับข้อมูลจริงของประเทศไทยในแต่ละช่วงเวลา)
+# ------------------------------------------------------------------------------
+VARIABLE_EXPLANATIONS = {
+    "FDI_GDP": {
+        "meaning": "สัดส่วนเงินลงทุนโดยตรงจากต่างประเทศ (Foreign Direct Investment) ต่อ GDP ของไทย",
+        "importance": "สะท้อนการถ่ายทอดเทคโนโลยี องค์ความรู้ด้านการจัดการ และเครือข่ายห่วงโซ่การผลิตจากต่างประเทศเข้าสู่ระบบเศรษฐกิจ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP (การถ่ายทอดเทคโนโลยี) แต่ขนาด/นัยสำคัญจริงให้ดูค่าสัมประสิทธิ์ในหน้า \"ผลการวิเคราะห์\"",
+    },
+    "FEE_GDP": {
+        "meaning": "สัดส่วนค่าธรรมเนียมการใช้ทรัพย์สินทางปัญญา (ค่าลิขสิทธิ์/สิทธิบัตรที่จ่ายให้ต่างประเทศ) ต่อ GDP",
+        "importance": "สะท้อนระดับการนำเข้าเทคโนโลยีจากต่างประเทศมาใช้ในการผลิต",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "ทิศทางไม่แน่นอนตามทฤษฎี (ขึ้นกับว่าการนำเข้าเทคโนโลยีคุ้มกับต้นทุนหรือไม่) — ดูผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_HDI": {
+        "meaning": "ดัชนีการพัฒนามนุษย์ (Human Development Index) แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "สะท้อนคุณภาพทุนมนุษย์โดยรวม (สุขภาพ การศึกษา รายได้) ซึ่งเป็นปัจจัยพื้นฐานของผลิตภาพแรงงาน",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP (ทุนมนุษย์ที่ดีขึ้นช่วยเพิ่มผลิตภาพ) — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_RDH_GDP": {
+        "meaning": "สัดส่วนบุคลากรด้านการวิจัยและพัฒนา (R&D) ต่อประชากร แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "สะท้อนกำลังคนด้านวิจัยที่ขับเคลื่อนการสร้างและประยุกต์ใช้เทคโนโลยีในประเทศ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP ในระยะยาว — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "RDG_GDP": {
+        "meaning": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาครัฐต่อ GDP",
+        "importance": "สะท้อนบทบาทภาครัฐในการสนับสนุนงานวิจัยพื้นฐานและโครงสร้างพื้นฐานด้านนวัตกรรม",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP ในระยะยาว — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "RDP_GDP": {
+        "meaning": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาคเอกชนต่อ GDP",
+        "importance": "สะท้อนแรงขับเคลื่อนนวัตกรรมจากภาคธุรกิจ ซึ่งมักนำไปใช้เชิงพาณิชย์ได้เร็วกว่างานวิจัยภาครัฐ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_JOUR_GDP": {
+        "meaning": "สัดส่วนจำนวนสิ่งพิมพ์ทางวิทยาศาสตร์และเทคนิคต่อ GDP แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "สะท้อนผลผลิตความรู้ทางวิชาการ/วิทยาศาสตร์ของประเทศ ซึ่งเป็นฐานของนวัตกรรมในอนาคต",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP ในระยะยาว — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_PCT_GDP": {
+        "meaning": "จำนวนคำขอตามสนธิสัญญาความร่วมมือด้านสิทธิบัตร (PCT) ต่อ GDP แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "สะท้อนความสามารถด้านนวัตกรรมที่มุ่งคุ้มครองทรัพย์สินทางปัญญาในระดับสากล",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_PATENT_GDP": {
+        "meaning": "สัดส่วนจำนวนสิทธิบัตรที่ยื่น/ได้รับต่อ GDP แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "เป็นตัวชี้วัดมาตรฐานของผลผลิตนวัตกรรมและการสร้างเทคโนโลยีใหม่ในประเทศ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ln_TUM_GDP": {
+        "meaning": "สัดส่วนจำนวนอนุสิทธิบัตร (Utility Model) ต่อ GDP แปลงเป็นลอการิทึมธรรมชาติ",
+        "importance": "สะท้อนนวัตกรรมระดับปรับปรุง/ประยุกต์ ซึ่งมักสะท้อนความสามารถของ SME และภาคการผลิตในประเทศ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "INDUS_GDP": {
+        "meaning": "สัดส่วนมูลค่าเพิ่มภาคอุตสาหกรรมต่อ GDP",
+        "importance": "สะท้อนโครงสร้างเศรษฐกิจว่าเน้นภาคการผลิต/อุตสาหกรรมมากน้อยเพียงใด ซึ่งมักมีผลิตภาพต่างจากภาคเกษตรหรือบริการ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "ทิศทางขึ้นกับโครงสร้างเศรษฐกิจช่วงนั้น ๆ — ดูผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "TRADE_GDP": {
+        "meaning": "อัตราการเปิดกว้างทางการค้า (มูลค่าส่งออก+นำเข้า ต่อ GDP)",
+        "importance": "สะท้อนระดับการเปิดรับการแข่งขันจากต่างประเทศ ซึ่งมักผลักดันให้ผู้ผลิตในประเทศปรับปรุงประสิทธิภาพ",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP (แรงกดดันด้านการแข่งขัน + การถ่ายทอดเทคโนโลยีผ่านการค้า) — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "MKTCOM": {
+        "meaning": "ดัชนีความซับซ้อนทางเศรษฐกิจด้านการค้า (Economic Complexity ของสินค้าส่งออก)",
+        "importance": "สะท้อนว่าประเทศผลิต/ส่งออกสินค้าที่ใช้องค์ความรู้และเทคโนโลยีซับซ้อนมากน้อยเพียงใด",
+        "source": "ข้อมูลดึงเข้าโมเดลผ่านระบบดึงข้อมูลอัตโนมัติ (Google Sheet) ในหน้า \"จัดการข้อมูลอัตโนมัติ\"",
+        "effect": "โดยทั่วไปคาดว่าเป็นบวกต่อ TFP (สินค้าซับซ้อนมากขึ้นมักมาพร้อมผลิตภาพที่สูงขึ้น) — ดูขนาดผลจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+    "ECM": {
+        "meaning": "พจน์ปรับตัวสู่ดุลยภาพ (Error Correction Term) จากสมการระยะยาว — ไม่ใช่ตัวแปรข้อมูลดิบ",
+        "importance": "บอกว่าการเบี่ยงเบนจากดุลยภาพระยะยาวในปีก่อนหน้า ถูกปรับกลับเข้าสู่ดุลยภาพในสมการระยะสั้นเร็วเพียงใด",
+        "source": "คำนวณจากผลลัพธ์ของสมการระยะยาว (ไม่ได้ดึงจาก Google Sheet โดยตรง)",
+        "effect": "ตามทฤษฎีควรมีค่าเป็นลบและมีนัยสำคัญ (แปลว่าระบบกลับเข้าสู่ดุลยภาพได้จริง) — ดูค่าจริงที่หน้า \"ผลการวิเคราะห์\"",
+    },
+}
+
+
 def var_label_with_abbr(code: str) -> str:
     """แสดงชื่อเต็มของตัวแปร แล้ววงเล็บรหัสย่อไว้ข้างหลัง
     เช่น "FDI_GDP" -> "การลงทุนโดยตรงจากต่างประเทศ (FDI/GDP)"
@@ -2308,14 +2424,14 @@ NAV_ITEMS = [
     ("Dashboard", "dashboard"),
     ("พยากรณ์ TFP", "forecast"),
     ("ข้อมูลและตัวแปร", "data_vars"),
-    ("ผลการวิเคราะห์", "analysis"),
-    ("รายงานสรุปสำหรับผู้บริหาร", "home"),
     ("คู่มือการใช้งาน", "manual"),
 ]
 
-# กลุ่มเมนูรอง (แสดงแยกด้วยเส้นคั่น ใต้กลุ่มเมนูหลักด้านบน) — งานที่จำกัดสิทธิ์/
-# งานดูแลระบบ ต่างจากกลุ่มเมนูหลักที่เน้นดูผลวิเคราะห์ทั่วไป
+# กลุ่มเมนูรอง (แสดงแยกด้วยเส้นคั่น ใต้กลุ่มเมนูหลักด้านบน) — งานที่จำกัดสิทธิ์
+# เฉพาะคณะวิจัยที่ต้องล็อกอินก่อนถึงจะเข้าดูได้ ("ผลการวิเคราะห์" และ
+# "รายงานสรุปสำหรับผู้บริหาร" ย้ายมาไว้ในกลุ่มนี้แทนกลุ่มเมนูหลักด้านบน)
 NAV_ITEMS_SECONDARY = [
+    ("ผลการวิเคราะห์", "analysis"),
     ("สำหรับคณะวิจัยเท่านั้น", "home"),
     ("จัดการข้อมูลอัตโนมัติ", "data_admin"),
     ("ตั้งค่าระบบ", "settings"),
@@ -2352,6 +2468,31 @@ with st.sidebar:
     )
     # หมายเหตุ: โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) ที่เคยแสดงเป็นแถวที่ 2
     # ตรงนี้ ถูกย้ายไปรวมกับข้อมูลผู้จัดทำและเลขเวอร์ชันแอปในกล่องมุมขวาบนแทนแล้ว
+
+    # ----- ส่วน "ข้อมูล" (ปุ่มดึงข้อมูลอัตโนมัติ) — ย้ายมาไว้บนสุดของแถบเมนู
+    # ต่อจากโลโก้ ก่อนเมนูหลัก เพราะเป็นขั้นตอนแรกที่ผู้ใช้ต้องทำก่อนดูหน้าอื่น -----
+    st.markdown(
+        f'<div class="sidebar-section-label">{icon("database", 14, 1.6)}<span>ข้อมูล</span></div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("คลิกดึงข้อมูลอัตโนมัติ", use_container_width=True, key="nav_top_fetch"):
+        st.session_state.pop("gsheet_load_error", None)
+        try:
+            with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                st.session_state.gsheet_raw_df = _load_data_gsheet_with_optional_url(
+                    st.session_state.get("custom_gsheet_url")
+                )
+            st.session_state.gsheet_loaded_at = now_th()
+        except Exception as e:
+            st.session_state.gsheet_load_error = str(e)
+            st.session_state.pop("gsheet_raw_df", None)
+    if st.session_state.get("gsheet_load_error"):
+        st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
+    elif "gsheet_raw_df" in st.session_state:
+        st.success(f"ดึงข้อมูลล่าสุดเมื่อ {st.session_state.gsheet_loaded_at.strftime('%H:%M:%S')}")
+    st.caption("ดึงข้อมูล → รันโมเดล → สรุปผลอัตโนมัติ")
+    st.markdown("---")
+
     for i, (label, page_key) in enumerate(NAV_ITEMS):
         is_active = st.session_state.page == page_key
         if st.button(
@@ -2385,26 +2526,6 @@ with st.sidebar:
         ):
             st.session_state.page = page_key
             st.rerun()
-
-    st.markdown("---")
-    st.markdown(
-        f'<div class="sidebar-section-label">{icon("database", 14, 1.6)}<span>ข้อมูล</span></div>',
-        unsafe_allow_html=True,
-    )
-    if st.button("คลิกดึงข้อมูลอัตโนมัติ", use_container_width=True):
-        st.session_state.pop("gsheet_load_error", None)
-        try:
-            with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                st.session_state.gsheet_raw_df = load_data_gsheet()
-            st.session_state.gsheet_loaded_at = now_th()
-        except Exception as e:
-            st.session_state.gsheet_load_error = str(e)
-            st.session_state.pop("gsheet_raw_df", None)
-    if st.session_state.get("gsheet_load_error"):
-        st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
-    elif "gsheet_raw_df" in st.session_state:
-        st.success(f"ดึงข้อมูลล่าสุดเมื่อ {st.session_state.gsheet_loaded_at.strftime('%H:%M:%S')}")
-    st.caption("ดึงข้อมูล → รันโมเดล → สรุปผลอัตโนมัติ")
 
     # ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป — วางไว้ท้าย
     # แถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ) แทนที่จะลอยทับเนื้อหาแบบเดิม
@@ -2899,25 +3020,8 @@ elif st.session_state.page == "dashboard":
         f'<h2>แบบจำลองเศรษฐมิติ มหภาค</h2></div>'
         f'</div>'
         f'<div class="nxpo-topbar-right">'
-        f'<div class="nxpo-icon-btn">{icon("bell", 18, 1.8)}<span class="dot"></span></div>'
         f'<div class="nxpo-userchip"><span class="avatar">{icon("user-circle", 16, 1.8)}</span>เจ้าหน้าที่วิจัย</div>'
         f'</div></div>',
-        unsafe_allow_html=True,
-    )
-
-    # ----- Hero banner: ต้อนรับเข้าสู่ระบบ -----
-    st.markdown(
-        '<div class="nxpo-hero">'
-        '<div class="nxpo-hero-badge">Better Data<br>Better Policy</div>'
-        '<p class="nxpo-hero-eyebrow">ยินดีต้อนรับสู่ระบบ</p>'
-        '<h1>แบบจำลองเศรษฐมิติ มหภาค</h1>'
-        '<p class="desc">ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมภายในประเทศ (TFP) '
-        'และรายงานสรุปผลสำหรับผู้บริหารด้วยปัญญาประดิษฐ์</p>'
-        '<div class="nxpo-hero-tags">'
-        f'<span class="nxpo-hero-tag">{icon("bars", 14, 2)} Total Factor Productivity (TFP)</span>'
-        f'<span class="nxpo-hero-tag">{icon("trend-up", 14, 2)} Econometric Model</span>'
-        f'<span class="nxpo-hero-tag">{icon("sparkle", 14, 2)} AI Executive Summary</span>'
-        '</div></div>',
         unsafe_allow_html=True,
     )
 
@@ -2942,7 +3046,9 @@ elif st.session_state.page == "dashboard":
                 st.session_state.pop("gsheet_load_error", None)
                 try:
                     with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                        st.session_state.gsheet_raw_df = load_data_gsheet()
+                        st.session_state.gsheet_raw_df = _load_data_gsheet_with_optional_url(
+                            st.session_state.get("custom_gsheet_url")
+                        )
                     st.session_state.gsheet_loaded_at = now_th()
                     st.rerun()
                 except Exception as e:
@@ -3858,32 +3964,6 @@ elif st.session_state.page == "dashboard":
                         )
         st.markdown('</div>', unsafe_allow_html=True)
 
-    # ================= เมนูลัด =================
-    st.markdown(
-        f'<div class="section-card"><div class="section-title">'
-        f'<div class="section-num">{icon("sparkle", 20, 2)}</div>'
-        f'<div class="section-title-text"><h3>เมนูลัด</h3></div></div>',
-        unsafe_allow_html=True,
-    )
-    _quick_menu_items = [
-        ("trend-up", "ดูกราฟทั้งหมด", "forecast"),
-        ("download", "ดาวน์โหลดรายงาน", "home"),
-        ("calendar", "ตั้งค่าพยากรณ์", "dashboard"),
-        ("database", "ข้อมูลตัวแปร", "data_vars"),
-        ("clock", "ประวัติการใช้งาน", "settings"),
-        ("bulb", "คำถามที่พบบ่อย", "manual"),
-    ]
-    qm_cols = st.columns(3)
-    for qm_i, (qm_icon, qm_label, qm_page) in enumerate(_quick_menu_items):
-        with qm_cols[qm_i % 3]:
-            with st.container(key=f"qm_wrap_{qm_i}"):
-                st.markdown('<div class="nxpo-quickmenu-item">', unsafe_allow_html=True)
-                if st.button(f"{qm_label} →", key=f"qm_btn_{qm_i}", use_container_width=True):
-                    st.session_state.page = qm_page
-                    st.rerun()
-                st.markdown('</div>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
 # ------------------------------------------------------------------------------
 # หน้า "พยากรณ์ TFP" — มุมมองย่อของกราฟแนวโน้ม TFP (กราฟพยากรณ์ ARIMA แบบเต็ม
 # พร้อมแถบ KPI/slider เลือกช่วงปี อยู่ในหน้า Dashboard อยู่แล้ว หน้านี้เน้นดูค่า
@@ -3900,52 +3980,13 @@ elif st.session_state.page == "forecast":
     if not result_ready:
         st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูค่าและพยากรณ์ TFP")
     else:
-        tfp_series_fc = model_df[DEP_VAR].dropna().sort_index()
-        if tfp_series_fc.empty:
-            st.info("ไม่พบข้อมูล TFP ในชุดข้อมูลที่ดึงมา")
-        else:
-            last_val = float(tfp_series_fc.iloc[-1])
-            prev_val = float(tfp_series_fc.iloc[-2]) if len(tfp_series_fc) > 1 else None
-            yoy = ((last_val / prev_val) - 1) * 100 if prev_val else None
-            k1, k2, k3 = st.columns(3)
-            with k1:
-                st.markdown(
-                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-orange);">'
-                    f'{icon("bars", 21, 1.8)}</div><div><div class="metric-value">{last_val:.4f}</div>'
-                    f'<div class="metric-label">ค่า TFP ล่าสุด (ปี {tfp_series_fc.index.max()})</div></div></div>',
-                    unsafe_allow_html=True,
-                )
-            with k2:
-                yoy_text = f"{yoy:+.2f}%" if yoy is not None else "-"
-                st.markdown(
-                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--green);">'
-                    f'{icon("trend-up", 21, 1.8)}</div><div><div class="metric-value">{yoy_text}</div>'
-                    f'<div class="metric-label">เทียบปีก่อนหน้า (YoY)</div></div></div>',
-                    unsafe_allow_html=True,
-                )
-            with k3:
-                st.markdown(
-                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-navy);">'
-                    f'{icon("database", 21, 1.8)}</div><div><div class="metric-value">{len(tfp_series_fc)} ปี</div>'
-                    f'<div class="metric-label">ข้อมูลย้อนหลัง (ปี {tfp_series_fc.index.min()}–{tfp_series_fc.index.max()})</div></div></div>',
-                    unsafe_allow_html=True,
-                )
-            st.write("")
-            st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("trend-up", 20, 2)}</div>'
-                f'<div class="section-title-text"><h3>แนวโน้มดัชนี TFP ย้อนหลัง</h3></div></div>',
-                unsafe_allow_html=True,
-            )
-            st.line_chart(tfp_series_fc, color="#F97316", height=300)
-            st.caption(
-                "ต้องการพยากรณ์ล่วงหน้าด้วย ARIMA พร้อมช่วงความเชื่อมั่น 95% และเลือกจำนวนปีที่ต้องการ "
-                "ไปที่หน้า Dashboard ได้จากเมนูด้านซ้าย"
-            )
-            if st.button("ไปที่หน้า Dashboard เพื่อพยากรณ์แบบเต็มรูปแบบ →", key="fc_goto_dashboard"):
-                st.session_state.page = "dashboard"
-                st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        # หมายเหตุ: การ์ด KPI และกราฟแนวโน้ม TFP แบบเต็ม (พร้อมพยากรณ์ ARIMA และ
+        # แถบเลื่อนเลือกปี) แสดงอยู่ในหน้า Dashboard อยู่แล้ว หน้านี้จึงไม่แสดงซ้ำ
+        # และพาไปหน้า Dashboard แทน
+        st.info("ดูกราฟพยากรณ์ TFP แบบเต็มรูปแบบ (พร้อมช่วงความเชื่อมั่น 95% และเลือกจำนวนปีที่ต้องการ) ได้ที่หน้า Dashboard")
+        if st.button("ไปที่หน้า Dashboard →", key="fc_goto_dashboard"):
+            st.session_state.page = "dashboard"
+            st.rerun()
 
 # ------------------------------------------------------------------------------
 # หน้า "ข้อมูลและตัวแปร" — ตารางข้อมูลที่ใช้จริงในโมเดล + คำอธิบายตัวแปรแต่ละตัว
@@ -3995,6 +4036,28 @@ elif st.session_state.page == "data_vars":
         )
         st.markdown('</div>', unsafe_allow_html=True)
 
+        # ----- คำอธิบายตัวแปรแต่ละตัวแบบละเอียด: ความหมาย / ความสำคัญ / ที่มาข้อมูล /
+        # ผลต่อ TFP — ตอบคำถามที่มักถูกถามว่าแต่ละตัวแปร "คืออะไร สำคัญแบบไหน
+        # ที่มาข้อมูล ส่งผลต่อ TFP อย่างไร" -----
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{icon("bulb", 20, 2)}</div>'
+            f'<div class="section-title-text"><h3>ตัวแปรแต่ละตัวคืออะไร สำคัญอย่างไร ส่งผลต่อ TFP อย่างไร</h3></div></div>',
+            unsafe_allow_html=True,
+        )
+        for code in VARIABLE_ORDER:
+            if code == "const":
+                continue
+            exp = VARIABLE_EXPLANATIONS.get(code)
+            if not exp:
+                continue
+            with st.expander(var_label_with_abbr(code)):
+                st.markdown(f"**คืออะไร:** {exp['meaning']}")
+                st.markdown(f"**สำคัญอย่างไร:** {exp['importance']}")
+                st.markdown(f"**ที่มาข้อมูล:** {exp['source']}")
+                st.markdown(f"**ผลต่อ TFP:** {exp['effect']}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
 # ------------------------------------------------------------------------------
 # หน้า "ผลการวิเคราะห์" — สรุปผลตรวจสอบข้อสมมติฐาน (Diagnostics) + ตารางค่าสัมประสิทธิ์
 # รวมระยะยาว/ระยะสั้น (ใช้ตัวแปรที่คำนวณไว้แล้วในส่วนรันโมเดลด้านบนไฟล์ ไม่คำนวณซ้ำ)
@@ -4007,6 +4070,25 @@ elif st.session_state.page == "analysis":
         f'<h2>ผลการวิเคราะห์</h2></div></div></div>',
         unsafe_allow_html=True,
     )
+    # หน้านี้จำกัดให้เฉพาะคณะวิจัยที่ล็อกอินแล้วเท่านั้น (ย้ายมาจากเมนูหลักที่เดิม
+    # เปิดให้บุคคลภายนอกดูได้ — ดูฟอร์มล็อกอินจริงได้ที่หน้า "สำหรับคณะวิจัยเท่านั้น")
+    if not st.session_state.research_authenticated:
+        st.markdown(
+            f'<div class="section-card" style="max-width:420px;margin:40px auto;'
+            f'text-align:center;">'
+            f'<div class="section-title" style="justify-content:center;">'
+            f'<div class="section-num">🔒</div>'
+            f'<div class="section-title-text"><h3>สำหรับคณะวิจัยเท่านั้น</h3></div></div>'
+            f'<p style="color:var(--brand-navy-soft);font-size:0.9rem;margin-top:-6px;">'
+            f'กรุณาเข้าสู่ระบบด้วยบัญชีคณะวิจัยก่อน จึงจะดูผลการวิเคราะห์หน้านี้ได้</p></div>',
+            unsafe_allow_html=True,
+        )
+        _analysis_login_col = st.columns([1, 1.4, 1])[1]
+        with _analysis_login_col:
+            if st.button("ไปที่หน้าเข้าสู่ระบบ →", use_container_width=True, key="analysis_goto_login"):
+                st.session_state.page = "home"
+                st.rerun()
+        st.stop()
     if not result_ready:
         st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูผลการวิเคราะห์")
     else:
@@ -4121,6 +4203,32 @@ elif st.session_state.page == "data_admin":
         f'อัปเดตข้อมูลแล้วรันโมเดล TFP ใหม่ทั้งหมดโดยอัตโนมัติ</p></div></div></div>',
         unsafe_allow_html=True,
     )
+    # ----- ช่องกรอกลิงก์ Google Sheet เอง — ให้คณะวิจัยเปลี่ยนแหล่งข้อมูลได้เอง
+    # โดยไม่ต้องแก้โค้ด (ถ้าเว้นว่างไว้ ระบบจะใช้ลิงก์เดิมที่ตั้งไว้ในโค้ดตามปกติ) -----
+    st.markdown(
+        f'<div class="section-card"><div class="section-title">'
+        f'<div class="section-num">{icon("database", 20, 2)}</div>'
+        f'<div class="section-title-text"><h3>ลิงก์ Google Sheet (สำหรับคณะวิจัย)</h3>'
+        f'<p style="margin:6px 0 0 0;color:var(--brand-navy-soft);font-size:0.9rem;">'
+        f'ระบุลิงก์ Google Sheet ของชุดข้อมูลที่ต้องการใช้แทนค่าเริ่มต้น '
+        f'เว้นว่างไว้หากต้องการใช้แหล่งข้อมูลเดิม</p></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    st.session_state.setdefault("custom_gsheet_url", "")
+    st.session_state.custom_gsheet_url = st.text_input(
+        "ลิงก์ Google Sheet",
+        value=st.session_state.custom_gsheet_url,
+        placeholder="https://docs.google.com/spreadsheets/d/...",
+        key="custom_gsheet_url_input",
+        label_visibility="collapsed",
+    )
+    st.caption(
+        "หมายเหตุ: ต้องแชร์ Google Sheet เป็น \"ทุกคนที่มีลิงก์ - ดูได้\" (หรือแชร์ให้อีเมล "
+        "service account ที่ตั้งค่าไว้) และต้องมีแท็บ \"Data\"/\"Researcher\" โครงสร้างเหมือน "
+        "Sheet ต้นแบบทุกประการ ระบบจึงจะดึงข้อมูลจากลิงก์นี้ได้สำเร็จ"
+    )
+    st.write("")
+
     if st.session_state.get("gsheet_load_error"):
         st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
     elif "gsheet_raw_df" in st.session_state:
@@ -4131,7 +4239,9 @@ elif st.session_state.page == "data_admin":
         st.session_state.pop("gsheet_load_error", None)
         try:
             with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                st.session_state.gsheet_raw_df = load_data_gsheet()
+                st.session_state.gsheet_raw_df = _load_data_gsheet_with_optional_url(
+                    st.session_state.get("custom_gsheet_url")
+                )
             st.session_state.gsheet_loaded_at = now_th()
             st.rerun()
         except Exception as e:
