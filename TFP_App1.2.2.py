@@ -194,47 +194,42 @@ st.markdown("""
         linear-gradient(180deg, #FAF8F4 0%, var(--bg-page) 320px);
 }
 
-/* ----- แถบเมนูบน (เดิมเป็น sidebar ด้านข้าง ย้ายมาเป็นแถบแนวนอนด้านบนแทน
-   เพื่อให้เนื้อหาหลักเต็มความกว้างจอ และใช้โทนสีเดียวกับ hero banner) ----- */
-.st-key-topnav_bar {
-    background: linear-gradient(120deg, var(--gold-tint) 0%, #FFFFFF 60%, var(--gold-tint) 100%) !important;
-    border: 1px solid var(--card-border) !important;
-    border-radius: 16px !important;
-    padding: 14px 22px !important;
-    margin-bottom: 20px !important;
-    box-shadow: var(--shadow-soft);
+/* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
+section[data-testid="stSidebar"] {
+    background: #FFFFFF;
+    border-right: 1px solid var(--card-border);
 }
-.topnav-logo-row { display: flex; align-items: center; gap: 14px; height: 100%; }
-.topnav-logo-divider { width: 1px; align-self: stretch; background: var(--card-border); }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
+section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
-/* ----- การ์ดโลโก้ด้านบนแถบเมนู (ใช้ตอนยังเป็น sidebar แนวตั้ง) ----- */
+/* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
 .sidebar-logo-card {
     display: flex; align-items: center; justify-content: center; gap: 24px;
     margin-bottom: 18px;
 }
 
-/* ----- footer ท้ายหน้าเว็บ: ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา +
-   เวอร์ชันแอป (ย้ายมาจากมุมล่างแถบเมนูด้านข้างเดิม มาไว้ท้ายเนื้อหาทุกหน้าแทน) ----- */
-.page-footer {
-    display: flex; align-items: center; gap: 14px;
-    padding: 16px 22px; margin-top: 32px;
-    border-top: 1px solid var(--card-border);
-}
+/* ----- ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป —
+   วางไว้ท้ายแถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ ไม่ลอยทับเนื้อหา) ----- */
 .corner-badge {
     display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 14px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 0;
+    margin-top: 18px;
+    padding-top: 12px;
+    border-top: 1px solid var(--card-border);
 }
 .corner-badge-logos {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 .corner-badge-text {
-    font-size: 0.68rem; line-height: 1.5; color: var(--brand-navy-soft);
+    font-size: 0.62rem; line-height: 1.4; color: var(--brand-navy-soft);
     text-align: left;
+    width: 100%;
 }
 .corner-badge-author {
-    font-weight: 700; color: var(--brand-navy); font-size: 0.72rem;
+    font-weight: 700; color: var(--brand-navy); font-size: 0.66rem;
 }
 .corner-badge-version {
     margin-top: 2px; font-weight: 600; color: var(--brand-orange-dark);
@@ -245,46 +240,241 @@ st.markdown("""
     display: flex; align-items: center; gap: 7px;
 }
 
-/* ----- ปุ่มเมนูในแถบบน (Dashboard / สำหรับคณะวิจัย) -----
+/* ----- sidebar nav (ปุ่มเมนู หน้าหลัก / Dashboard) -----
    ปกติพื้นขาว ตัวหนังสือสีเข้ม — พอกด (เมนูนั้นกลายเป็นหน้าที่เลือกอยู่)
    พื้นจะเปลี่ยนเป็นสีส้มของแบรนด์ ตัวหนังสือเป็นสีขาว */
-.st-key-topnav_bar div[data-testid="stButton"] button {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button {
+    justify-content: flex-start !important;
     border-radius: 10px !important;
     font-size: 0.96rem !important;
-    padding: 10px 18px !important;
+    padding: 10px 14px !important;
+    margin-bottom: 4px;
 }
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] {
     background: #FFFFFF !important;
     border: 1px solid var(--card-border) !important;
     color: var(--brand-navy) !important;
     font-weight: 500 !important;
 }
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"]:hover {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover {
     background: var(--gold-tint) !important;
     border-color: var(--brand-orange) !important;
     color: var(--brand-orange-dark) !important;
 }
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] {
     background: var(--brand-orange) !important;
     border: 1px solid var(--brand-orange) !important;
     color: #FFFFFF !important;
     font-weight: 700 !important;
 }
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"]:hover {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"]:hover {
     background: var(--brand-orange-dark) !important;
     border-color: var(--brand-orange-dark) !important;
     color: #FFFFFF !important;
 }
 /* ตัวหนังสือในปุ่มจริงๆ อยู่ใน <p>/<span> ซ้อนอยู่ข้างใน ต้องกำหนดสีตรงนี้ด้วย
    ไม่งั้นสีที่ตั้งไว้ที่ตัว <button> จะไม่ถูกนำไปใช้ (ปัญหาเดิมที่เจอ) */
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] p,
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] span {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] p,
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] span {
     color: var(--brand-navy) !important;
 }
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] p,
-.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] span {
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] p,
+section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] span {
     color: #FFFFFF !important;
 }
+
+/* ==============================================================
+   หน้า Dashboard โฉมใหม่ — top bar / hero banner / control cards /
+   การ์ดสรุปผลพยากรณ์ด้านข้าง / ตารางตัวแปรย่อ / เมนูลัด
+   ============================================================== */
+
+/* ----- แถบบนสุด (โลโก้ + ชื่อระบบ + ปุ่มไอคอนมุมขวา) ----- */
+.nxpo-topbar {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 14px; margin-bottom: 20px; flex-wrap: wrap;
+}
+.nxpo-topbar-left { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.nxpo-topbar-logo {
+    width: 44px; height: 44px; border-radius: 12px; flex-shrink: 0;
+    background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
+    display: flex; align-items: center; justify-content: center; color: #fff;
+    box-shadow: 0 6px 16px rgba(217,109,15,0.3);
+}
+.nxpo-topbar-title { min-width: 0; }
+.nxpo-topbar-title .eyebrow {
+    font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--brand-orange-dark); display: block; margin-bottom: 1px;
+}
+.nxpo-topbar-title h2 {
+    margin: 0; font-family: var(--font-elegant); font-size: 1.28rem; font-weight: 600;
+    color: var(--brand-navy); letter-spacing: -0.01em; overflow-wrap: break-word;
+}
+.nxpo-topbar-right { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+.nxpo-icon-btn {
+    width: 40px; height: 40px; border-radius: 50%; background: #FFFFFF;
+    border: 1px solid var(--card-border); display: flex; align-items: center; justify-content: center;
+    color: var(--brand-navy-soft); box-shadow: var(--shadow-soft); position: relative;
+    transition: all .15s ease;
+}
+.nxpo-icon-btn:hover { border-color: var(--brand-orange); color: var(--brand-orange-dark); transform: translateY(-1px); }
+.nxpo-icon-btn .dot {
+    position: absolute; top: 6px; right: 7px; width: 8px; height: 8px; border-radius: 50%;
+    background: var(--red); border: 1.5px solid #fff;
+}
+.nxpo-userchip {
+    display: flex; align-items: center; gap: 8px; background: #FFFFFF;
+    border: 1px solid var(--card-border); border-radius: 999px; padding: 6px 14px 6px 6px;
+    box-shadow: var(--shadow-soft); color: var(--brand-navy); font-size: 0.85rem; font-weight: 600;
+}
+.nxpo-userchip .avatar {
+    width: 28px; height: 28px; border-radius: 50%; background: var(--brand-navy);
+    color: #fff; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+
+/* ----- Hero banner (แบนเนอร์ต้อนรับ) ----- */
+.nxpo-hero {
+    position: relative; overflow: hidden; border-radius: 22px; margin-bottom: 22px;
+    padding: 34px 38px; background-image:
+        radial-gradient(700px 260px at 88% 15%, rgba(249,115,22,0.30), transparent 60%),
+        linear-gradient(120deg, #FFF6E9 0%, #FBEFDC 45%, #F7E6C9 100%);
+    border: 1px solid #F0DCB0;
+    box-shadow: var(--shadow-lift);
+    animation: tfp-rise .45s ease both;
+}
+.nxpo-hero-eyebrow {
+    font-size: 0.98rem; color: var(--brand-navy-soft); margin: 0 0 6px 0; font-weight: 500;
+}
+.nxpo-hero h1 {
+    font-family: var(--font-elegant); margin: 0 0 12px 0; color: var(--brand-navy);
+    font-size: 2.05rem; font-weight: 700; letter-spacing: -0.01em; line-height: 1.25;
+    overflow-wrap: break-word; max-width: 74%;
+}
+.nxpo-hero p.desc {
+    margin: 0; color: var(--brand-navy-soft); font-size: 0.98rem; line-height: 1.7;
+    max-width: 62%; overflow-wrap: break-word;
+}
+.nxpo-hero-tags {
+    display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px;
+}
+.nxpo-hero-tag {
+    display: inline-flex; align-items: center; gap: 6px; background: rgba(255,255,255,0.75);
+    border: 1px solid #F0DCB0; border-radius: 999px; padding: 6px 14px; font-size: 0.8rem;
+    color: var(--brand-navy); font-weight: 600;
+}
+.nxpo-hero-tag::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--brand-orange); }
+.nxpo-hero-badge {
+    position: absolute; top: 28px; right: 34px; font-family: var(--font-elegant); font-style: italic;
+    color: var(--brand-orange-dark); font-size: 0.92rem; font-weight: 600; text-align: right;
+    line-height: 1.35; opacity: 0.85;
+}
+.nxpo-hero-illustration { position: absolute; right: -10px; bottom: -14px; opacity: 0.9; pointer-events: none; }
+@media (max-width: 900px) {
+    .nxpo-hero h1, .nxpo-hero p.desc { max-width: 100%; }
+    .nxpo-hero-illustration { display: none; }
+}
+
+/* ----- การ์ดควบคุมด้านบน (ดึงข้อมูล / ช่วงพยากรณ์ / เข้าสู่ระบบคณะวิจัย) ----- */
+.nxpo-control-card {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFA 100%);
+    border: 1px solid var(--card-border); border-radius: 18px; padding: 18px 20px 16px;
+    box-shadow: var(--shadow-soft); height: 100%; animation: tfp-rise .4s ease both;
+    transition: box-shadow .18s ease, transform .18s ease;
+}
+.nxpo-control-card:hover { box-shadow: var(--shadow-lift); transform: translateY(-2px); }
+.nxpo-control-card .head { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+.nxpo-control-card .head-icon {
+    width: 40px; height: 40px; border-radius: 12px; flex-shrink: 0; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
+    box-shadow: 0 5px 12px rgba(217,109,15,0.3);
+}
+.nxpo-control-card .head h4 {
+    margin: 0; font-size: 1rem; font-weight: 700; color: var(--brand-navy);
+}
+.nxpo-control-card .subtext {
+    font-size: 0.8rem; color: var(--brand-navy-soft); margin: 6px 0 10px; line-height: 1.55;
+}
+.nxpo-control-card .status-line {
+    display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--brand-navy-soft);
+    margin-bottom: 10px;
+}
+.nxpo-control-card .status-dot {
+    width: 8px; height: 8px; border-radius: 50%; background: var(--green); flex-shrink: 0;
+}
+.nxpo-control-card .st-key-ctrl_data_btn div[data-testid="stButton"] button,
+.nxpo-control-card .st-key-ctrl_forecast_btn div[data-testid="stButton"] button,
+.nxpo-control-card .st-key-ctrl_login_btn div[data-testid="stButton"] button { width: 100%; }
+
+/* ----- การ์ดสรุปผลพยากรณ์ด้านข้างกราฟ ----- */
+.nxpo-summary-card {
+    background-image: linear-gradient(160deg, var(--brand-navy) 0%, #0E2436 100%);
+    border-radius: 20px; padding: 24px 24px 22px; color: #fff; height: 100%;
+    box-shadow: 0 22px 46px rgba(11,26,40,0.28), 0 2px 8px rgba(11,26,40,0.16);
+    animation: tfp-rise .45s ease both; position: relative; overflow: hidden;
+}
+.nxpo-summary-card::after {
+    content: ""; position: absolute; right: -60px; top: -80px; width: 260px; height: 260px;
+    border-radius: 50%; background: radial-gradient(circle, rgba(242,129,29,0.22), transparent 70%);
+    pointer-events: none;
+}
+.nxpo-summary-card .label {
+    font-size: 0.82rem; color: rgba(255,255,255,0.65); font-weight: 600; margin-bottom: 6px;
+    position: relative; z-index: 1;
+}
+.nxpo-summary-card .value {
+    font-size: 2.5rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1;
+    display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; position: relative; z-index: 1;
+}
+.nxpo-summary-card .growth-badge {
+    display: inline-flex; align-items: center; gap: 4px; background: rgba(22,163,74,0.22);
+    color: #6EE7A0; border: 1px solid rgba(110,231,160,0.3); border-radius: 999px;
+    padding: 3px 10px; font-size: 0.85rem; font-weight: 700;
+}
+.nxpo-summary-card .from-label {
+    font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 4px; position: relative; z-index: 1;
+}
+.nxpo-summary-card .divider { height: 1px; background: rgba(255,255,255,0.12); margin: 18px 0 14px; }
+.nxpo-summary-card .trend-title {
+    font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 10px; position: relative; z-index: 1;
+}
+.nxpo-summary-list { list-style: none; margin: 0; padding: 0; position: relative; z-index: 1; }
+.nxpo-summary-list li {
+    display: flex; align-items: flex-start; gap: 9px; font-size: 0.82rem;
+    color: rgba(255,255,255,0.82); line-height: 1.55; margin-bottom: 9px;
+}
+.nxpo-summary-list li .tick {
+    width: 17px; height: 17px; border-radius: 50%; background: rgba(22,163,74,0.28);
+    color: #6EE7A0; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 1px;
+}
+
+/* ----- หัวการ์ดตัวแปรในสมการ (short-run / long-run) พร้อม badge มุมขวา ----- */
+.nxpo-var-card-head {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 4px;
+}
+.nxpo-var-card-head .title-group { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.nxpo-run-badge {
+    flex-shrink: 0; font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
+    background: var(--gold-tint); color: var(--brand-orange-dark); border: 1px solid #F0DCB0;
+}
+.nxpo-var-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 12px; }
+.nxpo-var-table th {
+    text-align: left; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
+    padding: 0 8px 8px 0; border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.03em;
+}
+.nxpo-var-table th:not(:first-child), .nxpo-var-table td:not(:first-child) { text-align: center; }
+.nxpo-var-table td { padding: 9px 8px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy); vertical-align: middle; }
+.nxpo-var-table tr:last-child td { border-bottom: none; }
+.nxpo-var-table td:first-child { font-weight: 500; overflow-wrap: break-word; max-width: 210px; }
+.nxpo-var-dir { display: inline-flex; align-items: center; justify-content: center; }
+.nxpo-var-dir.up { color: var(--green); }
+.nxpo-var-dir.down { color: var(--red); }
+.nxpo-var-more {
+    display: inline-flex; align-items: center; gap: 6px; margin-top: 14px; color: var(--brand-orange-dark);
+    font-size: 0.85rem; font-weight: 700;
+}
+
+.nxpo-quickmenu-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+.nxpo-quickmenu-item div[data-testid="stButton"] button { justify-content: flex-start !important; }
 
 /* ----- top header ----- */
 .app-header {
@@ -863,26 +1053,47 @@ _ICON_PATHS = {
     ),
     "sparkle": (
         '<path d="M10,3.5 L11.6,8.4 L16.5,10 L11.6,11.6 L10,16.5 L8.4,11.6 L3.5,10 L8.4,8.4 Z" fill="currentColor" stroke="none"/>'
-        '<path d="M16,2 L16.4,3.6 L18,4 L16.4,4.4 L16,6 L15.6,4.4 L14,4 L15.6,3.6 Z" fill="currentColor" stroke="none" opacity="0.85"/>'
-    ),
-    "cloud": (
-        '<path d="M5.5 14.5C3.6 14.5 2 13 2 11.1C2 9.3 3.4 7.9 5.1 7.8C5.6 5.6 7.6 4 10 4C12.6 4 14.7 5.9 15 8.4C16.7 8.6 18 10 18 11.7C18 13.3 16.7 14.5 15.2 14.5H5.5Z" stroke-linejoin="round"/>'
-    ),
-    "calendar": (
-        '<rect x="3" y="4.5" width="14" height="12.5" rx="1.6" stroke-linejoin="round"/>'
-        '<line x1="3" y1="8.2" x2="17" y2="8.2"/>'
-        '<line x1="6.5" y1="2.8" x2="6.5" y2="5.5" stroke-linecap="round"/>'
-        '<line x1="13.5" y1="2.8" x2="13.5" y2="5.5" stroke-linecap="round"/>'
+        '<path d="M16,2 L16.4,3.6 L18,4 L16.4,4.4 L16,6 L15.6,3.6 Z" fill="currentColor" stroke="none" opacity="0.85"/>'
     ),
     "lock": (
-        '<rect x="4.5" y="9" width="11" height="8" rx="1.6" stroke-linejoin="round"/>'
-        '<path d="M6.8 9V6.3C6.8 4.5 8.2 3 10 3C11.8 3 13.2 4.5 13.2 6.3V9" stroke-linecap="round"/>'
-        '<circle cx="10" cy="12.8" r="1" fill="currentColor" stroke="none"/>'
+        '<rect x="4.5" y="9" width="11" height="8" rx="2" stroke-linejoin="round"/>'
+        '<path d="M6.5 9V6.5C6.5 4.3 8.1 2.7 10 2.7C11.9 2.7 13.5 4.3 13.5 6.5V9" stroke-linecap="round"/>'
+        '<circle cx="10" cy="12.6" r="1.15" fill="currentColor" stroke="none"/>'
     ),
     "download": (
-        '<path d="M10 3.5V12.5" stroke-linecap="round"/>'
-        '<path d="M6 9.3L10 13.3L14 9.3" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<path d="M4 15.5V16.2C4 16.6 4.3 17 4.8 17H15.2C15.6 17 16 16.6 16 16.2V15.5" stroke-linecap="round"/>'
+        '<path d="M10 3V12.5" stroke-linecap="round"/>'
+        '<path d="M6 9L10 13L14 9" stroke-linecap="round" stroke-linejoin="round"/>'
+        '<path d="M4 16.5H16" stroke-linecap="round"/>'
+    ),
+    "calendar": (
+        '<rect x="3" y="4.2" width="14" height="12.6" rx="2.2" stroke-linejoin="round"/>'
+        '<line x1="3" y1="8" x2="17" y2="8"/>'
+        '<line x1="6.5" y1="2.5" x2="6.5" y2="5.5" stroke-linecap="round"/>'
+        '<line x1="13.5" y1="2.5" x2="13.5" y2="5.5" stroke-linecap="round"/>'
+    ),
+    "bell": (
+        '<path d="M5 8.3C5 5.4 7.2 3 10 3C12.8 3 15 5.4 15 8.3V11.3L16.5 13.8H3.5L5 11.3V8.3Z" stroke-linejoin="round"/>'
+        '<path d="M8.2 16C8.5 16.8 9.2 17.3 10 17.3C10.8 17.3 11.5 16.8 11.8 16" stroke-linecap="round"/>'
+    ),
+    "user-circle": (
+        '<circle cx="10" cy="10" r="7.3"/>'
+        '<circle cx="10" cy="8.1" r="2.5"/>'
+        '<path d="M4.6 15.4C5.4 13.2 7.5 11.7 10 11.7C12.5 11.7 14.6 13.2 15.4 15.4" stroke-linecap="round"/>'
+    ),
+    "arrow-right": (
+        '<line x1="3.5" y1="10" x2="15.5" y2="10" stroke-linecap="round"/>'
+        '<polyline points="11,5.5 15.5,10 11,14.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>'
+    ),
+    "book": (
+        '<path d="M4 4.3C4 3.6 4.6 3 5.3 3H9.6V16.3H5.3C4.6 16.3 4 15.7 4 15V4.3Z" stroke-linejoin="round"/>'
+        '<path d="M16 4.3C16 3.6 15.4 3 14.7 3H10.4V16.3H14.7C15.4 16.3 16 15.7 16 15V4.3Z" stroke-linejoin="round"/>'
+    ),
+    "settings": (
+        '<circle cx="10" cy="10" r="2.6"/>'
+        '<path d="M10 3.2V5M10 15V16.8M16.8 10H15M5 10H3.2M14.9 5.1L13.6 6.4M6.4 13.6L5.1 14.9M14.9 14.9L13.6 13.6M6.4 6.4L5.1 5.1" stroke-linecap="round"/>'
+    ),
+    "cloud": (
+        '<path d="M6.2 14.8C4.2 14.8 2.7 13.2 2.7 11.3C2.7 9.5 4 8.1 5.7 7.8C6.2 5.6 8.2 4 10.5 4C13.1 4 15.2 6 15.4 8.6C16.9 9 18 10.4 18 12C18 13.6 16.7 14.8 15.1 14.8H6.2Z" stroke-linejoin="round" stroke-linecap="round"/>'
     ),
 }
 
@@ -2095,7 +2306,19 @@ if "var_audit_log" not in st.session_state:
 # ด้วย username/password (ดูส่วน RESEARCH_USERNAME/RESEARCH_PASSWORD ด้านล่าง)
 NAV_ITEMS = [
     ("Dashboard", "dashboard"),
+    ("พยากรณ์ TFP", "forecast"),
+    ("ข้อมูลและตัวแปร", "data_vars"),
+    ("ผลการวิเคราะห์", "analysis"),
+    ("รายงานสรุปสำหรับผู้บริหาร", "home"),
+    ("คู่มือการใช้งาน", "manual"),
+]
+
+# กลุ่มเมนูรอง (แสดงแยกด้วยเส้นคั่น ใต้กลุ่มเมนูหลักด้านบน) — งานที่จำกัดสิทธิ์/
+# งานดูแลระบบ ต่างจากกลุ่มเมนูหลักที่เน้นดูผลวิเคราะห์ทั่วไป
+NAV_ITEMS_SECONDARY = [
     ("สำหรับคณะวิจัยเท่านั้น", "home"),
+    ("จัดการข้อมูลอัตโนมัติ", "data_admin"),
+    ("ตั้งค่าระบบ", "settings"),
 ]
 
 if "page" not in st.session_state:
@@ -2118,36 +2341,74 @@ except (KeyError, FileNotFoundError):
 if "research_authenticated" not in st.session_state:
     st.session_state.research_authenticated = False
 
-with st.container(key="topnav_bar"):
-    _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 8
-    _nav_logo_col, _nav_dash_col, _nav_research_col, _nav_logout_col = st.columns(
-        [2.3, 1.1, 1.7, 1.3]
+with st.sidebar:
+    _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 12
+    st.markdown(
+        f'<div class="sidebar-logo-card">'
+        f'{logo1_html}'
+        f'<div style="width:1px;height:{_logo_divider_height}px;background:var(--card-border);"></div>'
+        f'{logo2_html}</div>',
+        unsafe_allow_html=True,
     )
-    with _nav_logo_col:
-        st.markdown(
-            f'<div class="topnav-logo-row">{logo1_html}'
-            f'<div class="topnav-logo-divider" style="height:{_logo_divider_height}px;"></div>'
-            f'{logo2_html}</div>',
-            unsafe_allow_html=True,
-        )
-    for _nav_col, (label, page_key) in zip((_nav_dash_col, _nav_research_col), NAV_ITEMS):
-        with _nav_col:
-            is_active = st.session_state.page == page_key
-            if st.button(
-                label,
-                key=f"nav_{page_key}",
-                use_container_width=True,
-                type="primary" if is_active else "secondary",
-            ):
-                st.session_state.page = page_key
-                st.rerun()
-    with _nav_logout_col:
-        # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าหน้า "สำหรับคณะวิจัยเท่านั้น" อยู่แล้ว
-        if st.session_state.research_authenticated:
-            if st.button("ออกจากระบบ (คณะวิจัย)", use_container_width=True, key="nav_logout"):
-                st.session_state.research_authenticated = False
-                st.session_state.page = "dashboard"
-                st.rerun()
+    # หมายเหตุ: โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) ที่เคยแสดงเป็นแถวที่ 2
+    # ตรงนี้ ถูกย้ายไปรวมกับข้อมูลผู้จัดทำและเลขเวอร์ชันแอปในกล่องมุมขวาบนแทนแล้ว
+    for i, (label, page_key) in enumerate(NAV_ITEMS):
+        is_active = st.session_state.page == page_key
+        if st.button(
+            label,
+            key=f"nav_main_{i}_{page_key}",
+            use_container_width=True,
+            type="primary" if is_active else "secondary",
+        ):
+            st.session_state.page = page_key
+            st.rerun()
+
+    # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าหน้า "สำหรับคณะวิจัยเท่านั้น" อยู่แล้ว
+    if st.session_state.research_authenticated:
+        if st.button("ออกจากระบบ (คณะวิจัย)", use_container_width=True, key="nav_logout"):
+            st.session_state.research_authenticated = False
+            st.session_state.page = "dashboard"
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown(
+        f'<div class="sidebar-section-label">{icon("lock", 14, 1.6)}<span>สำหรับคณะวิจัย</span></div>',
+        unsafe_allow_html=True,
+    )
+    for i, (label, page_key) in enumerate(NAV_ITEMS_SECONDARY):
+        is_active = st.session_state.page == page_key
+        if st.button(
+            label,
+            key=f"nav_sec_{i}_{page_key}",
+            use_container_width=True,
+            type="primary" if is_active else "secondary",
+        ):
+            st.session_state.page = page_key
+            st.rerun()
+
+    st.markdown("---")
+    st.markdown(
+        f'<div class="sidebar-section-label">{icon("database", 14, 1.6)}<span>ข้อมูล</span></div>',
+        unsafe_allow_html=True,
+    )
+    if st.button("คลิกดึงข้อมูลอัตโนมัติ", use_container_width=True):
+        st.session_state.pop("gsheet_load_error", None)
+        try:
+            with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                st.session_state.gsheet_raw_df = load_data_gsheet()
+            st.session_state.gsheet_loaded_at = now_th()
+        except Exception as e:
+            st.session_state.gsheet_load_error = str(e)
+            st.session_state.pop("gsheet_raw_df", None)
+    if st.session_state.get("gsheet_load_error"):
+        st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
+    elif "gsheet_raw_df" in st.session_state:
+        st.success(f"ดึงข้อมูลล่าสุดเมื่อ {st.session_state.gsheet_loaded_at.strftime('%H:%M:%S')}")
+    st.caption("ดึงข้อมูล → รันโมเดล → สรุปผลอัตโนมัติ")
+
+    # ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป — วางไว้ท้าย
+    # แถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ) แทนที่จะลอยทับเนื้อหาแบบเดิม
+    st.markdown(_corner_badge_html, unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
 # รันโมเดล (ถ้ามีไฟล์อัปโหลด) — คำนวณผลลัพธ์ทั้งหมดไว้ก่อน เพื่อนำไปแสดงในการ์ด
@@ -2304,7 +2565,7 @@ if st.session_state.page == "home":
     st.write("")
 
     if not result_ready:
-        st.info("ยังไม่มีข้อมูล — กรุณาไปที่หน้า Dashboard แล้วกดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ก่อนเพื่อเริ่มต้นการวิเคราะห์")
+        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายเพื่อเริ่มต้นการวิเคราะห์")
     else:
         if vars_customized:
             st.info(
@@ -2628,132 +2889,91 @@ if st.session_state.page == "home":
                     st.error(f"เรียก Gemini ไม่สำเร็จ: {e}")
 
 elif st.session_state.page == "dashboard":
-    # ================= สไตล์เฉพาะของหน้า Dashboard: hero banner + การ์ดทางลัด =================
+    # ----- แถบบนสุด: โลโก้ระบบ + ชื่อระบบ + ไอคอนแจ้งเตือน/โปรไฟล์ (ตกแต่งอย่างเดียว
+    # ยังไม่ผูกฟังก์ชันจริง — สลับธีม/การแจ้งเตือนจะเพิ่มในเวอร์ชันถัดไป) -----
     st.markdown(
-        """
-        <style>
-        .hero-banner-tfp {
-            background: linear-gradient(120deg, var(--gold-tint) 0%, #FFFFFF 58%, var(--gold-tint) 100%);
-            border: 1px solid var(--card-border); border-radius: 20px;
-            padding: 30px 34px; margin-bottom: 20px; box-shadow: var(--shadow-soft);
-        }
-        .hero-banner-tfp .hero-eyebrow { color: var(--brand-orange-dark); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.02em; }
-        .hero-banner-tfp h1 { font-family: var(--font-elegant); font-size: 2rem; color: var(--brand-navy); margin: 6px 0 10px 0; font-weight: 700; overflow-wrap: break-word; }
-        .hero-banner-tfp p { color: var(--brand-navy-soft); font-size: 0.98rem; line-height: 1.7; max-width: 66ch; margin: 0; overflow-wrap: break-word; }
-        .hero-banner-tfp .hero-tags { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .hero-banner-tfp .hero-tag {
-            background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 999px;
-            padding: 5px 16px; font-size: 0.78rem; color: var(--brand-navy-soft); font-weight: 600;
-        }
-        .st-key-hero_card_data, .st-key-hero_card_horizon {
-            background: #FFFFFF !important; border-radius: 16px !important;
-        }
-        .action-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .action-card-icon {
-            width: 36px; height: 36px; border-radius: 10px; background: var(--gold-tint);
-            color: var(--brand-orange-dark); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .action-card-title { font-weight: 700; color: var(--brand-navy); font-size: 0.98rem; }
-        .action-card-sub { font-size: 0.8rem; color: var(--brand-navy-soft); margin-bottom: 10px; line-height: 1.5; }
-        </style>
-        """,
+        f'<div class="nxpo-topbar">'
+        f'<div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("sparkle", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">NXPO Data Center</span>'
+        f'<h2>แบบจำลองเศรษฐมิติ มหภาค</h2></div>'
+        f'</div>'
+        f'<div class="nxpo-topbar-right">'
+        f'<div class="nxpo-icon-btn">{icon("bell", 18, 1.8)}<span class="dot"></span></div>'
+        f'<div class="nxpo-userchip"><span class="avatar">{icon("user-circle", 16, 1.8)}</span>เจ้าหน้าที่วิจัย</div>'
+        f'</div></div>',
         unsafe_allow_html=True,
     )
-    if not result_ready:
-        st.markdown(
-            """
-            <div class="hero-banner-tfp">
-                <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
-                <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>
-                <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวมของประเทศไทยและปัจจัยที่เกี่ยวข้อง พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติจากข้อมูลล่าสุด</p>
-                <div class="hero-tags">
-                    <span class="hero-tag">Total Factor Productivity (TFP)</span>
-                    <span class="hero-tag">Econometric Model</span>
-                    <span class="hero-tag">AI Executive Summary</span>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
-    else:
-        # พอดึงข้อมูลและมีผลลัพธ์แล้ว ย่อ hero banner ต้อนรับให้เหลือแค่หัวข้อสั้น ๆ
-        # (ไม่ต้องพูดซ้ำว่า "ยินดีต้อนรับ" หรือรายละเอียดระบบอีก เพราะผู้ใช้เข้าสู่การดูผลจริงแล้ว)
-        st.markdown(
-            """
-            <div class="app-header">
-                <div>
-                    <h1 style="font-size:1.9rem;">Dashboard พยากรณ์ผลิตภาพปัจจัยการผลิตรวม</h1>
-                </div>
-            </div>
-            """,
-            unsafe_allow_html=True,
-        )
 
-    # การ์ด "เข้าสู่ระบบสำหรับคณะวิจัย" ยังไม่เอากลับมาตรงนี้ เพราะมีปุ่มเทียบเท่า
-    # อยู่แล้วถาวรในแถบเมนูด้านบน — แต่ "ดึงข้อมูลอัตโนมัติ" ย้ายกลับมาไว้ที่นี่
-    # เพราะตอนนี้แถบเมนูด้านบนไม่มีปุ่มนี้แล้ว (ย้ายจาก sidebar เดิมมาเป็นแถบบน
-    # ที่เน้นแค่เนวิเกชัน ส่วนแอ็กชันเฉพาะหน้าอย่างการดึงข้อมูลให้มาอยู่ในเนื้อหาแทน)
-    _hc_data, _hc_horizon = st.columns(2, gap="medium")
-    with _hc_data:
-        with st.container(border=True, key="hero_card_data"):
-            st.markdown(
-                f'<div class="action-card-head"><div class="action-card-icon">{icon("cloud", 19, 1.8)}</div>'
-                f'<div class="action-card-title">ดึงข้อมูลอัตโนมัติ</div></div>'
-                f'<div class="action-card-sub">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</div>',
-                unsafe_allow_html=True,
-            )
-            if st.session_state.get("gsheet_load_error"):
-                st.error("ดึงข้อมูลไม่สำเร็จ", icon="⚠️")
-            elif "gsheet_raw_df" in st.session_state:
-                st.markdown(
-                    f'<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                    f'<span style="color:var(--green);">●</span> ล่าสุด: '
-                    f'{st.session_state.gsheet_loaded_at.strftime("%d/%m/%Y %H:%M น.")}</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">ยังไม่เคยดึงข้อมูล</div>',
-                    unsafe_allow_html=True,
-                )
-            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="hero_fetch_btn"):
+    # ----- Hero banner: ต้อนรับเข้าสู่ระบบ -----
+    st.markdown(
+        '<div class="nxpo-hero">'
+        '<div class="nxpo-hero-badge">Better Data<br>Better Policy</div>'
+        '<p class="nxpo-hero-eyebrow">ยินดีต้อนรับสู่ระบบ</p>'
+        '<h1>แบบจำลองเศรษฐมิติ มหภาค</h1>'
+        '<p class="desc">ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมภายในประเทศ (TFP) '
+        'และรายงานสรุปผลสำหรับผู้บริหารด้วยปัญญาประดิษฐ์</p>'
+        '<div class="nxpo-hero-tags">'
+        f'<span class="nxpo-hero-tag">{icon("bars", 14, 2)} Total Factor Productivity (TFP)</span>'
+        f'<span class="nxpo-hero-tag">{icon("trend-up", 14, 2)} Econometric Model</span>'
+        f'<span class="nxpo-hero-tag">{icon("sparkle", 14, 2)} AI Executive Summary</span>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    # ----- แถวการ์ดควบคุม 3 ใบ: ดึงข้อมูลอัตโนมัติ / กำหนดช่วงเวลาพยากรณ์ / เข้าสู่ระบบคณะวิจัย -----
+    ctl1, ctl2, ctl3 = st.columns(3)
+    with ctl1:
+        _data_status_dot = "var(--green)" if "gsheet_raw_df" in st.session_state else "var(--brand-navy-soft)"
+        _data_status_text = (
+            f"ล่าสุด: {thai_timestamp()}" if "gsheet_raw_df" in st.session_state
+            else "ยังไม่เคยดึงข้อมูลในเซสชันนี้"
+        )
+        st.markdown(
+            f'<div class="nxpo-control-card"><div class="head">'
+            f'<div class="head-icon">{icon("cloud", 20, 1.9)}</div><h4>ดึงข้อมูลอัตโนมัติ</h4></div>'
+            f'<p class="subtext">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</p>'
+            f'<div class="status-line"><span class="status-dot" style="background:{_data_status_dot};"></span>'
+            f'{_data_status_text}</div>',
+            unsafe_allow_html=True,
+        )
+        with st.container(key="ctrl_data_btn"):
+            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="dash_ctrl_fetch"):
                 st.session_state.pop("gsheet_load_error", None)
                 try:
                     with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
                         st.session_state.gsheet_raw_df = load_data_gsheet()
                     st.session_state.gsheet_loaded_at = now_th()
+                    st.rerun()
                 except Exception as e:
                     st.session_state.gsheet_load_error = str(e)
                     st.session_state.pop("gsheet_raw_df", None)
+        if st.session_state.get("gsheet_load_error"):
+            st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
+        st.markdown('</div>', unsafe_allow_html=True)
+    with ctl2:
+        st.markdown(
+            f'<div class="nxpo-control-card"><div class="head">'
+            f'<div class="head-icon">{icon("calendar", 20, 1.9)}</div><h4>กำหนดช่วงเวลาพยากรณ์</h4></div>'
+            f'<p class="subtext">เลือกปีที่ต้องการพยากรณ์ได้ตามต้องการในกราฟด้านล่าง</p>',
+            unsafe_allow_html=True,
+        )
+        with st.container(key="ctrl_forecast_btn"):
+            if st.button("ไปที่กราฟพยากรณ์ ↓", use_container_width=True, key="dash_ctrl_goto_chart"):
+                pass
+        st.markdown('</div>', unsafe_allow_html=True)
+    with ctl3:
+        st.markdown(
+            f'<div class="nxpo-control-card"><div class="head">'
+            f'<div class="head-icon">{icon("lock", 20, 1.9)}</div><h4>เข้าสู่ระบบสำหรับคณะวิจัย</h4></div>'
+            f'<p class="subtext">กรุณาเข้าสู่ระบบเพื่อเข้าถึงข้อมูลและฟีเจอร์เพิ่มเติม</p>',
+            unsafe_allow_html=True,
+        )
+        with st.container(key="ctrl_login_btn"):
+            if st.button("เข้าสู่ระบบ", use_container_width=True, key="dash_ctrl_goto_login"):
+                st.session_state.page = "home"
                 st.rerun()
-    with _hc_horizon:
-        with st.container(border=True, key="hero_card_horizon"):
-            st.markdown(
-                f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
-                f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
-                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
-                unsafe_allow_html=True,
-            )
-            if result_ready:
-                _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
-                _hz_options = [3, 5, 8, 10, 15, 20, 30]
-                if "tfp_forecast_horizon" not in st.session_state:
-                    st.session_state["tfp_forecast_horizon"] = 5
-                st.selectbox(
-                    "ช่วงเวลาพยากรณ์", options=_hz_options,
-                    format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
-                    key="tfp_forecast_horizon", label_visibility="collapsed",
-                )
-            else:
-                st.markdown(
-                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                    'ดึงข้อมูลจากการ์ดด้านซ้ายก่อน เพื่อกำหนดช่วงพยากรณ์</div>',
-                    unsafe_allow_html=True,
-                )
-                st.selectbox(
-                    "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
-                    key="hero_horizon_disabled", label_visibility="collapsed",
-                )
+        st.markdown('</div>', unsafe_allow_html=True)
     st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
@@ -2986,7 +3206,7 @@ elif st.session_state.page == "dashboard":
         )
 
     if not result_ready:
-        st.info("ยังไม่มีข้อมูล — กดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ด้านบนก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
+        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
         # ================= กราฟภาพรวม: แนวโน้มดัชนี TFP ย้อนหลัง + พยากรณ์ (ARIMA) =================
         st.markdown(
@@ -3008,19 +3228,26 @@ elif st.session_state.page == "dashboard":
                     f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
                 )
 
+            _arima_forecast_available = False
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                # ช่วงพยากรณ์ถูกกำหนดจากการ์ด "กำหนดช่วงเวลาพยากรณ์" ด้านบนสุดของหน้า
-                # (จุดเดียว ไม่มีตัวเลื่อนซ้ำที่นี่ เพื่อไม่ให้สับสนว่าต้องตั้งค่าที่ไหนกันแน่)
-                horizon = st.session_state.get("tfp_forecast_horizon", 5)
-                st.caption(
-                    f"ช่วงพยากรณ์ที่เลือกไว้: {horizon} ปีข้างหน้า "
-                    f"(ปรับได้จากการ์ด “กำหนดช่วงเวลาพยากรณ์” ด้านบนสุดของหน้า)"
-                )
+                # ----- แถบเลือกช่วงพยากรณ์ล่วงหน้า (slider) -----
+                fc_col1, fc_col2 = st.columns([3, 1])
+                with fc_col1:
+                    horizon = st.slider(
+                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า", min_value=1, max_value=30,
+                        value=5, step=1, key="tfp_forecast_horizon",
+                        help="เลือกได้ตั้งแต่ 1 ปีจนถึง 30 ปี ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
+                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                    )
+                with fc_col2:
+                    st.markdown("<div style='height:1.9rem;'></div>", unsafe_allow_html=True)
+                    st.caption(f"≈ {horizon} ปีข้างหน้า")
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
                 p, d, q = arima_order
                 last_fc_year = forecast_df.index.max()
+                _arima_forecast_available = True
 
                 # ----- แถบสรุปตัวเลขสำคัญ (KPI) เหนือกราฟ — สรุปให้เห็นภาพรวมได้
                 # ในสายตาเดียว ก่อนลงรายละเอียดในกราฟด้านล่าง -----
@@ -3136,101 +3363,83 @@ elif st.session_state.page == "dashboard":
                 )
         st.markdown('</div>', unsafe_allow_html=True)
 
-        # ================= ภาพรวมผลการพยากรณ์ + ตัวแปรในสมการ (สั้น/ยาว) แบบสรุปย่อ =================
-        _ov_col, _tbl_col = st.columns([1, 1.4], gap="large")
-        with _ov_col:
+        # ================= การ์ดสรุปภาพรวมผลการพยากรณ์ (พื้นกรมท่าเข้ม) =================
+        if _arima_forecast_available:
+            fc_final = float(forecast_df.loc[last_fc_year, "mean"])
+            base_val = float(tfp_series.iloc[-1])
+            base_year = int(tfp_series.index.max())
+            n_years_fc = int(last_fc_year) - base_year
+            growth_total = ((fc_final / base_val) - 1) * 100 if base_val else 0.0
+            cagr = (((fc_final / base_val) ** (1 / n_years_fc)) - 1) * 100 if base_val and n_years_fc > 0 else 0.0
+            _trend_icon = "trend-up" if growth_total >= 0 else "trend-down"
+            _trend_word = "เพิ่มขึ้น" if growth_total >= 0 else "ลดลง"
             st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("bulb", 20, 1.6)}</div>'
-                f'<div class="section-title-text"><h3>ภาพรวมผลการพยากรณ์</h3></div></div>',
+                f'<div class="nxpo-summary-card">'
+                f'<div class="label">{icon("sparkle", 14, 2)} ภาพรวมผลการพยากรณ์</div>'
+                f'<div class="value">TFP ปี {last_fc_year} (พยากรณ์)</div>'
+                f'<div class="value">{fc_final:,.2f}'
+                f'<span class="growth-badge">{icon(_trend_icon, 13, 2)} {growth_total:+.1f}%</span></div>'
+                f'<div class="from-label">จากปี {base_year} ({base_val:,.2f})</div>'
+                f'<div class="divider"></div>'
+                f'<div class="trend-title">แนวโน้มในช่วง {n_years_fc} ปีข้างหน้า</div>'
+                f'<ul class="nxpo-summary-list">'
+                f'<li><span class="tick">{icon("check", 11, 2.4)}</span>TFP มีแนวโน้ม{_trend_word}อย่างต่อเนื่อง</li>'
+                f'<li><span class="tick">{icon("check", 11, 2.4)}</span>อัตราการเติบโตเฉลี่ย (CAGR) {cagr:+.1f}% ต่อปี</li>'
+                f'<li><span class="tick">{icon("check", 11, 2.4)}</span>ส่งผลต่อผลิตภาพการผลิตและเศรษฐกิจไทยโดยรวม</li>'
+                f'</ul></div>',
                 unsafe_allow_html=True,
             )
-            if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                _last_actual_year = int(tfp_series.index.max())
-                _last_actual_val = float(tfp_series.iloc[-1])
-                _fc_last_val = float(fc_last["mean"])
-                _pct_change = (_fc_last_val / _last_actual_val - 1) * 100 if _last_actual_val else 0.0
-                _n_years = last_fc_year - _last_actual_year
-                _cagr = (
-                    ((_fc_last_val / _last_actual_val) ** (1 / _n_years) - 1) * 100
-                    if _n_years > 0 and _last_actual_val > 0 else 0.0
+            st.write("")
+
+        # ================= การ์ดตัวแปรในสมการ (ระยะสั้น / ระยะยาว) แบบย่อ =================
+        def _mini_var_table_card(raw_map: dict, title_th: str, badge_text: str, accent_num: str):
+            rows = [(base, info) for base, info in raw_map.items() if base != "const"]
+            # เรียงตามลำดับมาตรฐานของตัวแปร (VARIABLE_ORDER) เท่าที่มีอยู่จริงในสมการนี้
+            order_index = {code: i for i, code in enumerate(VARIABLE_ORDER)}
+            rows.sort(key=lambda kv: order_index.get(kv[0], 999))
+            body_html = ""
+            for base, info in rows:
+                coef = info.get("coef")
+                p_val = info.get("p")
+                label = _var_full_name(base) if base in VARIABLE_LABELS else base
+                coef_text = f"{coef:.3f}" if coef is not None else "-"
+                p_text = f"{p_val:.3f}" if p_val is not None else "-"
+                is_up = (coef or 0) >= 0
+                dir_html = (
+                    f'<span class="nxpo-var-dir up">{icon("trend-up", 15, 2)}</span>' if is_up
+                    else f'<span class="nxpo-var-dir down">{icon("trend-down", 15, 2)}</span>'
                 )
-                _trend_up = _fc_last_val >= _last_actual_val
-                st.markdown(
-                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">TFP ปี {last_fc_year} (พยากรณ์)</div>'
-                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);line-height:1.15;margin:2px 0 6px 0;">{_fc_last_val:,.2f}</div>'
-                    f'<div style="font-size:0.85rem;color:{"var(--green)" if _trend_up else "#DC2626"};font-weight:700;">'
-                    f'{"▲" if _trend_up else "▼"} {abs(_pct_change):.1f}% จากปี {_last_actual_year}</div>',
-                    unsafe_allow_html=True,
+                body_html += (
+                    f"<tr><td>{label}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
                 )
-                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-                st.markdown(
-                    f'<div style="font-size:0.88rem;font-weight:700;color:var(--brand-navy);margin-bottom:8px;">'
-                    f'แนวโน้มในช่วง {horizon} ปีข้างหน้า</div>',
-                    unsafe_allow_html=True,
-                )
-                for _b in [
-                    f'TFP มีแนวโน้ม{"เพิ่มขึ้น" if _trend_up else "ลดลง"}อย่างต่อเนื่อง',
-                    f'อัตราการเติบโตเฉลี่ย (CAGR) ≈ {_cagr:.1f}% ต่อปี',
-                    f'ใช้แบบจำลอง ARIMA({p},{d},{q}) เลือกอัตโนมัติจากค่า AIC ต่ำสุด',
-                ]:
-                    st.markdown(
-                        f'<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">'
-                        f'<span style="color:var(--green);flex-shrink:0;margin-top:1px;">{icon("check", 15, 2.2)}</span>'
-                        f'<span style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.5;">{_b}</span></div>',
-                        unsafe_allow_html=True,
-                    )
+            st.markdown(
+                f'<div class="section-card"><div class="nxpo-var-card-head">'
+                f'<div class="title-group"><div class="section-num">{accent_num}</div>'
+                f'<div class="section-title-text"><h3>ตัวแปรในสมการ ({title_th})</h3></div></div>'
+                f'<span class="nxpo-run-badge">{badge_text}</span></div>'
+                f'<table class="nxpo-var-table"><thead><tr>'
+                f'<th>ตัวแปร</th><th>ค่าสัมประสิทธิ์</th><th>p-value</th><th>ทิศทาง</th>'
+                f'</tr></thead><tbody>{body_html}</tbody></table>'
+                f'<div class="nxpo-var-more">ดูรายละเอียดเพิ่มเติม {icon("arrow-right", 15, 2)}</div>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        var_col_sr, var_col_lr = st.columns(2)
+        with var_col_sr:
+            if sr_raw_map:
+                _mini_var_table_card(sr_raw_map, "ระยะสั้น", "Short Run", icon("clock", 20, 2))
             else:
-                st.markdown(
-                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">ค่า TFP ล่าสุด (ปี {int(tfp_series.index.max())})</div>'
-                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);">{tfp_series.iloc[-1]:,.2f}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.caption(f"ข้อมูลยังมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with _tbl_col:
-            st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("file", 19, 1.8)}</div>'
-                f'<div class="section-title-text"><h3>ตัวแปรในสมการ</h3></div></div>',
-                unsafe_allow_html=True,
-            )
-
-            def _mini_coef_table(raw_map: dict, var_list: list) -> str:
-                rows = []
-                for v in var_list:
-                    info = raw_map.get(v)
-                    if not info or info.get("p") is None:
-                        continue
-                    rows.append((var_label_with_abbr(v), info["coef"], info["p"]))
-                if not rows:
-                    return (
-                        "<div style='font-size:0.85rem;color:var(--brand-navy-soft);padding:6px 0;'>"
-                        "ไม่มีข้อมูล</div>"
-                    )
-                body = "".join(
-                    f'<tr><td>{name}</td><td style="text-align:right;">{coef:,.3f}</td>'
-                    f'<td style="text-align:right;">{p_val:.3f}</td>'
-                    f'<td style="text-align:center;">{"🟢▲" if coef >= 0 else "🔴▼"}</td></tr>'
-                    for name, coef, p_val in rows
-                )
-                return (
-                    '<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;">'
-                    '<thead><tr><th>ตัวแปร</th><th style="text-align:right;">ค่าสัมประสิทธิ์</th>'
-                    '<th style="text-align:right;">p-value</th><th style="text-align:center;">ทิศทาง</th></tr></thead>'
-                    f'<tbody>{body}</tbody></table></div>'
-                )
-
-            _tab_sr, _tab_lr = st.tabs(["ตัวแปรในสมการ (ระยะสั้น)", "ตัวแปรในสมการ (ระยะยาว)"])
-            with _tab_sr:
-                st.markdown(_mini_coef_table(sr_raw_map, active_sr_bases), unsafe_allow_html=True)
-            with _tab_lr:
-                st.markdown(
-                    _mini_coef_table(lr_raw_map, [v for v in active_lr_vars if v != "const"]),
-                    unsafe_allow_html=True,
-                )
-            st.markdown('</div>', unsafe_allow_html=True)
+                st.info("ยังไม่มีตัวแปรในสมการระยะสั้น")
+        with var_col_lr:
+            if lr_raw_map:
+                _mini_var_table_card(lr_raw_map, "ระยะยาว", "Long Run", icon("bars", 20, 2))
+            else:
+                st.info("ยังไม่มีตัวแปรในสมการระยะยาว")
+        if st.button("ดูรายละเอียดตัวแปรและผลการวิเคราะห์เพิ่มเติม →", key="dash_goto_analysis"):
+            st.session_state.page = "analysis"
+            st.rerun()
+        st.write("")
 
         # ================= กราฟรายตัวแปร: แยกกล่องระยะยาว / ระยะสั้น =================
         # แยกรายชื่อตัวแปรอิสระเป็น 2 ชุดตามสมการที่ตัวแปรนั้นอยู่ แทนที่จะรวมเป็น
@@ -3648,10 +3857,314 @@ elif st.session_state.page == "dashboard":
                             key="dl_influence_share",
                         )
         st.markdown('</div>', unsafe_allow_html=True)
+
+    # ================= เมนูลัด =================
+    st.markdown(
+        f'<div class="section-card"><div class="section-title">'
+        f'<div class="section-num">{icon("sparkle", 20, 2)}</div>'
+        f'<div class="section-title-text"><h3>เมนูลัด</h3></div></div>',
+        unsafe_allow_html=True,
+    )
+    _quick_menu_items = [
+        ("trend-up", "ดูกราฟทั้งหมด", "forecast"),
+        ("download", "ดาวน์โหลดรายงาน", "home"),
+        ("calendar", "ตั้งค่าพยากรณ์", "dashboard"),
+        ("database", "ข้อมูลตัวแปร", "data_vars"),
+        ("clock", "ประวัติการใช้งาน", "settings"),
+        ("bulb", "คำถามที่พบบ่อย", "manual"),
+    ]
+    qm_cols = st.columns(3)
+    for qm_i, (qm_icon, qm_label, qm_page) in enumerate(_quick_menu_items):
+        with qm_cols[qm_i % 3]:
+            with st.container(key=f"qm_wrap_{qm_i}"):
+                st.markdown('<div class="nxpo-quickmenu-item">', unsafe_allow_html=True)
+                if st.button(f"{qm_label} →", key=f"qm_btn_{qm_i}", use_container_width=True):
+                    st.session_state.page = qm_page
+                    st.rerun()
+                st.markdown('</div>', unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
 # ------------------------------------------------------------------------------
-# ท้ายหน้าเว็บ — โลโก้ สอวช./สวค./มหาวิทยาลัย/ภาควิชา + ข้อมูลผู้จัดทำ + เวอร์ชันแอป
-# (ย้ายมาจากมุมล่างแถบเมนูด้านข้างเดิม มาไว้เป็น footer ท้ายเนื้อหาทุกหน้าแทน
-# เพราะแถบเมนูด้านข้างถูกเปลี่ยนเป็นแถบเมนูแนวนอนด้านบนแล้ว — ดูตัวแปร
-# _corner_badge_html ที่ประกาศไว้ต้นไฟล์แถวเดียวกับที่กำหนด logo3_html/logo4_html)
+# หน้า "พยากรณ์ TFP" — มุมมองย่อของกราฟแนวโน้ม TFP (กราฟพยากรณ์ ARIMA แบบเต็ม
+# พร้อมแถบ KPI/slider เลือกช่วงปี อยู่ในหน้า Dashboard อยู่แล้ว หน้านี้เน้นดูค่า
+# ย้อนหลังล่าสุด + ลิงก์กลับไปหน้า Dashboard เพื่อพยากรณ์แบบเต็มรูปแบบ)
 # ------------------------------------------------------------------------------
-st.markdown(f'<div class="page-footer">{_corner_badge_html}</div>', unsafe_allow_html=True)
+elif st.session_state.page == "forecast":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("trend-up", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">TFP Forecast</span>'
+        f'<h2>พยากรณ์ TFP</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    if not result_ready:
+        st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูค่าและพยากรณ์ TFP")
+    else:
+        tfp_series_fc = model_df[DEP_VAR].dropna().sort_index()
+        if tfp_series_fc.empty:
+            st.info("ไม่พบข้อมูล TFP ในชุดข้อมูลที่ดึงมา")
+        else:
+            last_val = float(tfp_series_fc.iloc[-1])
+            prev_val = float(tfp_series_fc.iloc[-2]) if len(tfp_series_fc) > 1 else None
+            yoy = ((last_val / prev_val) - 1) * 100 if prev_val else None
+            k1, k2, k3 = st.columns(3)
+            with k1:
+                st.markdown(
+                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-orange);">'
+                    f'{icon("bars", 21, 1.8)}</div><div><div class="metric-value">{last_val:.4f}</div>'
+                    f'<div class="metric-label">ค่า TFP ล่าสุด (ปี {tfp_series_fc.index.max()})</div></div></div>',
+                    unsafe_allow_html=True,
+                )
+            with k2:
+                yoy_text = f"{yoy:+.2f}%" if yoy is not None else "-"
+                st.markdown(
+                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--green);">'
+                    f'{icon("trend-up", 21, 1.8)}</div><div><div class="metric-value">{yoy_text}</div>'
+                    f'<div class="metric-label">เทียบปีก่อนหน้า (YoY)</div></div></div>',
+                    unsafe_allow_html=True,
+                )
+            with k3:
+                st.markdown(
+                    f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-navy);">'
+                    f'{icon("database", 21, 1.8)}</div><div><div class="metric-value">{len(tfp_series_fc)} ปี</div>'
+                    f'<div class="metric-label">ข้อมูลย้อนหลัง (ปี {tfp_series_fc.index.min()}–{tfp_series_fc.index.max()})</div></div></div>',
+                    unsafe_allow_html=True,
+                )
+            st.write("")
+            st.markdown(
+                f'<div class="section-card"><div class="section-title">'
+                f'<div class="section-num">{icon("trend-up", 20, 2)}</div>'
+                f'<div class="section-title-text"><h3>แนวโน้มดัชนี TFP ย้อนหลัง</h3></div></div>',
+                unsafe_allow_html=True,
+            )
+            st.line_chart(tfp_series_fc, color="#F97316", height=300)
+            st.caption(
+                "ต้องการพยากรณ์ล่วงหน้าด้วย ARIMA พร้อมช่วงความเชื่อมั่น 95% และเลือกจำนวนปีที่ต้องการ "
+                "ไปที่หน้า Dashboard ได้จากเมนูด้านซ้าย"
+            )
+            if st.button("ไปที่หน้า Dashboard เพื่อพยากรณ์แบบเต็มรูปแบบ →", key="fc_goto_dashboard"):
+                st.session_state.page = "dashboard"
+                st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------------------------------------------------------
+# หน้า "ข้อมูลและตัวแปร" — ตารางข้อมูลที่ใช้จริงในโมเดล + คำอธิบายตัวแปรแต่ละตัว
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "data_vars":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("database", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">Data &amp; Variables</span>'
+        f'<h2>ข้อมูลและตัวแปร</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    if not result_ready:
+        st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูข้อมูลและตัวแปรที่ใช้ในโมเดล")
+    else:
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{icon("file", 20, 2)}</div>'
+            f'<div class="section-title-text"><h3>ตารางข้อมูลที่ใช้ในโมเดล</h3></div></div>',
+            unsafe_allow_html=True,
+        )
+        st.dataframe(model_df, use_container_width=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{icon("bulb", 20, 2)}</div>'
+            f'<div class="section-title-text"><h3>คำอธิบายตัวแปรที่ใช้ในสมการ</h3></div></div>',
+            unsafe_allow_html=True,
+        )
+        active_lr_set = set(st.session_state.active_long_run_vars)
+        active_sr_set = set(c for c, _, _ in st.session_state.active_short_run_spec)
+        var_rows_html = "".join(
+            "<tr>"
+            f"<td style='font-weight:600;color:var(--brand-navy);text-align:left;'>{code}</td>"
+            f"<td style='text-align:left;'>{VARIABLE_LABELS.get(code, code)}</td>"
+            f"<td>{'✅' if code in active_lr_set else '-'}</td>"
+            f"<td>{'✅' if code in active_sr_set else '-'}</td>"
+            "</tr>"
+            for code in VARIABLE_ORDER if code not in ("const", "ECM")
+        )
+        st.markdown(
+            f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
+            f'<th>รหัสตัวแปร</th><th>ชื่อเต็ม</th><th>อยู่ในสมการระยะยาว</th><th>อยู่ในสมการระยะสั้น</th>'
+            f'</tr></thead><tbody>{var_rows_html}</tbody></table></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------------------------------------------------------
+# หน้า "ผลการวิเคราะห์" — สรุปผลตรวจสอบข้อสมมติฐาน (Diagnostics) + ตารางค่าสัมประสิทธิ์
+# รวมระยะยาว/ระยะสั้น (ใช้ตัวแปรที่คำนวณไว้แล้วในส่วนรันโมเดลด้านบนไฟล์ ไม่คำนวณซ้ำ)
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "analysis":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("bars", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">Analysis Results</span>'
+        f'<h2>ผลการวิเคราะห์</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    if not result_ready:
+        st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูผลการวิเคราะห์")
+    else:
+        k1, k2, k3 = st.columns(3)
+        with k1:
+            st.markdown(
+                f'<div class="metric-card"><div class="metric-icon" style="background:var(--green);">'
+                f'{icon("check", 21, 2)}</div><div><div class="metric-value">{n_pass}</div>'
+                f'<div class="metric-label">ผ่านเกณฑ์ข้อสมมติฐาน</div></div></div>',
+                unsafe_allow_html=True,
+            )
+        with k2:
+            st.markdown(
+                f'<div class="metric-card"><div class="metric-icon" style="background:var(--amber);">'
+                f'{icon("alert", 21, 2)}</div><div><div class="metric-value">{n_watch}</div>'
+                f'<div class="metric-label">ควรจับตา</div></div></div>',
+                unsafe_allow_html=True,
+            )
+        with k3:
+            st.markdown(
+                f'<div class="metric-card"><div class="metric-icon" style="background:var(--red);">'
+                f'{icon("x", 21, 2)}</div><div><div class="metric-value">{n_fail}</div>'
+                f'<div class="metric-label">ไม่ผ่านเกณฑ์</div></div></div>',
+                unsafe_allow_html=True,
+            )
+        st.write("")
+        if diag_table_display is not None:
+            st.markdown(
+                f'<div class="section-card"><div class="section-title">'
+                f'<div class="section-num">{icon("check", 20, 2)}</div>'
+                f'<div class="section-title-text"><h3>ผลตรวจสอบข้อสมมติฐาน (Diagnostics)</h3></div></div>',
+                unsafe_allow_html=True,
+            )
+            diag_header_html = "".join(f"<th>{c}</th>" for c in diag_table_display.columns)
+            diag_rows_html = "".join(
+                "<tr>" + "".join(f"<td>{v}</td>" for v in row) + "</tr>"
+                for row in diag_table_display.values.tolist()
+            )
+            st.markdown(
+                f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
+                f'{diag_header_html}</tr></thead><tbody>{diag_rows_html}</tbody></table></div>',
+                unsafe_allow_html=True,
+            )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{icon("bars", 20, 2)}</div>'
+            f'<div class="section-title-text"><h3>ตารางค่าสัมประสิทธิ์ (ระยะยาว/ระยะสั้น)</h3></div></div>',
+            unsafe_allow_html=True,
+        )
+        combined_header_html2 = "".join(f"<th>{c}</th>" for c in combined_table.columns)
+        combined_rows_html2 = "".join(
+            "<tr>" + "".join(
+                f'<td style="font-weight:600;color:var(--brand-navy);">{v}</td>' if i == 0 else f"<td>{v}</td>"
+                for i, v in enumerate(row)
+            ) + "</tr>"
+            for row in combined_table.values.tolist()
+        )
+        st.markdown(
+            f'<div style="overflow-x:auto;"><table class="tfp-table tfp-table-left"><thead><tr>'
+            f'{combined_header_html2}</tr></thead><tbody>{combined_rows_html2}</tbody></table></div>',
+            unsafe_allow_html=True,
+        )
+        st.caption(f"Adj. R² (ระยะยาว) = {adj_r2_lr:.4f}  |  Adj. R² (ระยะสั้น) = {adj_r2_sr:.4f}")
+        st.markdown('</div>', unsafe_allow_html=True)
+
+# ------------------------------------------------------------------------------
+# หน้า "คู่มือการใช้งาน" — ขั้นตอนการใช้งานระบบแบบสรุป ไม่ขึ้นกับข้อมูลที่ดึงมา
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "manual":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("book", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">User Guide</span>'
+        f'<h2>คู่มือการใช้งาน</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    manual_steps = [
+        ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้าย (หรือการ์ด \"ดึงข้อมูลอัตโนมัติ\" ในหน้า Dashboard) เพื่อโหลดข้อมูลล่าสุดและรันโมเดลอัตโนมัติ"),
+        ("calendar", "กำหนดช่วงเวลาพยากรณ์", "ในหน้า Dashboard เลือกจำนวนปีที่ต้องการพยากรณ์ล่วงหน้าด้วยแถบเลื่อน ระบบจะเลือกโมเดล ARIMA ที่เหมาะสมให้อัตโนมัติ"),
+        ("trend-up", "ดูผลพยากรณ์และตัวแปรในสมการ", "ดูกราฟแนวโน้ม TFP ตัวแปรในสมการระยะสั้น/ระยะยาว และผลตรวจสอบข้อสมมติฐานได้จากเมนู \"พยากรณ์ TFP\", \"ข้อมูลและตัวแปร\" และ \"ผลการวิเคราะห์\""),
+        ("lock", "เข้าสู่ระบบสำหรับคณะวิจัย", "คณะวิจัยเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์ เพื่อปรับแต่งตัวแปรในสมการและสร้างรายงานสรุปผู้บริหารด้วย AI"),
+        ("download", "ดาวน์โหลดรายงาน", "ดาวน์โหลดตัวเลขพยากรณ์ ตารางผลการวิเคราะห์ หรือรายงานสรุปเป็นไฟล์ CSV/Word/PowerPoint ได้จากปุ่มดาวน์โหลดในแต่ละหมวด"),
+    ]
+    for i, (ic, title, desc) in enumerate(manual_steps, start=1):
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{i}</div>'
+            f'<div class="section-title-text"><h3>{title}</h3>'
+            f'<p style="margin:6px 0 0 0;color:var(--brand-navy-soft);font-size:0.9rem;line-height:1.65;">{desc}</p>'
+            f'</div></div></div>',
+            unsafe_allow_html=True,
+        )
+
+# ------------------------------------------------------------------------------
+# หน้า "จัดการข้อมูลอัตโนมัติ" — เวอร์ชันขยายของปุ่มดึงข้อมูลที่แถบด้านซ้าย
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "data_admin":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("cloud", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">Data Management</span>'
+        f'<h2>จัดการข้อมูลอัตโนมัติ</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        f'<div class="section-card"><div class="section-title">'
+        f'<div class="section-num">{icon("cloud", 20, 2)}</div>'
+        f'<div class="section-title-text"><h3>ดึงข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</h3>'
+        f'<p style="margin:6px 0 0 0;color:var(--brand-navy-soft);font-size:0.9rem;">'
+        f'อัปเดตข้อมูลแล้วรันโมเดล TFP ใหม่ทั้งหมดโดยอัตโนมัติ</p></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    if st.session_state.get("gsheet_load_error"):
+        st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
+    elif "gsheet_raw_df" in st.session_state:
+        st.success(f"ดึงข้อมูลล่าสุดเมื่อ {thai_timestamp()}")
+    else:
+        st.info("ยังไม่เคยดึงข้อมูลในเซสชันนี้")
+    if st.button("คลิกดึงข้อมูลอัตโนมัติ", key="data_admin_fetch_btn"):
+        st.session_state.pop("gsheet_load_error", None)
+        try:
+            with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                st.session_state.gsheet_raw_df = load_data_gsheet()
+            st.session_state.gsheet_loaded_at = now_th()
+            st.rerun()
+        except Exception as e:
+            st.session_state.gsheet_load_error = str(e)
+            st.session_state.pop("gsheet_raw_df", None)
+
+# ------------------------------------------------------------------------------
+# หน้า "ตั้งค่าระบบ" — ข้อมูลเวอร์ชันแอปและหมายเหตุทั่วไป (placeholder — ยังไม่มี
+# การตั้งค่าที่ผู้ใช้แก้ไขได้จริงในเวอร์ชันนี้)
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "settings":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("settings", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">System Settings</span>'
+        f'<h2>ตั้งค่าระบบ</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        '<div class="section-card"><div class="section-title">'
+        f'<div class="section-num">{icon("info", 20, 2)}</div>'
+        '<div class="section-title-text"><h3>เกี่ยวกับระบบ</h3>'
+        '<p style="margin:6px 0 0 0;color:var(--brand-navy-soft);font-size:0.9rem;line-height:1.7;">'
+        'ระบบแบบจำลองเศรษฐมิติมหภาค (TFP) — NXPO Data Center<br>เวอร์ชัน 1.0.0'
+        '</p></div></div></div>',
+        unsafe_allow_html=True,
+    )
+    st.info("การตั้งค่าเพิ่มเติม (เช่น การสลับธีมสี การแจ้งเตือน) จะเปิดให้ใช้งานในเวอร์ชันถัดไป")
+
+# ------------------------------------------------------------------------------
+# ท้ายหน้าเว็บ — เดิมมี footer กลางหน้าแสดงโลโก้ สอวช./สวค./มหาวิทยาลัย/ภาควิชา +
+# ข้อมูลผู้จัดทำอยู่ตรงนี้ ปัจจุบันถูกลบออกแล้ว เพราะย้ายโลโก้มหาวิทยาลัย/ภาควิชา
+# และข้อมูลผู้จัดทำทั้งหมดไปแสดงเล็ก ๆ ท้ายแถบเมนูด้านซ้ายแทน (ดูตัวแปร
+# _corner_badge_html ที่ประกาศไว้ต้นไฟล์แถวเดียวกับที่กำหนด logo3_html/logo4_html
+# และเรียกใช้จริงใน `with st.sidebar:` ด้านบน)
+# ------------------------------------------------------------------------------
