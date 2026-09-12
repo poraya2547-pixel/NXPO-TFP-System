@@ -17,6 +17,7 @@ RDH_GDP จากแท็บ Researcher) เพียงแต่อ่าน�
 ================================================================================
 """
 
+import re
 import time
 
 import gspread
@@ -40,6 +41,23 @@ RESEARCHER_TAB = "Researcher"  # ชื่อแท็บ RDH_GDP จาก OECD
 # service unavailable) — คุ้มค่าที่จะลองใหม่อัตโนมัติ ต่างจาก 4xx อย่าง 403/404
 # ที่เป็นปัญหาสิทธิ์/การตั้งค่าซึ่งลองกี่ครั้งก็ไม่หาย
 _RETRYABLE_STATUS_CODES = {500, 502, 503, 504}
+
+# จับรูปแบบ Sheet ID จากลิงก์ Google Sheet เต็มรูปแบบ เช่น
+# "https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit#gid=0" -> "<SHEET_ID>"
+_SHEET_URL_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9_-]+)")
+
+
+def _resolve_sheet_id(sheet_url_or_id: str = None) -> str:
+    """แปลงค่าที่คณะวิจัยกรอกเข้ามา (ลิงก์เต็มของ Google Sheet หรือแค่ Sheet ID
+    ล้วนๆ ก็ได้) ให้กลายเป็น Sheet ID ที่ใช้เรียก gspread ได้จริง — ถ้าไม่ได้
+    กรอกอะไรมาเลย (None/ว่าง) จะคืนค่า SHEET_ID เริ่มต้นที่ตั้งไว้ในโค้ดแทน"""
+    if not sheet_url_or_id or not str(sheet_url_or_id).strip():
+        return SHEET_ID
+    text = str(sheet_url_or_id).strip()
+    m = _SHEET_URL_ID_RE.search(text)
+    if m:
+        return m.group(1)
+    return text  # สมมติว่าผู้ใช้กรอก Sheet ID มาตรงๆ (ไม่ใช่ลิงก์เต็ม)
 
 
 def _call_with_retry(func, *args, max_attempts: int = 3, base_delay: float = 1.5, **kwargs):
@@ -106,10 +124,10 @@ def _get_client() -> gspread.Client:
         ) from file_error
 
 
-def _load_researcher_rdh(client: gspread.Client, country: str = "Thailand") -> pd.Series:
+def _load_researcher_rdh(client: gspread.Client, sheet_id: str, country: str = "Thailand") -> pd.Series:
     """เทียบเท่า load_researcher_rdh() ใน TFP.py แต่ดึงจากแท็บ Google Sheet
     แทนชีต Excel"""
-    ws = _call_with_retry(lambda: client.open_by_key(SHEET_ID).worksheet(RESEARCHER_TAB))
+    ws = _call_with_retry(lambda: client.open_by_key(sheet_id).worksheet(RESEARCHER_TAB))
     values = _call_with_retry(ws.get_all_values)
     try:
         row = next(r for r in values if r and country in r[0])
@@ -123,12 +141,19 @@ def _load_researcher_rdh(client: gspread.Client, country: str = "Thailand") -> p
     return vals.rename("RDH_GDP")
 
 
-def load_data_gsheet(rdh_source: str = RDH_SOURCE) -> pd.DataFrame:
+def load_data_gsheet(rdh_source: str = RDH_SOURCE, url: str = None) -> pd.DataFrame:
     """เทียบเท่า load_data() ใน TFP.py ทุกขั้นตอน (rename, ตั้งปีเป็น index,
     หาร % ด้วย 100, ดึง RDH_GDP จากแท็บ Researcher) แต่อ่านจาก Google Sheets
-    คืนค่าเป็น DataFrame รูปแบบเดียวกับที่ TFP.build_model_frame() คาดหวัง"""
+    คืนค่าเป็น DataFrame รูปแบบเดียวกับที่ TFP.build_model_frame() คาดหวัง
+
+    พารามิเตอร์ url: ลิงก์ Google Sheet เต็มรูปแบบ หรือ Sheet ID ล้วนๆ ก็ได้
+    ที่คณะวิจัยกรอกเองจากหน้า "จัดการข้อมูลอัตโนมัติ" ในเว็บแอป — ถ้าไม่ระบุ
+    (None/ว่าง) จะใช้ SHEET_ID เริ่มต้นที่ตั้งไว้ด้านบนของไฟล์นี้แทนตามปกติ
+    (Sheet ที่ใช้ลิงก์นี้ต้องมีโครงสร้างแท็บ "Data"/"Researcher" เหมือนเดิมทุก
+    ประการ ตามที่อธิบายไว้ในคอมเมนต์หัวไฟล์ ไม่เช่นนั้นจะโหลดข้อมูลไม่สำเร็จ)"""
+    sheet_id = _resolve_sheet_id(url)
     client = _get_client()
-    ws = _call_with_retry(lambda: client.open_by_key(SHEET_ID).worksheet(DATA_TAB))
+    ws = _call_with_retry(lambda: client.open_by_key(sheet_id).worksheet(DATA_TAB))
     values = _call_with_retry(ws.get_all_values)
 
     if len(values) < 4:
@@ -159,7 +184,7 @@ def load_data_gsheet(rdh_source: str = RDH_SOURCE) -> pd.DataFrame:
             df[col] = df[col] / 100.0
 
     if rdh_source == "researcher":
-        rdh = _load_researcher_rdh(client)
+        rdh = _load_researcher_rdh(client, sheet_id)
         df["RDH_GDP"] = rdh.reindex(df.index)
     elif rdh_source != "data":
         raise ValueError('rdh_source ต้องเป็น "researcher" หรือ "data"')
