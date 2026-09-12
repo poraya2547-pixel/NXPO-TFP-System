@@ -2678,21 +2678,35 @@ elif st.session_state.page == "dashboard":
         """,
         unsafe_allow_html=True,
     )
-    st.markdown(
-        """
-        <div class="hero-banner-tfp">
-            <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
-            <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>
-            <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวมของประเทศไทยและปัจจัยที่เกี่ยวข้อง พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติจากข้อมูลล่าสุด</p>
-            <div class="hero-tags">
-                <span class="hero-tag">Total Factor Productivity (TFP)</span>
-                <span class="hero-tag">Econometric Model</span>
-                <span class="hero-tag">AI Executive Summary</span>
+    if not result_ready:
+        st.markdown(
+            """
+            <div class="hero-banner-tfp">
+                <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
+                <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>
+                <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวมของประเทศไทยและปัจจัยที่เกี่ยวข้อง พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติจากข้อมูลล่าสุด</p>
+                <div class="hero-tags">
+                    <span class="hero-tag">Total Factor Productivity (TFP)</span>
+                    <span class="hero-tag">Econometric Model</span>
+                    <span class="hero-tag">AI Executive Summary</span>
+                </div>
             </div>
-        </div>
-        """,
-        unsafe_allow_html=True,
-    )
+            """,
+            unsafe_allow_html=True,
+        )
+    else:
+        # พอดึงข้อมูลและมีผลลัพธ์แล้ว ย่อ hero banner ต้อนรับให้เหลือแค่หัวข้อสั้น ๆ
+        # (ไม่ต้องพูดซ้ำว่า "ยินดีต้อนรับ" หรือรายละเอียดระบบอีก เพราะผู้ใช้เข้าสู่การดูผลจริงแล้ว)
+        st.markdown(
+            """
+            <div class="app-header">
+                <div>
+                    <h1 style="font-size:1.9rem;">Dashboard พยากรณ์ผลิตภาพปัจจัยการผลิตรวม</h1>
+                </div>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     # การ์ด "ดึงข้อมูลอัตโนมัติ" และ "เข้าสู่ระบบสำหรับคณะวิจัย" ถูกตัดออกจากตรงนี้
     # เพราะเป็นปุ่มเดียวกันกับที่มีอยู่แล้วถาวรในแถบเมนูด้านซ้าย (เห็นพร้อมกันทั้ง 2
