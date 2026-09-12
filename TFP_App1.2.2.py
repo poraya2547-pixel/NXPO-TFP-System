@@ -302,6 +302,51 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .header-chip span { overflow-wrap: break-word; }
 .header-chip svg { color: var(--brand-orange-dark); flex-shrink: 0; }
 
+/* ----- hero banner (หัวหน้า Dashboard) — แบนเนอร์ไล่สีครีม-ส้มพร้อมกราฟิก
+   เส้นแนวโน้มขาขึ้นจาง ๆ ด้านขวา และแท็กหัวข้อ (pill) บอกจุดเด่นของระบบ
+   เพิ่มความรู้สึก "โปรดักต์จริง" ให้หน้า Dashboard แทนหัวข้อตัวหนังสือล้วนเดิม ----- */
+.hero-banner {
+    position: relative; overflow: hidden;
+    border-radius: 22px; padding: 34px 40px;
+    margin-bottom: 20px;
+    background-image: linear-gradient(115deg, #FFFBF3 0%, #FDECD4 45%, #FBD9AE 100%);
+    border: 1px solid #F3DDB8;
+    box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,0.9);
+    animation: tfp-rise .4s ease both;
+}
+.hero-banner-inner { position: relative; z-index: 2; max-width: 700px; }
+.hero-eyebrow { font-size: 0.85rem; font-weight: 700; color: var(--brand-orange-dark); margin-bottom: 6px; letter-spacing: 0.01em; }
+.hero-banner h1 {
+    font-family: var(--font-elegant); font-size: 2.05rem; margin: 0 0 10px 0;
+    color: var(--brand-navy); font-weight: 700; letter-spacing: -0.01em; line-height: 1.28;
+    overflow-wrap: break-word;
+}
+.hero-banner p {
+    margin: 0 0 18px 0; color: var(--brand-navy-soft); font-size: 0.98rem;
+    line-height: 1.65; max-width: 60ch; overflow-wrap: break-word;
+}
+.hero-pill-row { display: flex; flex-wrap: wrap; gap: 10px; position: relative; z-index: 2; }
+.hero-pill {
+    display: inline-flex; align-items: center; gap: 7px; white-space: nowrap;
+    background: rgba(255,255,255,0.8); border: 1px solid rgba(194,65,12,0.25);
+    color: var(--brand-orange-dark); padding: 6px 14px; border-radius: 999px;
+    font-size: 0.8rem; font-weight: 700;
+}
+.hero-decor {
+    position: absolute; right: -6px; top: 0; bottom: 0; width: 44%;
+    opacity: 0.9; pointer-events: none; z-index: 1;
+}
+.hero-tagline {
+    position: absolute; top: 24px; right: 30px; text-align: right; z-index: 3; pointer-events: none;
+}
+.hero-tagline span {
+    display: block; font-family: 'Noto Serif Thai', serif; font-style: italic;
+    font-size: 1.05rem; color: var(--brand-orange-dark); line-height: 1.35;
+}
+@media (max-width: 900px) {
+    .hero-decor, .hero-tagline { display: none; }
+}
+
 /* ----- เอฟเฟกต์เข้าฉากแบบนุ่ม ๆ (ลูกเล่นเล็ก ๆ ตอนการ์ดปรากฏ ไม่รบกวนสายตา) ----- */
 @keyframes tfp-rise {
     from { opacity: 0; transform: translateY(8px); }
@@ -861,25 +906,6 @@ _ICON_PATHS = {
     "sparkle": (
         '<path d="M10,3.5 L11.6,8.4 L16.5,10 L11.6,11.6 L10,16.5 L8.4,11.6 L3.5,10 L8.4,8.4 Z" fill="currentColor" stroke="none"/>'
         '<path d="M16,2 L16.4,3.6 L18,4 L16.4,4.4 L16,6 L15.6,4.4 L14,4 L15.6,3.6 Z" fill="currentColor" stroke="none" opacity="0.85"/>'
-    ),
-    "cloud": (
-        '<path d="M5.5 14.5C3.6 14.5 2 13 2 11.1C2 9.3 3.4 7.9 5.1 7.8C5.6 5.6 7.6 4 10 4C12.6 4 14.7 5.9 15 8.4C16.7 8.6 18 10 18 11.7C18 13.3 16.7 14.5 15.2 14.5H5.5Z" stroke-linejoin="round"/>'
-    ),
-    "calendar": (
-        '<rect x="3" y="4.5" width="14" height="12.5" rx="1.6" stroke-linejoin="round"/>'
-        '<line x1="3" y1="8.2" x2="17" y2="8.2"/>'
-        '<line x1="6.5" y1="2.8" x2="6.5" y2="5.5" stroke-linecap="round"/>'
-        '<line x1="13.5" y1="2.8" x2="13.5" y2="5.5" stroke-linecap="round"/>'
-    ),
-    "lock": (
-        '<rect x="4.5" y="9" width="11" height="8" rx="1.6" stroke-linejoin="round"/>'
-        '<path d="M6.8 9V6.3C6.8 4.5 8.2 3 10 3C11.8 3 13.2 4.5 13.2 6.3V9" stroke-linecap="round"/>'
-        '<circle cx="10" cy="12.8" r="1" fill="currentColor" stroke="none"/>'
-    ),
-    "download": (
-        '<path d="M10 3.5V12.5" stroke-linecap="round"/>'
-        '<path d="M6 9.3L10 13.3L14 9.3" stroke-linecap="round" stroke-linejoin="round"/>'
-        '<path d="M4 15.5V16.2C4 16.6 4.3 17 4.8 17H15.2C15.6 17 16 16.6 16 16.2V15.5" stroke-linecap="round"/>'
     ),
 }
 
@@ -2647,84 +2673,78 @@ if st.session_state.page == "home":
                     st.error(f"เรียก Gemini ไม่สำเร็จ: {e}")
 
 elif st.session_state.page == "dashboard":
-    # ================= สไตล์เฉพาะของหน้า Dashboard: hero banner + การ์ดทางลัด =================
+    # ----- แบนเนอร์หัวหน้า Dashboard (hero banner) แทนหัวข้อตัวหนังสือล้วนเดิม
+    # ให้ความรู้สึกเหมือนหน้าแรกของโปรดักต์จริงมากขึ้น ไม่กระทบโครงสร้างเมนู/
+    # หน้าอื่น ๆ ของแอปแต่อย่างใด -----
     st.markdown(
         """
-        <style>
-        .hero-banner-tfp {
-            background: linear-gradient(120deg, var(--gold-tint) 0%, #FFFFFF 58%, var(--gold-tint) 100%);
-            border: 1px solid var(--card-border); border-radius: 20px;
-            padding: 30px 34px; margin-bottom: 20px; box-shadow: var(--shadow-soft);
-        }
-        .hero-banner-tfp .hero-eyebrow { color: var(--brand-orange-dark); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.02em; }
-        .hero-banner-tfp h1 { font-family: var(--font-elegant); font-size: 2rem; color: var(--brand-navy); margin: 6px 0 10px 0; font-weight: 700; overflow-wrap: break-word; }
-        .hero-banner-tfp p { color: var(--brand-navy-soft); font-size: 0.98rem; line-height: 1.7; max-width: 66ch; margin: 0; overflow-wrap: break-word; }
-        .hero-banner-tfp .hero-tags { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
-        .hero-banner-tfp .hero-tag {
-            background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 999px;
-            padding: 5px 16px; font-size: 0.78rem; color: var(--brand-navy-soft); font-weight: 600;
-        }
-        .st-key-hero_card_horizon {
-            background: #FFFFFF !important; border-radius: 16px !important;
-        }
-        .action-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
-        .action-card-icon {
-            width: 36px; height: 36px; border-radius: 10px; background: var(--gold-tint);
-            color: var(--brand-orange-dark); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
-        }
-        .action-card-title { font-weight: 700; color: var(--brand-navy); font-size: 0.98rem; }
-        .action-card-sub { font-size: 0.8rem; color: var(--brand-navy-soft); margin-bottom: 10px; line-height: 1.5; }
-        </style>
-        """,
-        unsafe_allow_html=True,
-    )
-    st.markdown(
-        """
-        <div class="hero-banner-tfp">
-            <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
-            <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>
-            <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวมของประเทศไทยและปัจจัยที่เกี่ยวข้อง พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติจากข้อมูลล่าสุด</p>
-            <div class="hero-tags">
-                <span class="hero-tag">Total Factor Productivity (TFP)</span>
-                <span class="hero-tag">Econometric Model</span>
-                <span class="hero-tag">AI Executive Summary</span>
+        <div class="hero-banner">
+            <div class="hero-tagline"><span>Better Data</span><span>Better Policy</span></div>
+            <div class="hero-decor">
+                <svg viewBox="0 0 400 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:100%;">
+                    <polyline points="10,190 60,190 60,140 100,140 100,160 150,160 150,110 200,110 200,150 250,150 250,90 300,90 300,190 340,190"
+                        fill="none" stroke="#C2410C" stroke-width="3" stroke-opacity="0.18"/>
+                    <path d="M20,180 L90,120 L150,150 L230,60 L300,90" fill="none" stroke="#F97316"
+                        stroke-width="5" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>
+                    <polygon points="300,90 322,78 306,106" fill="#F97316" opacity="0.85"/>
+                </svg>
+            </div>
+            <div class="hero-banner-inner">
+                <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
+                <h1>Dashboard วิเคราะห์ผลิตภาพการผลิตรวม (TFP)</h1>
+                <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวม (TFP) และปัจจัยที่เกี่ยวข้องจากข้อมูลล่าสุด
+                   พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติ</p>
+                <div class="hero-pill-row">
+                    <span class="hero-pill">Total Factor Productivity (TFP)</span>
+                    <span class="hero-pill">Econometric Model</span>
+                    <span class="hero-pill">AI Executive Summary</span>
+                </div>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
 
-    # การ์ด "ดึงข้อมูลอัตโนมัติ" และ "เข้าสู่ระบบสำหรับคณะวิจัย" ถูกตัดออกจากตรงนี้
-    # เพราะเป็นปุ่มเดียวกันกับที่มีอยู่แล้วถาวรในแถบเมนูด้านซ้าย (เห็นพร้อมกันทั้ง 2
-    # จุดบนหน้าจอเดียวกันแล้วทำให้งงว่าต้องกดปุ่มไหน) เหลือเฉพาะการตั้งค่าที่เป็น
-    # ของหน้า Dashboard นี้โดยเฉพาะ คือช่วงเวลาพยากรณ์
-    with st.container(border=True, key="hero_card_horizon"):
+    # ----- แถวการ์ดสรุปสถานะ 3 ใบใต้แบนเนอร์ (ข้อมูลจริงจาก session ปัจจุบัน
+    # ไม่ใช่ปุ่ม/ช่องกรอกใหม่ซ้ำกับแถบเมนูซ้าย เพื่อไม่ให้ชนกับ widget เดิม) -----
+    _hero_c1, _hero_c2, _hero_c3 = st.columns(3)
+    with _hero_c1:
+        if "gsheet_raw_df" in st.session_state:
+            _dash_load_val = st.session_state.gsheet_loaded_at.strftime("%d/%m/%Y %H:%M น.")
+            _dash_load_label = "ข้อมูลอัปเดตล่าสุดจากแหล่งข้อมูลภายนอก"
+        else:
+            _dash_load_val = "ยังไม่ได้ดึงข้อมูล"
+            _dash_load_label = 'กดปุ่ม "ดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้าย'
         st.markdown(
-            f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
-            f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
-            f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
+            f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-orange);">'
+            f'{icon("database", 21, 1.8)}</div>'
+            f'<div><div class="metric-value" style="font-size:1.05rem;">{_dash_load_val}</div>'
+            f'<div class="metric-label">{_dash_load_label}</div></div></div>',
             unsafe_allow_html=True,
         )
+    with _hero_c2:
+        _dash_horizon = st.session_state.get("tfp_forecast_horizon", 5)
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-icon" style="background:var(--brand-navy);">'
+            f'{icon("clock", 21, 1.8)}</div>'
+            f'<div><div class="metric-value">{_dash_horizon} ปี</div>'
+            f'<div class="metric-label">ช่วงเวลาพยากรณ์ที่ตั้งไว้ (ปรับได้ในกราฟด้านล่าง)</div></div></div>',
+            unsafe_allow_html=True,
+        )
+    with _hero_c3:
         if result_ready:
-            _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
-            _hz_options = [3, 5, 8, 10, 15, 20, 30]
-            if "tfp_forecast_horizon" not in st.session_state:
-                st.session_state["tfp_forecast_horizon"] = 5
-            st.selectbox(
-                "ช่วงเวลาพยากรณ์", options=_hz_options,
-                format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
-                key="tfp_forecast_horizon", label_visibility="collapsed",
-            )
+            _dash_diag_val = f"{n_pass} ผ่าน · {n_watch} เฝ้าระวัง · {n_fail} ไม่ผ่าน"
+            _dash_diag_bg = "var(--red)" if n_fail else ("var(--amber)" if n_watch else "var(--green)")
         else:
-            st.markdown(
-                '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                'ดึงข้อมูลจากแถบเมนูด้านซ้ายก่อน เพื่อกำหนดช่วงพยากรณ์</div>',
-                unsafe_allow_html=True,
-            )
-            st.selectbox(
-                "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
-                key="hero_horizon_disabled", label_visibility="collapsed",
-            )
+            _dash_diag_val = "รอผลการรันแบบจำลอง"
+            _dash_diag_bg = "var(--brand-navy-soft)"
+        st.markdown(
+            f'<div class="metric-card"><div class="metric-icon" style="background:{_dash_diag_bg};">'
+            f'{icon("check", 21, 2)}</div>'
+            f'<div><div class="metric-value" style="font-size:1rem;">{_dash_diag_val}</div>'
+            f'<div class="metric-label">สถานะการตรวจสอบข้อสมมติฐานแบบจำลอง</div></div></div>',
+            unsafe_allow_html=True,
+        )
     st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
@@ -2957,7 +2977,7 @@ elif st.session_state.page == "dashboard":
         )
 
     if not result_ready:
-        st.info("ยังไม่มีข้อมูล — กดปุ่ม “คลิกดึงข้อมูลอัตโนมัติ” ที่แถบเมนูด้านซ้ายก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
+        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
         # ================= กราฟภาพรวม: แนวโน้มดัชนี TFP ย้อนหลัง + พยากรณ์ (ARIMA) =================
         st.markdown(
@@ -2980,13 +3000,18 @@ elif st.session_state.page == "dashboard":
                 )
 
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                # ช่วงพยากรณ์ถูกกำหนดจากการ์ด "กำหนดช่วงเวลาพยากรณ์" ด้านบนสุดของหน้า
-                # (จุดเดียว ไม่มีตัวเลื่อนซ้ำที่นี่ เพื่อไม่ให้สับสนว่าต้องตั้งค่าที่ไหนกันแน่)
-                horizon = st.session_state.get("tfp_forecast_horizon", 5)
-                st.caption(
-                    f"ช่วงพยากรณ์ที่เลือกไว้: {horizon} ปีข้างหน้า "
-                    f"(ปรับได้จากการ์ด “กำหนดช่วงเวลาพยากรณ์” ด้านบนสุดของหน้า)"
-                )
+                # ----- แถบเลือกช่วงพยากรณ์ล่วงหน้า (slider) -----
+                fc_col1, fc_col2 = st.columns([3, 1])
+                with fc_col1:
+                    horizon = st.slider(
+                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า", min_value=1, max_value=30,
+                        value=5, step=1, key="tfp_forecast_horizon",
+                        help="เลือกได้ตั้งแต่ 1 ปีจนถึง 30 ปี ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
+                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                    )
+                with fc_col2:
+                    st.markdown("<div style='height:1.9rem;'></div>", unsafe_allow_html=True)
+                    st.caption(f"≈ {horizon} ปีข้างหน้า")
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
@@ -3106,102 +3131,6 @@ elif st.session_state.page == "dashboard":
                     f"อย่างน่าเชื่อถือ (ต้องการอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
                 )
         st.markdown('</div>', unsafe_allow_html=True)
-
-        # ================= ภาพรวมผลการพยากรณ์ + ตัวแปรในสมการ (สั้น/ยาว) แบบสรุปย่อ =================
-        _ov_col, _tbl_col = st.columns([1, 1.4], gap="large")
-        with _ov_col:
-            st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("bulb", 20, 1.6)}</div>'
-                f'<div class="section-title-text"><h3>ภาพรวมผลการพยากรณ์</h3></div></div>',
-                unsafe_allow_html=True,
-            )
-            if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                _last_actual_year = int(tfp_series.index.max())
-                _last_actual_val = float(tfp_series.iloc[-1])
-                _fc_last_val = float(fc_last["mean"])
-                _pct_change = (_fc_last_val / _last_actual_val - 1) * 100 if _last_actual_val else 0.0
-                _n_years = last_fc_year - _last_actual_year
-                _cagr = (
-                    ((_fc_last_val / _last_actual_val) ** (1 / _n_years) - 1) * 100
-                    if _n_years > 0 and _last_actual_val > 0 else 0.0
-                )
-                _trend_up = _fc_last_val >= _last_actual_val
-                st.markdown(
-                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">TFP ปี {last_fc_year} (พยากรณ์)</div>'
-                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);line-height:1.15;margin:2px 0 6px 0;">{_fc_last_val:,.2f}</div>'
-                    f'<div style="font-size:0.85rem;color:{"var(--green)" if _trend_up else "#DC2626"};font-weight:700;">'
-                    f'{"▲" if _trend_up else "▼"} {abs(_pct_change):.1f}% จากปี {_last_actual_year}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-                st.markdown(
-                    f'<div style="font-size:0.88rem;font-weight:700;color:var(--brand-navy);margin-bottom:8px;">'
-                    f'แนวโน้มในช่วง {horizon} ปีข้างหน้า</div>',
-                    unsafe_allow_html=True,
-                )
-                for _b in [
-                    f'TFP มีแนวโน้ม{"เพิ่มขึ้น" if _trend_up else "ลดลง"}อย่างต่อเนื่อง',
-                    f'อัตราการเติบโตเฉลี่ย (CAGR) ≈ {_cagr:.1f}% ต่อปี',
-                    f'ใช้แบบจำลอง ARIMA({p},{d},{q}) เลือกอัตโนมัติจากค่า AIC ต่ำสุด',
-                ]:
-                    st.markdown(
-                        f'<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">'
-                        f'<span style="color:var(--green);flex-shrink:0;margin-top:1px;">{icon("check", 15, 2.2)}</span>'
-                        f'<span style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.5;">{_b}</span></div>',
-                        unsafe_allow_html=True,
-                    )
-            else:
-                st.markdown(
-                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">ค่า TFP ล่าสุด (ปี {int(tfp_series.index.max())})</div>'
-                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);">{tfp_series.iloc[-1]:,.2f}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.caption(f"ข้อมูลยังมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        with _tbl_col:
-            st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("file", 19, 1.8)}</div>'
-                f'<div class="section-title-text"><h3>ตัวแปรในสมการ</h3></div></div>',
-                unsafe_allow_html=True,
-            )
-
-            def _mini_coef_table(raw_map: dict, var_list: list) -> str:
-                rows = []
-                for v in var_list:
-                    info = raw_map.get(v)
-                    if not info or info.get("p") is None:
-                        continue
-                    rows.append((var_label_with_abbr(v), info["coef"], info["p"]))
-                if not rows:
-                    return (
-                        "<div style='font-size:0.85rem;color:var(--brand-navy-soft);padding:6px 0;'>"
-                        "ไม่มีข้อมูล</div>"
-                    )
-                body = "".join(
-                    f'<tr><td>{name}</td><td style="text-align:right;">{coef:,.3f}</td>'
-                    f'<td style="text-align:right;">{p_val:.3f}</td>'
-                    f'<td style="text-align:center;">{"🟢▲" if coef >= 0 else "🔴▼"}</td></tr>'
-                    for name, coef, p_val in rows
-                )
-                return (
-                    '<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;">'
-                    '<thead><tr><th>ตัวแปร</th><th style="text-align:right;">ค่าสัมประสิทธิ์</th>'
-                    '<th style="text-align:right;">p-value</th><th style="text-align:center;">ทิศทาง</th></tr></thead>'
-                    f'<tbody>{body}</tbody></table></div>'
-                )
-
-            _tab_sr, _tab_lr = st.tabs(["ตัวแปรในสมการ (ระยะสั้น)", "ตัวแปรในสมการ (ระยะยาว)"])
-            with _tab_sr:
-                st.markdown(_mini_coef_table(sr_raw_map, active_sr_bases), unsafe_allow_html=True)
-            with _tab_lr:
-                st.markdown(
-                    _mini_coef_table(lr_raw_map, [v for v in active_lr_vars if v != "const"]),
-                    unsafe_allow_html=True,
-                )
-            st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= กราฟรายตัวแปร: แยกกล่องระยะยาว / ระยะสั้น =================
         # แยกรายชื่อตัวแปรอิสระเป็น 2 ชุดตามสมการที่ตัวแปรนั้นอยู่ แทนที่จะรวมเป็น
