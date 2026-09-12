@@ -194,42 +194,47 @@ st.markdown("""
         linear-gradient(180deg, #FAF8F4 0%, var(--bg-page) 320px);
 }
 
-/* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
-section[data-testid="stSidebar"] {
-    background: #FFFFFF;
-    border-right: 1px solid var(--card-border);
+/* ----- แถบเมนูบน (เดิมเป็น sidebar ด้านข้าง ย้ายมาเป็นแถบแนวนอนด้านบนแทน
+   เพื่อให้เนื้อหาหลักเต็มความกว้างจอ และใช้โทนสีเดียวกับ hero banner) ----- */
+.st-key-topnav_bar {
+    background: linear-gradient(120deg, var(--gold-tint) 0%, #FFFFFF 60%, var(--gold-tint) 100%) !important;
+    border: 1px solid var(--card-border) !important;
+    border-radius: 16px !important;
+    padding: 14px 22px !important;
+    margin-bottom: 20px !important;
+    box-shadow: var(--shadow-soft);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
-section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
+.topnav-logo-row { display: flex; align-items: center; gap: 14px; height: 100%; }
+.topnav-logo-divider { width: 1px; align-self: stretch; background: var(--card-border); }
 
-/* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
+/* ----- การ์ดโลโก้ด้านบนแถบเมนู (ใช้ตอนยังเป็น sidebar แนวตั้ง) ----- */
 .sidebar-logo-card {
     display: flex; align-items: center; justify-content: center; gap: 24px;
     margin-bottom: 18px;
 }
 
-/* ----- ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป —
-   วางไว้ท้ายแถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ ไม่ลอยทับเนื้อหา) ----- */
+/* ----- footer ท้ายหน้าเว็บ: ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา +
+   เวอร์ชันแอป (ย้ายมาจากมุมล่างแถบเมนูด้านข้างเดิม มาไว้ท้ายเนื้อหาทุกหน้าแทน) ----- */
+.page-footer {
+    display: flex; align-items: center; gap: 14px;
+    padding: 16px 22px; margin-top: 32px;
+    border-top: 1px solid var(--card-border);
+}
 .corner-badge {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 6px;
-    padding: 0;
-    margin-top: 18px;
-    padding-top: 12px;
-    border-top: 1px solid var(--card-border);
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
 }
 .corner-badge-logos {
     display: flex; align-items: center; gap: 8px; flex-shrink: 0;
 }
 .corner-badge-text {
-    font-size: 0.62rem; line-height: 1.4; color: var(--brand-navy-soft);
+    font-size: 0.68rem; line-height: 1.5; color: var(--brand-navy-soft);
     text-align: left;
-    width: 100%;
 }
 .corner-badge-author {
-    font-weight: 700; color: var(--brand-navy); font-size: 0.66rem;
+    font-weight: 700; color: var(--brand-navy); font-size: 0.72rem;
 }
 .corner-badge-version {
     margin-top: 2px; font-weight: 600; color: var(--brand-orange-dark);
@@ -240,46 +245,44 @@ section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !imp
     display: flex; align-items: center; gap: 7px;
 }
 
-/* ----- sidebar nav (ปุ่มเมนู หน้าหลัก / Dashboard) -----
+/* ----- ปุ่มเมนูในแถบบน (Dashboard / สำหรับคณะวิจัย) -----
    ปกติพื้นขาว ตัวหนังสือสีเข้ม — พอกด (เมนูนั้นกลายเป็นหน้าที่เลือกอยู่)
    พื้นจะเปลี่ยนเป็นสีส้มของแบรนด์ ตัวหนังสือเป็นสีขาว */
-section[data-testid="stSidebar"] div[data-testid="stButton"] button {
-    justify-content: flex-start !important;
+.st-key-topnav_bar div[data-testid="stButton"] button {
     border-radius: 10px !important;
     font-size: 0.96rem !important;
-    padding: 10px 14px !important;
-    margin-bottom: 4px;
+    padding: 10px 18px !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] {
     background: #FFFFFF !important;
     border: 1px solid var(--card-border) !important;
     color: var(--brand-navy) !important;
     font-weight: 500 !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"]:hover {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"]:hover {
     background: var(--gold-tint) !important;
     border-color: var(--brand-orange) !important;
     color: var(--brand-orange-dark) !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] {
     background: var(--brand-orange) !important;
     border: 1px solid var(--brand-orange) !important;
     color: #FFFFFF !important;
     font-weight: 700 !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"]:hover {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"]:hover {
     background: var(--brand-orange-dark) !important;
     border-color: var(--brand-orange-dark) !important;
     color: #FFFFFF !important;
 }
 /* ตัวหนังสือในปุ่มจริงๆ อยู่ใน <p>/<span> ซ้อนอยู่ข้างใน ต้องกำหนดสีตรงนี้ด้วย
    ไม่งั้นสีที่ตั้งไว้ที่ตัว <button> จะไม่ถูกนำไปใช้ (ปัญหาเดิมที่เจอ) */
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] p,
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="secondary"] span {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] p,
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="secondary"] span {
     color: var(--brand-navy) !important;
 }
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] p,
-section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] span {
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] p,
+.st-key-topnav_bar div[data-testid="stButton"] button[kind="primary"] span {
     color: #FFFFFF !important;
 }
 
@@ -2115,58 +2118,36 @@ except (KeyError, FileNotFoundError):
 if "research_authenticated" not in st.session_state:
     st.session_state.research_authenticated = False
 
-with st.sidebar:
-    _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 12
-    st.markdown(
-        f'<div class="sidebar-logo-card">'
-        f'{logo1_html}'
-        f'<div style="width:1px;height:{_logo_divider_height}px;background:var(--card-border);"></div>'
-        f'{logo2_html}</div>',
-        unsafe_allow_html=True,
+with st.container(key="topnav_bar"):
+    _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 8
+    _nav_logo_col, _nav_dash_col, _nav_research_col, _nav_logout_col = st.columns(
+        [2.3, 1.1, 1.7, 1.3]
     )
-    # หมายเหตุ: โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) ที่เคยแสดงเป็นแถวที่ 2
-    # ตรงนี้ ถูกย้ายไปรวมกับข้อมูลผู้จัดทำและเลขเวอร์ชันแอปในกล่องมุมขวาบนแทนแล้ว
-    for label, page_key in NAV_ITEMS:
-        is_active = st.session_state.page == page_key
-        if st.button(
-            label,
-            key=f"nav_{page_key}",
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-        ):
-            st.session_state.page = page_key
-            st.rerun()
-
-    # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าหน้า "สำหรับคณะวิจัยเท่านั้น" อยู่แล้ว
-    if st.session_state.research_authenticated:
-        if st.button("ออกจากระบบ (คณะวิจัย)", use_container_width=True, key="nav_logout"):
-            st.session_state.research_authenticated = False
-            st.session_state.page = "dashboard"
-            st.rerun()
-
-    st.markdown("---")
-    st.markdown(
-        f'<div class="sidebar-section-label">{icon("database", 14, 1.6)}<span>ข้อมูล</span></div>',
-        unsafe_allow_html=True,
-    )
-    if st.button("คลิกดึงข้อมูลอัตโนมัติ", use_container_width=True):
-        st.session_state.pop("gsheet_load_error", None)
-        try:
-            with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                st.session_state.gsheet_raw_df = load_data_gsheet()
-            st.session_state.gsheet_loaded_at = now_th()
-        except Exception as e:
-            st.session_state.gsheet_load_error = str(e)
-            st.session_state.pop("gsheet_raw_df", None)
-    if st.session_state.get("gsheet_load_error"):
-        st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
-    elif "gsheet_raw_df" in st.session_state:
-        st.success(f"ดึงข้อมูลล่าสุดเมื่อ {st.session_state.gsheet_loaded_at.strftime('%H:%M:%S')}")
-    st.caption("ดึงข้อมูล → รันโมเดล → สรุปผลอัตโนมัติ")
-
-    # ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป — วางไว้ท้าย
-    # แถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ) แทนที่จะลอยทับเนื้อหาแบบเดิม
-    st.markdown(_corner_badge_html, unsafe_allow_html=True)
+    with _nav_logo_col:
+        st.markdown(
+            f'<div class="topnav-logo-row">{logo1_html}'
+            f'<div class="topnav-logo-divider" style="height:{_logo_divider_height}px;"></div>'
+            f'{logo2_html}</div>',
+            unsafe_allow_html=True,
+        )
+    for _nav_col, (label, page_key) in zip((_nav_dash_col, _nav_research_col), NAV_ITEMS):
+        with _nav_col:
+            is_active = st.session_state.page == page_key
+            if st.button(
+                label,
+                key=f"nav_{page_key}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state.page = page_key
+                st.rerun()
+    with _nav_logout_col:
+        # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าหน้า "สำหรับคณะวิจัยเท่านั้น" อยู่แล้ว
+        if st.session_state.research_authenticated:
+            if st.button("ออกจากระบบ (คณะวิจัย)", use_container_width=True, key="nav_logout"):
+                st.session_state.research_authenticated = False
+                st.session_state.page = "dashboard"
+                st.rerun()
 
 # ------------------------------------------------------------------------------
 # รันโมเดล (ถ้ามีไฟล์อัปโหลด) — คำนวณผลลัพธ์ทั้งหมดไว้ก่อน เพื่อนำไปแสดงในการ์ด
@@ -2323,7 +2304,7 @@ if st.session_state.page == "home":
     st.write("")
 
     if not result_ready:
-        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายเพื่อเริ่มต้นการวิเคราะห์")
+        st.info("ยังไม่มีข้อมูล — กรุณาไปที่หน้า Dashboard แล้วกดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ก่อนเพื่อเริ่มต้นการวิเคราะห์")
     else:
         if vars_customized:
             st.info(
@@ -2664,7 +2645,7 @@ elif st.session_state.page == "dashboard":
             background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 999px;
             padding: 5px 16px; font-size: 0.78rem; color: var(--brand-navy-soft); font-weight: 600;
         }
-        .st-key-hero_card_horizon {
+        .st-key-hero_card_data, .st-key-hero_card_horizon {
             background: #FFFFFF !important; border-radius: 16px !important;
         }
         .action-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -2708,37 +2689,71 @@ elif st.session_state.page == "dashboard":
             unsafe_allow_html=True,
         )
 
-    # การ์ด "ดึงข้อมูลอัตโนมัติ" และ "เข้าสู่ระบบสำหรับคณะวิจัย" ถูกตัดออกจากตรงนี้
-    # เพราะเป็นปุ่มเดียวกันกับที่มีอยู่แล้วถาวรในแถบเมนูด้านซ้าย (เห็นพร้อมกันทั้ง 2
-    # จุดบนหน้าจอเดียวกันแล้วทำให้งงว่าต้องกดปุ่มไหน) เหลือเฉพาะการตั้งค่าที่เป็น
-    # ของหน้า Dashboard นี้โดยเฉพาะ คือช่วงเวลาพยากรณ์
-    with st.container(border=True, key="hero_card_horizon"):
-        st.markdown(
-            f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
-            f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
-            f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
-            unsafe_allow_html=True,
-        )
-        if result_ready:
-            _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
-            _hz_options = [3, 5, 8, 10, 15, 20, 30]
-            if "tfp_forecast_horizon" not in st.session_state:
-                st.session_state["tfp_forecast_horizon"] = 5
-            st.selectbox(
-                "ช่วงเวลาพยากรณ์", options=_hz_options,
-                format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
-                key="tfp_forecast_horizon", label_visibility="collapsed",
-            )
-        else:
+    # การ์ด "เข้าสู่ระบบสำหรับคณะวิจัย" ยังไม่เอากลับมาตรงนี้ เพราะมีปุ่มเทียบเท่า
+    # อยู่แล้วถาวรในแถบเมนูด้านบน — แต่ "ดึงข้อมูลอัตโนมัติ" ย้ายกลับมาไว้ที่นี่
+    # เพราะตอนนี้แถบเมนูด้านบนไม่มีปุ่มนี้แล้ว (ย้ายจาก sidebar เดิมมาเป็นแถบบน
+    # ที่เน้นแค่เนวิเกชัน ส่วนแอ็กชันเฉพาะหน้าอย่างการดึงข้อมูลให้มาอยู่ในเนื้อหาแทน)
+    _hc_data, _hc_horizon = st.columns(2, gap="medium")
+    with _hc_data:
+        with st.container(border=True, key="hero_card_data"):
             st.markdown(
-                '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                'ดึงข้อมูลจากแถบเมนูด้านซ้ายก่อน เพื่อกำหนดช่วงพยากรณ์</div>',
+                f'<div class="action-card-head"><div class="action-card-icon">{icon("cloud", 19, 1.8)}</div>'
+                f'<div class="action-card-title">ดึงข้อมูลอัตโนมัติ</div></div>'
+                f'<div class="action-card-sub">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</div>',
                 unsafe_allow_html=True,
             )
-            st.selectbox(
-                "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
-                key="hero_horizon_disabled", label_visibility="collapsed",
+            if st.session_state.get("gsheet_load_error"):
+                st.error("ดึงข้อมูลไม่สำเร็จ", icon="⚠️")
+            elif "gsheet_raw_df" in st.session_state:
+                st.markdown(
+                    f'<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
+                    f'<span style="color:var(--green);">●</span> ล่าสุด: '
+                    f'{st.session_state.gsheet_loaded_at.strftime("%d/%m/%Y %H:%M น.")}</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">ยังไม่เคยดึงข้อมูล</div>',
+                    unsafe_allow_html=True,
+                )
+            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="hero_fetch_btn"):
+                st.session_state.pop("gsheet_load_error", None)
+                try:
+                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                        st.session_state.gsheet_raw_df = load_data_gsheet()
+                    st.session_state.gsheet_loaded_at = now_th()
+                except Exception as e:
+                    st.session_state.gsheet_load_error = str(e)
+                    st.session_state.pop("gsheet_raw_df", None)
+                st.rerun()
+    with _hc_horizon:
+        with st.container(border=True, key="hero_card_horizon"):
+            st.markdown(
+                f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
+                f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
+                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
+                unsafe_allow_html=True,
             )
+            if result_ready:
+                _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
+                _hz_options = [3, 5, 8, 10, 15, 20, 30]
+                if "tfp_forecast_horizon" not in st.session_state:
+                    st.session_state["tfp_forecast_horizon"] = 5
+                st.selectbox(
+                    "ช่วงเวลาพยากรณ์", options=_hz_options,
+                    format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
+                    key="tfp_forecast_horizon", label_visibility="collapsed",
+                )
+            else:
+                st.markdown(
+                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
+                    'ดึงข้อมูลจากการ์ดด้านซ้ายก่อน เพื่อกำหนดช่วงพยากรณ์</div>',
+                    unsafe_allow_html=True,
+                )
+                st.selectbox(
+                    "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
+                    key="hero_horizon_disabled", label_visibility="collapsed",
+                )
     st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
@@ -2971,7 +2986,7 @@ elif st.session_state.page == "dashboard":
         )
 
     if not result_ready:
-        st.info("ยังไม่มีข้อมูล — กดปุ่ม “คลิกดึงข้อมูลอัตโนมัติ” ที่แถบเมนูด้านซ้ายก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
+        st.info("ยังไม่มีข้อมูล — กดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ด้านบนก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
         # ================= กราฟภาพรวม: แนวโน้มดัชนี TFP ย้อนหลัง + พยากรณ์ (ARIMA) =================
         st.markdown(
@@ -3634,9 +3649,9 @@ elif st.session_state.page == "dashboard":
                         )
         st.markdown('</div>', unsafe_allow_html=True)
 # ------------------------------------------------------------------------------
-# ท้ายหน้าเว็บ — เดิมมี footer กลางหน้าแสดงโลโก้ สอวช./สวค./มหาวิทยาลัย/ภาควิชา +
-# ข้อมูลผู้จัดทำอยู่ตรงนี้ ปัจจุบันถูกลบออกแล้ว เพราะย้ายโลโก้มหาวิทยาลัย/ภาควิชา
-# และข้อมูลผู้จัดทำทั้งหมดไปแสดงเล็ก ๆ ท้ายแถบเมนูด้านซ้ายแทน (ดูตัวแปร
-# _corner_badge_html ที่ประกาศไว้ต้นไฟล์แถวเดียวกับที่กำหนด logo3_html/logo4_html
-# และเรียกใช้จริงใน `with st.sidebar:` ด้านบน)
+# ท้ายหน้าเว็บ — โลโก้ สอวช./สวค./มหาวิทยาลัย/ภาควิชา + ข้อมูลผู้จัดทำ + เวอร์ชันแอป
+# (ย้ายมาจากมุมล่างแถบเมนูด้านข้างเดิม มาไว้เป็น footer ท้ายเนื้อหาทุกหน้าแทน
+# เพราะแถบเมนูด้านข้างถูกเปลี่ยนเป็นแถบเมนูแนวนอนด้านบนแล้ว — ดูตัวแปร
+# _corner_badge_html ที่ประกาศไว้ต้นไฟล์แถวเดียวกับที่กำหนด logo3_html/logo4_html)
 # ------------------------------------------------------------------------------
+st.markdown(f'<div class="page-footer">{_corner_badge_html}</div>', unsafe_allow_html=True)
