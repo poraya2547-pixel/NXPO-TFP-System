@@ -2732,29 +2732,29 @@ elif st.session_state.page == "dashboard":
             st.markdown(
                 f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
                 f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
-                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า</div>',
+                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
                 unsafe_allow_html=True,
             )
             if result_ready:
                 _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
                 _hz_options = [3, 5, 8, 10, 15, 20, 30]
-                _hz_current = st.session_state.get("tfp_forecast_horizon", 5)
-                _hz_default_idx = min(range(len(_hz_options)), key=lambda i: abs(_hz_options[i] - _hz_current))
-                _hz_choice = st.selectbox(
+                if "tfp_forecast_horizon" not in st.session_state:
+                    st.session_state["tfp_forecast_horizon"] = 5
+                st.selectbox(
                     "ช่วงเวลาพยากรณ์", options=_hz_options,
                     format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
-                    index=_hz_default_idx, key="hero_horizon_select", label_visibility="collapsed",
+                    key="tfp_forecast_horizon", label_visibility="collapsed",
                 )
-                if st.button("เริ่มพยากรณ์", use_container_width=True, key="hero_horizon_btn"):
-                    st.session_state["tfp_forecast_horizon"] = _hz_choice
-                    st.rerun()
             else:
                 st.markdown(
                     '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
                     'ดึงข้อมูลก่อนเพื่อกำหนดช่วงพยากรณ์</div>',
                     unsafe_allow_html=True,
                 )
-                st.button("เริ่มพยากรณ์", use_container_width=True, key="hero_horizon_btn_disabled", disabled=True)
+                st.selectbox(
+                    "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
+                    key="hero_horizon_disabled", label_visibility="collapsed",
+                )
     with _hc3:
         with st.container(border=True, key="hero_card_login"):
             st.markdown(
@@ -2998,7 +2998,7 @@ elif st.session_state.page == "dashboard":
         )
 
     if not result_ready:
-        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อดูกราฟแนวโน้มในหน้านี้")
+        st.info("ยังไม่มีข้อมูล — กดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ด้านบนก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
         # ================= กราฟภาพรวม: แนวโน้มดัชนี TFP ย้อนหลัง + พยากรณ์ (ARIMA) =================
         st.markdown(
@@ -3021,18 +3021,13 @@ elif st.session_state.page == "dashboard":
                 )
 
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                # ----- แถบเลือกช่วงพยากรณ์ล่วงหน้า (slider) -----
-                fc_col1, fc_col2 = st.columns([3, 1])
-                with fc_col1:
-                    horizon = st.slider(
-                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า", min_value=1, max_value=30,
-                        value=5, step=1, key="tfp_forecast_horizon",
-                        help="เลือกได้ตั้งแต่ 1 ปีจนถึง 30 ปี ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
-                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
-                    )
-                with fc_col2:
-                    st.markdown("<div style='height:1.9rem;'></div>", unsafe_allow_html=True)
-                    st.caption(f"≈ {horizon} ปีข้างหน้า")
+                # ช่วงพยากรณ์ถูกกำหนดจากการ์ด "กำหนดช่วงเวลาพยากรณ์" ด้านบนสุดของหน้า
+                # (จุดเดียว ไม่มีตัวเลื่อนซ้ำที่นี่ เพื่อไม่ให้สับสนว่าต้องตั้งค่าที่ไหนกันแน่)
+                horizon = st.session_state.get("tfp_forecast_horizon", 5)
+                st.caption(
+                    f"ช่วงพยากรณ์ที่เลือกไว้: {horizon} ปีข้างหน้า "
+                    f"(ปรับได้จากการ์ด “กำหนดช่วงเวลาพยากรณ์” ด้านบนสุดของหน้า)"
+                )
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
@@ -3248,43 +3243,6 @@ elif st.session_state.page == "dashboard":
                     unsafe_allow_html=True,
                 )
             st.markdown('</div>', unsafe_allow_html=True)
-
-        # ================= เมนูด่วน =================
-        st.markdown(
-            f'<div class="section-card"><div class="section-title">'
-            f'<div class="section-num">{icon("sparkle", 19, 1.8)}</div>'
-            f'<div class="section-title-text"><h3>เมนูด่วน</h3></div></div>',
-            unsafe_allow_html=True,
-        )
-        _qm1, _qm2, _qm3 = st.columns(3, gap="medium")
-        with _qm1:
-            if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
-                _qm_csv = forecast_df.rename(
-                    columns={"mean": "ค่าพยากรณ์", "lower": "ขอบล่าง 95%", "upper": "ขอบบน 95%"}
-                ).round(4).to_csv().encode("utf-8-sig")
-                st.download_button(
-                    "ดาวน์โหลดพยากรณ์ (CSV)",
-                    data=_qm_csv, file_name="TFP_forecast_ARIMA.csv", mime="text/csv",
-                    use_container_width=True, key="quickmenu_dl_csv",
-                )
-            else:
-                st.button("ดาวน์โหลดพยากรณ์ (CSV)", use_container_width=True, disabled=True, key="quickmenu_dl_csv_disabled")
-        with _qm2:
-            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="quickmenu_refetch"):
-                st.session_state.pop("gsheet_load_error", None)
-                try:
-                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                        st.session_state.gsheet_raw_df = load_data_gsheet()
-                    st.session_state.gsheet_loaded_at = now_th()
-                except Exception as e:
-                    st.session_state.gsheet_load_error = str(e)
-                    st.session_state.pop("gsheet_raw_df", None)
-                st.rerun()
-        with _qm3:
-            if st.button("เข้าสู่ระบบสำหรับคณะวิจัย", use_container_width=True, key="quickmenu_login"):
-                st.session_state.page = "home"
-                st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= กราฟรายตัวแปร: แยกกล่องระยะยาว / ระยะสั้น =================
         # แยกรายชื่อตัวแปรอิสระเป็น 2 ชุดตามสมการที่ตัวแปรนั้นอยู่ แทนที่จะรวมเป็น
