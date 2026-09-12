@@ -3017,11 +3017,27 @@ elif st.session_state.page == "dashboard":
         f'<div class="nxpo-topbar-left">'
         f'<div class="nxpo-topbar-logo">{icon("sparkle", 22, 2)}</div>'
         f'<div class="nxpo-topbar-title"><span class="eyebrow">NXPO Data Center</span>'
-        f'<h2>แบบจำลองเศรษฐมิติ มหภาค</h2></div>'
+        f'<h2>แดชบอร์ดพยากรณ์และแสดงผลผลิตภาพปัจจัยการผลิตรวมในประเทศไทย</h2></div>'
         f'</div>'
         f'<div class="nxpo-topbar-right">'
         f'<div class="nxpo-userchip"><span class="avatar">{icon("user-circle", 16, 1.8)}</span>เจ้าหน้าที่วิจัย</div>'
         f'</div></div>',
+        unsafe_allow_html=True,
+    )
+
+    # ----- Hero banner: ต้อนรับเข้าสู่ระบบ -----
+    st.markdown(
+        '<div class="nxpo-hero">'
+        '<div class="nxpo-hero-badge">Better Data<br>Better Policy</div>'
+        '<p class="nxpo-hero-eyebrow">ยินดีต้อนรับสู่ระบบ</p>'
+        '<h1>แดชบอร์ดพยากรณ์และแสดงผลผลิตภาพปัจจัยการผลิตรวมในประเทศไทย</h1>'
+        '<p class="desc">ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมภายในประเทศ (TFP) '
+        'และรายงานสรุปผลสำหรับผู้บริหารด้วยปัญญาประดิษฐ์</p>'
+        '<div class="nxpo-hero-tags">'
+        f'<span class="nxpo-hero-tag">{icon("bars", 14, 2)} Total Factor Productivity (TFP)</span>'
+        f'<span class="nxpo-hero-tag">{icon("trend-up", 14, 2)} Econometric Model</span>'
+        f'<span class="nxpo-hero-tag">{icon("sparkle", 14, 2)} AI Executive Summary</span>'
+        '</div></div>',
         unsafe_allow_html=True,
     )
 
