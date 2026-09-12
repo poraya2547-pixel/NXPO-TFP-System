@@ -2664,7 +2664,7 @@ elif st.session_state.page == "dashboard":
             background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 999px;
             padding: 5px 16px; font-size: 0.78rem; color: var(--brand-navy-soft); font-weight: 600;
         }
-        .st-key-hero_card_data, .st-key-hero_card_horizon, .st-key-hero_card_login {
+        .st-key-hero_card_horizon {
             background: #FFFFFF !important; border-radius: 16px !important;
         }
         .action-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -2694,78 +2694,37 @@ elif st.session_state.page == "dashboard":
         unsafe_allow_html=True,
     )
 
-    _hc1, _hc2, _hc3 = st.columns(3, gap="medium")
-    with _hc1:
-        with st.container(border=True, key="hero_card_data"):
+    # การ์ด "ดึงข้อมูลอัตโนมัติ" และ "เข้าสู่ระบบสำหรับคณะวิจัย" ถูกตัดออกจากตรงนี้
+    # เพราะเป็นปุ่มเดียวกันกับที่มีอยู่แล้วถาวรในแถบเมนูด้านซ้าย (เห็นพร้อมกันทั้ง 2
+    # จุดบนหน้าจอเดียวกันแล้วทำให้งงว่าต้องกดปุ่มไหน) เหลือเฉพาะการตั้งค่าที่เป็น
+    # ของหน้า Dashboard นี้โดยเฉพาะ คือช่วงเวลาพยากรณ์
+    with st.container(border=True, key="hero_card_horizon"):
+        st.markdown(
+            f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
+            f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
+            f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
+            unsafe_allow_html=True,
+        )
+        if result_ready:
+            _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
+            _hz_options = [3, 5, 8, 10, 15, 20, 30]
+            if "tfp_forecast_horizon" not in st.session_state:
+                st.session_state["tfp_forecast_horizon"] = 5
+            st.selectbox(
+                "ช่วงเวลาพยากรณ์", options=_hz_options,
+                format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
+                key="tfp_forecast_horizon", label_visibility="collapsed",
+            )
+        else:
             st.markdown(
-                f'<div class="action-card-head"><div class="action-card-icon">{icon("cloud", 19, 1.8)}</div>'
-                f'<div class="action-card-title">ดึงข้อมูลอัตโนมัติ</div></div>'
-                f'<div class="action-card-sub">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</div>',
+                '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
+                'ดึงข้อมูลจากแถบเมนูด้านซ้ายก่อน เพื่อกำหนดช่วงพยากรณ์</div>',
                 unsafe_allow_html=True,
             )
-            if st.session_state.get("gsheet_load_error"):
-                st.error("ดึงข้อมูลไม่สำเร็จ", icon="⚠️")
-            elif "gsheet_raw_df" in st.session_state:
-                st.markdown(
-                    f'<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                    f'<span style="color:var(--green);">●</span> ล่าสุด: '
-                    f'{st.session_state.gsheet_loaded_at.strftime("%d/%m/%Y %H:%M น.")}</div>',
-                    unsafe_allow_html=True,
-                )
-            else:
-                st.markdown(
-                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">ยังไม่เคยดึงข้อมูล</div>',
-                    unsafe_allow_html=True,
-                )
-            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="hero_fetch_btn"):
-                st.session_state.pop("gsheet_load_error", None)
-                try:
-                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                        st.session_state.gsheet_raw_df = load_data_gsheet()
-                    st.session_state.gsheet_loaded_at = now_th()
-                except Exception as e:
-                    st.session_state.gsheet_load_error = str(e)
-                    st.session_state.pop("gsheet_raw_df", None)
-                st.rerun()
-    with _hc2:
-        with st.container(border=True, key="hero_card_horizon"):
-            st.markdown(
-                f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
-                f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
-                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า — กราฟด้านล่างจะอัปเดตให้ทันที</div>',
-                unsafe_allow_html=True,
+            st.selectbox(
+                "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
+                key="hero_horizon_disabled", label_visibility="collapsed",
             )
-            if result_ready:
-                _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
-                _hz_options = [3, 5, 8, 10, 15, 20, 30]
-                if "tfp_forecast_horizon" not in st.session_state:
-                    st.session_state["tfp_forecast_horizon"] = 5
-                st.selectbox(
-                    "ช่วงเวลาพยากรณ์", options=_hz_options,
-                    format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
-                    key="tfp_forecast_horizon", label_visibility="collapsed",
-                )
-            else:
-                st.markdown(
-                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
-                    'ดึงข้อมูลก่อนเพื่อกำหนดช่วงพยากรณ์</div>',
-                    unsafe_allow_html=True,
-                )
-                st.selectbox(
-                    "ช่วงเวลาพยากรณ์", options=["–"], disabled=True,
-                    key="hero_horizon_disabled", label_visibility="collapsed",
-                )
-    with _hc3:
-        with st.container(border=True, key="hero_card_login"):
-            st.markdown(
-                f'<div class="action-card-head"><div class="action-card-icon">{icon("lock", 19, 1.8)}</div>'
-                f'<div class="action-card-title">เข้าสู่ระบบสำหรับคณะวิจัย</div></div>'
-                f'<div class="action-card-sub">กรุณาเข้าสู่ระบบเพื่อเข้าถึงบทสรุปผู้บริหารและฟังก์ชันเพิ่มเติม</div>',
-                unsafe_allow_html=True,
-            )
-            if st.button("เข้าสู่ระบบ", use_container_width=True, key="hero_login_btn"):
-                st.session_state.page = "home"
-                st.rerun()
     st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
@@ -2998,7 +2957,7 @@ elif st.session_state.page == "dashboard":
         )
 
     if not result_ready:
-        st.info("ยังไม่มีข้อมูล — กดปุ่ม “ดึงข้อมูลอีกครั้ง” ในการ์ด “ดึงข้อมูลอัตโนมัติ” ด้านบนก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
+        st.info("ยังไม่มีข้อมูล — กดปุ่ม “คลิกดึงข้อมูลอัตโนมัติ” ที่แถบเมนูด้านซ้ายก่อน เพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
         # ================= กราฟภาพรวม: แนวโน้มดัชนี TFP ย้อนหลัง + พยากรณ์ (ARIMA) =================
         st.markdown(
