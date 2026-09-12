@@ -334,67 +334,6 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
     overflow-wrap: break-word; line-height: 1.45;
 }
 
-/* ----- บังคับแถวการ์ด KPI (st.columns) ให้พยายามอยู่บรรทัดเดียวเสมอ -----
-   ปกติ Streamlit จะปล่อยให้แถว column ตกบรรทัดใหม่ (wrap) เมื่อพื้นที่แคบลง
-   ทำให้การ์ดใบสุดท้ายหล่นไปอยู่แถวถัดไป — เปลี่ยนพฤติกรรมเป็น "ย่อขนาดตัวการ์ด
-   ลงก่อน" ด้วย clamp() แล้วถ้าย่อจนสุดแล้วยังไม่พอ (จอแคบมาก เช่นมือถือ) ค่อย
-   ปล่อยให้ scroll แนวนอนแทน (ดีกว่าปล่อยให้ตัวหนังสือเล็กจนอ่านไม่ออก)
-   ใช้ :has(.metric-card) เพื่อจำกัดผลแค่แถว KPI การ์ดเท่านั้น ไม่กระทบ
-   st.columns จุดอื่นในแอปที่อยากให้ wrap ตามปกติ (เช่นปุ่มดาวน์โหลดท้ายหน้า) ----- */
-div[data-testid="stHorizontalBlock"]:has(.metric-card) {
-    flex-wrap: nowrap !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) > div[data-testid="column"] {
-    min-width: 0 !important;   /* อนุญาตให้คอลัมน์หดแคบได้ไม่จำกัด */
-    flex: 1 1 0 !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card {
-    padding: clamp(8px, 1.6vw, 18px) clamp(8px, 1.6vw, 20px);
-    gap: clamp(6px, 1.2vw, 15px);
-    overflow: visible; /* กันเงา/ขอบการ์ดถูกตัด */
-    align-items: center;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-icon {
-    width: clamp(24px, 3.2vw, 46px); height: clamp(24px, 3.2vw, 46px);
-    font-size: clamp(0.7rem, 1.3vw, 1.25rem); flex-shrink: 0;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-value {
-    font-size: clamp(0.68rem, 1.4vw, 1.5rem);
-    white-space: nowrap; /* ตัวเลขไม่ตัดขึ้นบรรทัดใหม่ เพราะยังไม่เคยยาวจนล้น */
-}
-/* label เอาการตัดคำแบบ ellipsis ("...") ออก — ผู้ใช้ต้องการเห็นข้อความครบเสมอ
-   ปล่อยให้ตัวหนังสือย่อเล็กลงได้ตามพื้นที่ (clamp) ก่อน แล้วถ้ายังไม่พอจริง ๆ
-   ค่อยให้ตกไปบรรทัดที่ 2 แทนการตัดทิ้ง (การ์ดจะสูงขึ้นเล็กน้อยแทน ไม่เสียเนื้อหา) */
-div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-label {
-    font-size: clamp(0.5rem, 1vw, 0.8rem);
-    white-space: normal;
-    overflow-wrap: break-word;
-    line-height: 1.3;
-}
-/* กล่อง <div> ที่ห่อ .metric-value/.metric-label (ไม่มีคลาสของมันเอง) เป็น flex
-   item ข้าง .metric-icon — ต้องตั้ง min-width:0 ไม่งั้นมันจะไม่ยอมหดตามการ์ด */
-div[data-testid="stHorizontalBlock"]:has(.metric-card) .metric-card > div:not([class]) {
-    min-width: 0;
-}
-/* ----- ทำให้การ์ด KPI ทั้ง 4 ใบสูงเท่ากันเสมอ ไม่ว่า label จะตกบรรทัดใหม่กี่บรรทัด -----
-   .metric-card มี height:100% อยู่แล้ว แต่จะเท่ากับความสูงของใบที่สูงสุดได้ก็ต่อเมื่อ
-   ทุก <div> ที่ครอบมันอยู่ (ไล่ตั้งแต่ column ลงมา) สูงเต็ม 100% ตามกันเป็นทอด ๆ
-   ด้วย ไม่งั้นแต่ละคอลัมน์จะสูงแค่ตามเนื้อหาของตัวเอง ทำให้ใบที่ label สั้นกว่าดู
-   เตี้ยกว่าใบอื่น (เดิมเคยล็อกด้วยชื่อ data-testid ตรงๆ เช่น "element-container"/
-   "stMarkdown" แต่ Streamlit เปลี่ยนชื่อ testid พวกนี้ไปในแต่ละเวอร์ชัน ทำให้กฎ
-   เดิมไม่ตรงกับ DOM จริงบนแอปที่ deploy อยู่ — เปลี่ยนมาใช้ :has() เลือก "ทุก div
-   ที่มี .metric-card ซ้อนอยู่ข้างในไม่ว่าจะลึกแค่ไหน" แทน ไม่ต้องพึ่งชื่อ testid
-   เจาะจง จึงทำงานได้ไม่ว่า Streamlit เวอร์ชันไหน) */
-div[data-testid="stHorizontalBlock"]:has(.metric-card) {
-    align-items: stretch !important;
-}
-div[data-testid="stHorizontalBlock"]:has(.metric-card) div:has(> .metric-card),
-div[data-testid="stHorizontalBlock"]:has(.metric-card) div:has(.metric-card) {
-    height: 100% !important;
-    display: flex !important;
-    flex-direction: column !important;
-}
-
 /* ----- แถบไฮไลต์สรุปค่าพยากรณ์ปีสุดท้าย (ใต้กราฟแนวโน้ม TFP หน้า Dashboard) -----
    แทนที่ caption ข้อความล้วนเดิมด้วยแถบไล่สีเข้ม (โทนเดียวกับหัวตาราง .tfp-table)
    แบ่งเป็นช่อง ๆ ให้ตัวเลขสำคัญ (ค่าพยากรณ์ / ขอบล่าง-บน 95% / ปีที่พยากรณ์ถึง)
@@ -922,6 +861,25 @@ _ICON_PATHS = {
     "sparkle": (
         '<path d="M10,3.5 L11.6,8.4 L16.5,10 L11.6,11.6 L10,16.5 L8.4,11.6 L3.5,10 L8.4,8.4 Z" fill="currentColor" stroke="none"/>'
         '<path d="M16,2 L16.4,3.6 L18,4 L16.4,4.4 L16,6 L15.6,4.4 L14,4 L15.6,3.6 Z" fill="currentColor" stroke="none" opacity="0.85"/>'
+    ),
+    "cloud": (
+        '<path d="M5.5 14.5C3.6 14.5 2 13 2 11.1C2 9.3 3.4 7.9 5.1 7.8C5.6 5.6 7.6 4 10 4C12.6 4 14.7 5.9 15 8.4C16.7 8.6 18 10 18 11.7C18 13.3 16.7 14.5 15.2 14.5H5.5Z" stroke-linejoin="round"/>'
+    ),
+    "calendar": (
+        '<rect x="3" y="4.5" width="14" height="12.5" rx="1.6" stroke-linejoin="round"/>'
+        '<line x1="3" y1="8.2" x2="17" y2="8.2"/>'
+        '<line x1="6.5" y1="2.8" x2="6.5" y2="5.5" stroke-linecap="round"/>'
+        '<line x1="13.5" y1="2.8" x2="13.5" y2="5.5" stroke-linecap="round"/>'
+    ),
+    "lock": (
+        '<rect x="4.5" y="9" width="11" height="8" rx="1.6" stroke-linejoin="round"/>'
+        '<path d="M6.8 9V6.3C6.8 4.5 8.2 3 10 3C11.8 3 13.2 4.5 13.2 6.3V9" stroke-linecap="round"/>'
+        '<circle cx="10" cy="12.8" r="1" fill="currentColor" stroke="none"/>'
+    ),
+    "download": (
+        '<path d="M10 3.5V12.5" stroke-linecap="round"/>'
+        '<path d="M6 9.3L10 13.3L14 9.3" stroke-linecap="round" stroke-linejoin="round"/>'
+        '<path d="M4 15.5V16.2C4 16.6 4.3 17 4.8 17H15.2C15.6 17 16 16.6 16 16.2V15.5" stroke-linecap="round"/>'
     ),
 }
 
@@ -2689,17 +2647,126 @@ if st.session_state.page == "home":
                     st.error(f"เรียก Gemini ไม่สำเร็จ: {e}")
 
 elif st.session_state.page == "dashboard":
+    # ================= สไตล์เฉพาะของหน้า Dashboard: hero banner + การ์ดทางลัด =================
     st.markdown(
         """
-        <div class="app-header">
-            <div>
-                <h1 style="font-size:2.05rem;">Dashboard</h1>
-                <p style="font-size:1.05rem;line-height:1.6;">ภาพรวมแนวโน้มผลิตภาพการผลิตรวม (TFP) และปัจจัยที่เกี่ยวข้องจากข้อมูลล่าสุด</p>
+        <style>
+        .hero-banner-tfp {
+            background: linear-gradient(120deg, var(--gold-tint) 0%, #FFFFFF 58%, var(--gold-tint) 100%);
+            border: 1px solid var(--card-border); border-radius: 20px;
+            padding: 30px 34px; margin-bottom: 20px; box-shadow: var(--shadow-soft);
+        }
+        .hero-banner-tfp .hero-eyebrow { color: var(--brand-orange-dark); font-weight: 700; font-size: 0.9rem; letter-spacing: 0.02em; }
+        .hero-banner-tfp h1 { font-family: var(--font-elegant); font-size: 2rem; color: var(--brand-navy); margin: 6px 0 10px 0; font-weight: 700; overflow-wrap: break-word; }
+        .hero-banner-tfp p { color: var(--brand-navy-soft); font-size: 0.98rem; line-height: 1.7; max-width: 66ch; margin: 0; overflow-wrap: break-word; }
+        .hero-banner-tfp .hero-tags { margin-top: 16px; display: flex; gap: 10px; flex-wrap: wrap; }
+        .hero-banner-tfp .hero-tag {
+            background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 999px;
+            padding: 5px 16px; font-size: 0.78rem; color: var(--brand-navy-soft); font-weight: 600;
+        }
+        .st-key-hero_card_data, .st-key-hero_card_horizon, .st-key-hero_card_login {
+            background: #FFFFFF !important; border-radius: 16px !important;
+        }
+        .action-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .action-card-icon {
+            width: 36px; height: 36px; border-radius: 10px; background: var(--gold-tint);
+            color: var(--brand-orange-dark); display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+        .action-card-title { font-weight: 700; color: var(--brand-navy); font-size: 0.98rem; }
+        .action-card-sub { font-size: 0.8rem; color: var(--brand-navy-soft); margin-bottom: 10px; line-height: 1.5; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+    st.markdown(
+        """
+        <div class="hero-banner-tfp">
+            <div class="hero-eyebrow">ยินดีต้อนรับสู่ระบบ</div>
+            <h1>ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>
+            <p>ภาพรวมแนวโน้มผลิตภาพการผลิตรวมของประเทศไทยและปัจจัยที่เกี่ยวข้อง พร้อมพยากรณ์ล่วงหน้าด้วยแบบจำลองทางเศรษฐมิติจากข้อมูลล่าสุด</p>
+            <div class="hero-tags">
+                <span class="hero-tag">Total Factor Productivity (TFP)</span>
+                <span class="hero-tag">Econometric Model</span>
+                <span class="hero-tag">AI Executive Summary</span>
             </div>
         </div>
         """,
         unsafe_allow_html=True,
     )
+
+    _hc1, _hc2, _hc3 = st.columns(3, gap="medium")
+    with _hc1:
+        with st.container(border=True, key="hero_card_data"):
+            st.markdown(
+                f'<div class="action-card-head"><div class="action-card-icon">{icon("cloud", 19, 1.8)}</div>'
+                f'<div class="action-card-title">ดึงข้อมูลอัตโนมัติ</div></div>'
+                f'<div class="action-card-sub">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</div>',
+                unsafe_allow_html=True,
+            )
+            if st.session_state.get("gsheet_load_error"):
+                st.error("ดึงข้อมูลไม่สำเร็จ", icon="⚠️")
+            elif "gsheet_raw_df" in st.session_state:
+                st.markdown(
+                    f'<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
+                    f'<span style="color:var(--green);">●</span> ล่าสุด: '
+                    f'{st.session_state.gsheet_loaded_at.strftime("%d/%m/%Y %H:%M น.")}</div>',
+                    unsafe_allow_html=True,
+                )
+            else:
+                st.markdown(
+                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">ยังไม่เคยดึงข้อมูล</div>',
+                    unsafe_allow_html=True,
+                )
+            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="hero_fetch_btn"):
+                st.session_state.pop("gsheet_load_error", None)
+                try:
+                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                        st.session_state.gsheet_raw_df = load_data_gsheet()
+                    st.session_state.gsheet_loaded_at = now_th()
+                except Exception as e:
+                    st.session_state.gsheet_load_error = str(e)
+                    st.session_state.pop("gsheet_raw_df", None)
+                st.rerun()
+    with _hc2:
+        with st.container(border=True, key="hero_card_horizon"):
+            st.markdown(
+                f'<div class="action-card-head"><div class="action-card-icon">{icon("calendar", 19, 1.8)}</div>'
+                f'<div class="action-card-title">กำหนดช่วงเวลาพยากรณ์</div></div>'
+                f'<div class="action-card-sub">เลือกปีที่ต้องการพยากรณ์ TFP ล่วงหน้า</div>',
+                unsafe_allow_html=True,
+            )
+            if result_ready:
+                _hz_last_year = int(model_df[DEP_VAR].dropna().index.max())
+                _hz_options = [3, 5, 8, 10, 15, 20, 30]
+                _hz_current = st.session_state.get("tfp_forecast_horizon", 5)
+                _hz_default_idx = min(range(len(_hz_options)), key=lambda i: abs(_hz_options[i] - _hz_current))
+                _hz_choice = st.selectbox(
+                    "ช่วงเวลาพยากรณ์", options=_hz_options,
+                    format_func=lambda h: f"{_hz_last_year + 1} - {_hz_last_year + h} ({h} ปี)",
+                    index=_hz_default_idx, key="hero_horizon_select", label_visibility="collapsed",
+                )
+                if st.button("เริ่มพยากรณ์", use_container_width=True, key="hero_horizon_btn"):
+                    st.session_state["tfp_forecast_horizon"] = _hz_choice
+                    st.rerun()
+            else:
+                st.markdown(
+                    '<div style="font-size:0.82rem;color:var(--brand-navy-soft);margin-bottom:8px;">'
+                    'ดึงข้อมูลก่อนเพื่อกำหนดช่วงพยากรณ์</div>',
+                    unsafe_allow_html=True,
+                )
+                st.button("เริ่มพยากรณ์", use_container_width=True, key="hero_horizon_btn_disabled", disabled=True)
+    with _hc3:
+        with st.container(border=True, key="hero_card_login"):
+            st.markdown(
+                f'<div class="action-card-head"><div class="action-card-icon">{icon("lock", 19, 1.8)}</div>'
+                f'<div class="action-card-title">เข้าสู่ระบบสำหรับคณะวิจัย</div></div>'
+                f'<div class="action-card-sub">กรุณาเข้าสู่ระบบเพื่อเข้าถึงบทสรุปผู้บริหารและฟังก์ชันเพิ่มเติม</div>',
+                unsafe_allow_html=True,
+            )
+            if st.button("เข้าสู่ระบบ", use_container_width=True, key="hero_login_btn"):
+                st.session_state.page = "home"
+                st.rerun()
+    st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
         """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
@@ -2980,8 +3047,7 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--brand-orange)", icon("database", 21, 1.8),
                             f"{len(tfp_series)} ปี",
-                            f"ข้อมูลย้อนหลัง<br><span style='white-space:nowrap;'>"
-                            f"(ปี {tfp_series.index.min()}–{tfp_series.index.max()})</span>",
+                            f"ข้อมูลย้อนหลัง (ปี {tfp_series.index.min()}–{tfp_series.index.max()})",
                         ),
                         unsafe_allow_html=True,
                     )
@@ -2999,8 +3065,7 @@ elif st.session_state.page == "dashboard":
                         _dash_kpi_card(
                             "var(--brand-navy)", icon("clock", 21, 1.8),
                             f"{horizon} ปี",
-                            f"พยากรณ์ล่วงหน้า<br><span style='white-space:nowrap;'>"
-                            f"({tfp_series.index.max() + 1}–{last_fc_year})</span>",
+                            f"พยากรณ์ล่วงหน้า ({tfp_series.index.max() + 1}–{last_fc_year})",
                         ),
                         unsafe_allow_html=True,
                     )
@@ -3086,6 +3151,139 @@ elif st.session_state.page == "dashboard":
                     f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA "
                     f"อย่างน่าเชื่อถือ (ต้องการอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
                 )
+        st.markdown('</div>', unsafe_allow_html=True)
+
+        # ================= ภาพรวมผลการพยากรณ์ + ตัวแปรในสมการ (สั้น/ยาว) แบบสรุปย่อ =================
+        _ov_col, _tbl_col = st.columns([1, 1.4], gap="large")
+        with _ov_col:
+            st.markdown(
+                f'<div class="section-card"><div class="section-title">'
+                f'<div class="section-num">{icon("bulb", 20, 1.6)}</div>'
+                f'<div class="section-title-text"><h3>ภาพรวมผลการพยากรณ์</h3></div></div>',
+                unsafe_allow_html=True,
+            )
+            if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
+                _last_actual_year = int(tfp_series.index.max())
+                _last_actual_val = float(tfp_series.iloc[-1])
+                _fc_last_val = float(fc_last["mean"])
+                _pct_change = (_fc_last_val / _last_actual_val - 1) * 100 if _last_actual_val else 0.0
+                _n_years = last_fc_year - _last_actual_year
+                _cagr = (
+                    ((_fc_last_val / _last_actual_val) ** (1 / _n_years) - 1) * 100
+                    if _n_years > 0 and _last_actual_val > 0 else 0.0
+                )
+                _trend_up = _fc_last_val >= _last_actual_val
+                st.markdown(
+                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">TFP ปี {last_fc_year} (พยากรณ์)</div>'
+                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);line-height:1.15;margin:2px 0 6px 0;">{_fc_last_val:,.2f}</div>'
+                    f'<div style="font-size:0.85rem;color:{"var(--green)" if _trend_up else "#DC2626"};font-weight:700;">'
+                    f'{"▲" if _trend_up else "▼"} {abs(_pct_change):.1f}% จากปี {_last_actual_year}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
+                st.markdown(
+                    f'<div style="font-size:0.88rem;font-weight:700;color:var(--brand-navy);margin-bottom:8px;">'
+                    f'แนวโน้มในช่วง {horizon} ปีข้างหน้า</div>',
+                    unsafe_allow_html=True,
+                )
+                for _b in [
+                    f'TFP มีแนวโน้ม{"เพิ่มขึ้น" if _trend_up else "ลดลง"}อย่างต่อเนื่อง',
+                    f'อัตราการเติบโตเฉลี่ย (CAGR) ≈ {_cagr:.1f}% ต่อปี',
+                    f'ใช้แบบจำลอง ARIMA({p},{d},{q}) เลือกอัตโนมัติจากค่า AIC ต่ำสุด',
+                ]:
+                    st.markdown(
+                        f'<div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:6px;">'
+                        f'<span style="color:var(--green);flex-shrink:0;margin-top:1px;">{icon("check", 15, 2.2)}</span>'
+                        f'<span style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.5;">{_b}</span></div>',
+                        unsafe_allow_html=True,
+                    )
+            else:
+                st.markdown(
+                    f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);">ค่า TFP ล่าสุด (ปี {int(tfp_series.index.max())})</div>'
+                    f'<div style="font-size:2rem;font-weight:800;color:var(--brand-navy);">{tfp_series.iloc[-1]:,.2f}</div>',
+                    unsafe_allow_html=True,
+                )
+                st.caption(f"ข้อมูลยังมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        with _tbl_col:
+            st.markdown(
+                f'<div class="section-card"><div class="section-title">'
+                f'<div class="section-num">{icon("file", 19, 1.8)}</div>'
+                f'<div class="section-title-text"><h3>ตัวแปรในสมการ</h3></div></div>',
+                unsafe_allow_html=True,
+            )
+
+            def _mini_coef_table(raw_map: dict, var_list: list) -> str:
+                rows = []
+                for v in var_list:
+                    info = raw_map.get(v)
+                    if not info or info.get("p") is None:
+                        continue
+                    rows.append((var_label_with_abbr(v), info["coef"], info["p"]))
+                if not rows:
+                    return (
+                        "<div style='font-size:0.85rem;color:var(--brand-navy-soft);padding:6px 0;'>"
+                        "ไม่มีข้อมูล</div>"
+                    )
+                body = "".join(
+                    f'<tr><td>{name}</td><td style="text-align:right;">{coef:,.3f}</td>'
+                    f'<td style="text-align:right;">{p_val:.3f}</td>'
+                    f'<td style="text-align:center;">{"🟢▲" if coef >= 0 else "🔴▼"}</td></tr>'
+                    for name, coef, p_val in rows
+                )
+                return (
+                    '<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;">'
+                    '<thead><tr><th>ตัวแปร</th><th style="text-align:right;">ค่าสัมประสิทธิ์</th>'
+                    '<th style="text-align:right;">p-value</th><th style="text-align:center;">ทิศทาง</th></tr></thead>'
+                    f'<tbody>{body}</tbody></table></div>'
+                )
+
+            _tab_sr, _tab_lr = st.tabs(["ตัวแปรในสมการ (ระยะสั้น)", "ตัวแปรในสมการ (ระยะยาว)"])
+            with _tab_sr:
+                st.markdown(_mini_coef_table(sr_raw_map, active_sr_bases), unsafe_allow_html=True)
+            with _tab_lr:
+                st.markdown(
+                    _mini_coef_table(lr_raw_map, [v for v in active_lr_vars if v != "const"]),
+                    unsafe_allow_html=True,
+                )
+            st.markdown('</div>', unsafe_allow_html=True)
+
+        # ================= เมนูด่วน =================
+        st.markdown(
+            f'<div class="section-card"><div class="section-title">'
+            f'<div class="section-num">{icon("sparkle", 19, 1.8)}</div>'
+            f'<div class="section-title-text"><h3>เมนูด่วน</h3></div></div>',
+            unsafe_allow_html=True,
+        )
+        _qm1, _qm2, _qm3 = st.columns(3, gap="medium")
+        with _qm1:
+            if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
+                _qm_csv = forecast_df.rename(
+                    columns={"mean": "ค่าพยากรณ์", "lower": "ขอบล่าง 95%", "upper": "ขอบบน 95%"}
+                ).round(4).to_csv().encode("utf-8-sig")
+                st.download_button(
+                    "ดาวน์โหลดพยากรณ์ (CSV)",
+                    data=_qm_csv, file_name="TFP_forecast_ARIMA.csv", mime="text/csv",
+                    use_container_width=True, key="quickmenu_dl_csv",
+                )
+            else:
+                st.button("ดาวน์โหลดพยากรณ์ (CSV)", use_container_width=True, disabled=True, key="quickmenu_dl_csv_disabled")
+        with _qm2:
+            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="quickmenu_refetch"):
+                st.session_state.pop("gsheet_load_error", None)
+                try:
+                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
+                        st.session_state.gsheet_raw_df = load_data_gsheet()
+                    st.session_state.gsheet_loaded_at = now_th()
+                except Exception as e:
+                    st.session_state.gsheet_load_error = str(e)
+                    st.session_state.pop("gsheet_raw_df", None)
+                st.rerun()
+        with _qm3:
+            if st.button("เข้าสู่ระบบสำหรับคณะวิจัย", use_container_width=True, key="quickmenu_login"):
+                st.session_state.page = "home"
+                st.rerun()
         st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= กราฟรายตัวแปร: แยกกล่องระยะยาว / ระยะสั้น =================
