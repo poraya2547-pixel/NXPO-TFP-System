@@ -2445,7 +2445,6 @@ NAV_ITEMS = [
 # เฉพาะคณะวิจัยที่ต้องล็อกอินก่อนถึงจะเข้าดูได้ ("ผลการวิเคราะห์" และ
 # "รายงานสรุปสำหรับผู้บริหาร" ย้ายมาไว้ในกลุ่มนี้แทนกลุ่มเมนูหลักด้านบน)
 NAV_ITEMS_SECONDARY = [
-    ("ผลการวิเคราะห์", "analysis"),
     ("สำหรับคณะวิจัยเท่านั้น", "home"),
     ("จัดการข้อมูลอัตโนมัติ", "data_admin"),
     ("ตั้งค่าระบบ", "settings"),
@@ -2707,6 +2706,54 @@ if st.session_state.page == "home":
                 "ℹ️ ผลลัพธ์ด้านล่างนี้รันด้วย **ชุดตัวแปรที่คณะวิจัยปรับไว้** ไม่ใช่ค่า default ในไฟล์โค้ด "
                 "— ดูรายละเอียดและเหตุผลได้ที่ประวัติการปรับตัวแปรด้านล่าง"
             )
+
+        # ================= การ์ดตัวแปรในสมการ (ระยะสั้น / ระยะยาว) แบบย่อ — ย้ายมา
+        # จากหน้า Dashboard เดิม มาไว้เป็นภาพรวมสั้น ๆ ก่อนตารางละเอียดในหมวด 1 ด้านล่าง =================
+        def _mini_var_table_card(raw_map: dict, title_th: str, badge_text: str, accent_num: str):
+            rows = [(base, info) for base, info in raw_map.items() if base != "const"]
+            # เรียงตามลำดับมาตรฐานของตัวแปร (VARIABLE_ORDER) เท่าที่มีอยู่จริงในสมการนี้
+            order_index = {code: i for i, code in enumerate(VARIABLE_ORDER)}
+            rows.sort(key=lambda kv: order_index.get(kv[0], 999))
+            body_html = ""
+            for base, info in rows:
+                coef = info.get("coef")
+                p_val = info.get("p")
+                label = _var_full_name(base) if base in VARIABLE_LABELS else base
+                coef_text = f"{coef:.3f}" if coef is not None else "-"
+                p_text = f"{p_val:.3f}" if p_val is not None else "-"
+                is_up = (coef or 0) >= 0
+                dir_html = (
+                    f'<span class="nxpo-var-dir up">{icon("trend-up", 15, 2)}</span>' if is_up
+                    else f'<span class="nxpo-var-dir down">{icon("trend-down", 15, 2)}</span>'
+                )
+                body_html += (
+                    f"<tr><td>{label}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
+                )
+            st.markdown(
+                f'<div class="section-card"><div class="nxpo-var-card-head">'
+                f'<div class="title-group"><div class="section-num">{accent_num}</div>'
+                f'<div class="section-title-text"><h3>ตัวแปรในสมการ ({title_th})</h3></div></div>'
+                f'<span class="nxpo-run-badge">{badge_text}</span></div>'
+                f'<table class="nxpo-var-table"><thead><tr>'
+                f'<th>ตัวแปร</th><th>ค่าสัมประสิทธิ์</th><th>p-value</th><th>ทิศทาง</th>'
+                f'</tr></thead><tbody>{body_html}</tbody></table>'
+                f'</div>',
+                unsafe_allow_html=True,
+            )
+
+        var_col_sr, var_col_lr = st.columns(2)
+        with var_col_sr:
+            if sr_raw_map:
+                _mini_var_table_card(sr_raw_map, "ระยะสั้น", "Short Run", icon("clock", 20, 2))
+            else:
+                st.info("ยังไม่มีตัวแปรในสมการระยะสั้น")
+        with var_col_lr:
+            if lr_raw_map:
+                _mini_var_table_card(lr_raw_map, "ระยะยาว", "Long Run", icon("bars", 20, 2))
+            else:
+                st.info("ยังไม่มีตัวแปรในสมการระยะยาว")
+        st.caption("รายละเอียดตัวแปรครบทุกตัวพร้อมระดับนัยสำคัญ ดูได้ในตารางค่าสัมประสิทธิ์ด้านล่าง (หมวด 1)")
+        st.write("")
 
         # ================= หมวด 1: ผลการทดสอบปัจจัย ววน. =================
         st.markdown(
@@ -3024,92 +3071,17 @@ if st.session_state.page == "home":
                     st.error(f"เรียก Gemini ไม่สำเร็จ: {e}")
 
 elif st.session_state.page == "dashboard":
-    # ----- แถบบนสุด: โลโก้ระบบ + ชื่อระบบ + ไอคอนแจ้งเตือน/โปรไฟล์ (ตกแต่งอย่างเดียว
-    # ยังไม่ผูกฟังก์ชันจริง — สลับธีม/การแจ้งเตือนจะเพิ่มในเวอร์ชันถัดไป) -----
+    # ----- แถบบนสุด: เหลือเฉพาะป้ายสถานะผู้ใช้มุมขวาบน — แสดง "ผู้เยี่ยมชม" สำหรับ
+    # คนทั่วไปที่ยังไม่เข้าสู่ระบบ และเปลี่ยนเป็น "เจ้าหน้าที่วิจัย" อัตโนมัติทันทีที่
+    # เข้าสู่ระบบคณะวิจัยสำเร็จ (ดูสถานะจาก research_authenticated) -----
+    _user_chip_label = "เจ้าหน้าที่วิจัย" if st.session_state.research_authenticated else "ผู้เยี่ยมชม"
     st.markdown(
-        f'<div class="nxpo-topbar">'
-        f'<div class="nxpo-topbar-left">'
-        f'<div class="nxpo-topbar-logo">{icon("sparkle", 22, 2)}</div>'
-        f'<div class="nxpo-topbar-title"><span class="eyebrow">NXPO Data Center</span>'
-        f'<h2>แดชบอร์ดพยากรณ์และแสดงผลผลิตภาพปัจจัยการผลิตรวมในประเทศไทย</h2></div>'
-        f'</div>'
+        f'<div class="nxpo-topbar" style="justify-content:flex-end;">'
         f'<div class="nxpo-topbar-right">'
-        f'<div class="nxpo-userchip"><span class="avatar">{icon("user-circle", 16, 1.8)}</span>เจ้าหน้าที่วิจัย</div>'
+        f'<div class="nxpo-userchip"><span class="avatar">{icon("user-circle", 16, 1.8)}</span>{_user_chip_label}</div>'
         f'</div></div>',
         unsafe_allow_html=True,
     )
-
-    # ----- Hero banner: ต้อนรับเข้าสู่ระบบ -----
-    st.markdown(
-        '<div class="nxpo-hero">'
-        '<div class="nxpo-hero-badge">Better Data<br>Better Policy</div>'
-        '<p class="nxpo-hero-eyebrow">ยินดีต้อนรับสู่ระบบ</p>'
-        '<h1>แดชบอร์ดพยากรณ์และแสดงผลผลิตภาพปัจจัยการผลิตรวมในประเทศไทย</h1>'
-        '<p class="desc">ระบบวิเคราะห์ผลิตภาพปัจจัยการผลิตรวมภายในประเทศ (TFP) '
-        'และรายงานสรุปผลสำหรับผู้บริหารด้วยปัญญาประดิษฐ์</p>'
-        '<div class="nxpo-hero-tags">'
-        f'<span class="nxpo-hero-tag">{icon("bars", 14, 2)} Total Factor Productivity (TFP)</span>'
-        f'<span class="nxpo-hero-tag">{icon("trend-up", 14, 2)} Econometric Model</span>'
-        f'<span class="nxpo-hero-tag">{icon("sparkle", 14, 2)} AI Executive Summary</span>'
-        '</div></div>',
-        unsafe_allow_html=True,
-    )
-
-    # ----- แถวการ์ดควบคุม 3 ใบ: ดึงข้อมูลอัตโนมัติ / กำหนดช่วงเวลาพยากรณ์ / เข้าสู่ระบบคณะวิจัย -----
-    ctl1, ctl2, ctl3 = st.columns(3)
-    with ctl1:
-        _data_status_dot = "var(--green)" if "gsheet_raw_df" in st.session_state else "var(--brand-navy-soft)"
-        _data_status_text = (
-            f"ล่าสุด: {thai_timestamp()}" if "gsheet_raw_df" in st.session_state
-            else "ยังไม่เคยดึงข้อมูลในเซสชันนี้"
-        )
-        st.markdown(
-            f'<div class="nxpo-control-card"><div class="head">'
-            f'<div class="head-icon">{icon("cloud", 20, 1.9)}</div><h4>ดึงข้อมูลอัตโนมัติ</h4></div>'
-            f'<p class="subtext">อัปเดตข้อมูลล่าสุดจากแหล่งข้อมูลภายนอก</p>'
-            f'<div class="status-line"><span class="status-dot" style="background:{_data_status_dot};"></span>'
-            f'{_data_status_text}</div>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="ctrl_data_btn"):
-            if st.button("ดึงข้อมูลอีกครั้ง", use_container_width=True, key="dash_ctrl_fetch"):
-                st.session_state.pop("gsheet_load_error", None)
-                try:
-                    with st.spinner("กำลังดึงข้อมูลอัตโนมัติ..."):
-                        st.session_state.gsheet_raw_df = _load_data_gsheet_with_optional_url(
-                            st.session_state.get("custom_gsheet_url")
-                        )
-                    st.session_state.gsheet_loaded_at = now_th()
-                    st.rerun()
-                except Exception as e:
-                    st.session_state.gsheet_load_error = str(e)
-                    st.session_state.pop("gsheet_raw_df", None)
-        if st.session_state.get("gsheet_load_error"):
-            st.error(f"ดึงข้อมูลไม่สำเร็จ: {st.session_state.gsheet_load_error}")
-        st.markdown('</div>', unsafe_allow_html=True)
-    with ctl2:
-        st.markdown(
-            f'<div class="nxpo-control-card"><div class="head">'
-            f'<div class="head-icon">{icon("calendar", 20, 1.9)}</div><h4>กำหนดช่วงเวลาพยากรณ์</h4></div>'
-            f'<p class="subtext">เลือกปีที่ต้องการพยากรณ์ได้ตามต้องการในกราฟด้านล่าง</p>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="ctrl_forecast_btn"):
-            if st.button("ไปที่กราฟพยากรณ์ ↓", use_container_width=True, key="dash_ctrl_goto_chart"):
-                pass
-        st.markdown('</div>', unsafe_allow_html=True)
-    with ctl3:
-        st.markdown(
-            f'<div class="nxpo-control-card"><div class="head">'
-            f'<div class="head-icon">{icon("lock", 20, 1.9)}</div><h4>เข้าสู่ระบบสำหรับคณะวิจัย</h4></div>'
-            f'<p class="subtext">กรุณาเข้าสู่ระบบเพื่อเข้าถึงข้อมูลและฟีเจอร์เพิ่มเติม</p>',
-            unsafe_allow_html=True,
-        )
-        with st.container(key="ctrl_login_btn"):
-            if st.button("เข้าสู่ระบบ", use_container_width=True, key="dash_ctrl_goto_login"):
-                st.session_state.page = "home"
-                st.rerun()
-        st.markdown('</div>', unsafe_allow_html=True)
     st.write("")
 
     def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
@@ -3526,56 +3498,6 @@ elif st.session_state.page == "dashboard":
                 unsafe_allow_html=True,
             )
             st.write("")
-
-        # ================= การ์ดตัวแปรในสมการ (ระยะสั้น / ระยะยาว) แบบย่อ =================
-        def _mini_var_table_card(raw_map: dict, title_th: str, badge_text: str, accent_num: str):
-            rows = [(base, info) for base, info in raw_map.items() if base != "const"]
-            # เรียงตามลำดับมาตรฐานของตัวแปร (VARIABLE_ORDER) เท่าที่มีอยู่จริงในสมการนี้
-            order_index = {code: i for i, code in enumerate(VARIABLE_ORDER)}
-            rows.sort(key=lambda kv: order_index.get(kv[0], 999))
-            body_html = ""
-            for base, info in rows:
-                coef = info.get("coef")
-                p_val = info.get("p")
-                label = _var_full_name(base) if base in VARIABLE_LABELS else base
-                coef_text = f"{coef:.3f}" if coef is not None else "-"
-                p_text = f"{p_val:.3f}" if p_val is not None else "-"
-                is_up = (coef or 0) >= 0
-                dir_html = (
-                    f'<span class="nxpo-var-dir up">{icon("trend-up", 15, 2)}</span>' if is_up
-                    else f'<span class="nxpo-var-dir down">{icon("trend-down", 15, 2)}</span>'
-                )
-                body_html += (
-                    f"<tr><td>{label}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
-                )
-            st.markdown(
-                f'<div class="section-card"><div class="nxpo-var-card-head">'
-                f'<div class="title-group"><div class="section-num">{accent_num}</div>'
-                f'<div class="section-title-text"><h3>ตัวแปรในสมการ ({title_th})</h3></div></div>'
-                f'<span class="nxpo-run-badge">{badge_text}</span></div>'
-                f'<table class="nxpo-var-table"><thead><tr>'
-                f'<th>ตัวแปร</th><th>ค่าสัมประสิทธิ์</th><th>p-value</th><th>ทิศทาง</th>'
-                f'</tr></thead><tbody>{body_html}</tbody></table>'
-                f'<div class="nxpo-var-more">ดูรายละเอียดเพิ่มเติม {icon("arrow-right", 15, 2)}</div>'
-                f'</div>',
-                unsafe_allow_html=True,
-            )
-
-        var_col_sr, var_col_lr = st.columns(2)
-        with var_col_sr:
-            if sr_raw_map:
-                _mini_var_table_card(sr_raw_map, "ระยะสั้น", "Short Run", icon("clock", 20, 2))
-            else:
-                st.info("ยังไม่มีตัวแปรในสมการระยะสั้น")
-        with var_col_lr:
-            if lr_raw_map:
-                _mini_var_table_card(lr_raw_map, "ระยะยาว", "Long Run", icon("bars", 20, 2))
-            else:
-                st.info("ยังไม่มีตัวแปรในสมการระยะยาว")
-        if st.button("ดูรายละเอียดตัวแปรและผลการวิเคราะห์เพิ่มเติม →", key="dash_goto_analysis"):
-            st.session_state.page = "analysis"
-            st.rerun()
-        st.write("")
 
         # ================= กราฟรายตัวแปร: แยกกล่องระยะยาว / ระยะสั้น =================
         # แยกรายชื่อตัวแปรอิสระเป็น 2 ชุดตามสมการที่ตัวแปรนั้นอยู่ แทนที่จะรวมเป็น
@@ -4119,104 +4041,6 @@ elif st.session_state.page == "data_vars":
         '</div>',
         unsafe_allow_html=True,
     )
-
-# ------------------------------------------------------------------------------
-# หน้า "ผลการวิเคราะห์" — สรุปผลตรวจสอบข้อสมมติฐาน (Diagnostics) + ตารางค่าสัมประสิทธิ์
-# รวมระยะยาว/ระยะสั้น (ใช้ตัวแปรที่คำนวณไว้แล้วในส่วนรันโมเดลด้านบนไฟล์ ไม่คำนวณซ้ำ)
-# ------------------------------------------------------------------------------
-elif st.session_state.page == "analysis":
-    st.markdown(
-        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
-        f'<div class="nxpo-topbar-logo">{icon("bars", 22, 2)}</div>'
-        f'<div class="nxpo-topbar-title"><span class="eyebrow">Analysis Results</span>'
-        f'<h2>ผลการวิเคราะห์</h2></div></div></div>',
-        unsafe_allow_html=True,
-    )
-    # หน้านี้จำกัดให้เฉพาะคณะวิจัยที่ล็อกอินแล้วเท่านั้น (ย้ายมาจากเมนูหลักที่เดิม
-    # เปิดให้บุคคลภายนอกดูได้ — ดูฟอร์มล็อกอินจริงได้ที่หน้า "สำหรับคณะวิจัยเท่านั้น")
-    if not st.session_state.research_authenticated:
-        st.markdown(
-            f'<div class="section-card" style="max-width:420px;margin:40px auto;'
-            f'text-align:center;">'
-            f'<div class="section-title" style="justify-content:center;">'
-            f'<div class="section-num">🔒</div>'
-            f'<div class="section-title-text"><h3>สำหรับคณะวิจัยเท่านั้น</h3></div></div>'
-            f'<p style="color:var(--brand-navy-soft);font-size:0.9rem;margin-top:-6px;">'
-            f'กรุณาเข้าสู่ระบบด้วยบัญชีคณะวิจัยก่อน จึงจะดูผลการวิเคราะห์หน้านี้ได้</p></div>',
-            unsafe_allow_html=True,
-        )
-        _analysis_login_col = st.columns([1, 1.4, 1])[1]
-        with _analysis_login_col:
-            if st.button("ไปที่หน้าเข้าสู่ระบบ →", use_container_width=True, key="analysis_goto_login"):
-                st.session_state.page = "home"
-                st.rerun()
-        st.stop()
-    if not result_ready:
-        st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูผลการวิเคราะห์")
-    else:
-        k1, k2, k3 = st.columns(3)
-        with k1:
-            st.markdown(
-                f'<div class="metric-card"><div class="metric-icon" style="background:var(--green);">'
-                f'{icon("check", 21, 2)}</div><div><div class="metric-value">{n_pass}</div>'
-                f'<div class="metric-label">ผ่านเกณฑ์ข้อสมมติฐาน</div></div></div>',
-                unsafe_allow_html=True,
-            )
-        with k2:
-            st.markdown(
-                f'<div class="metric-card"><div class="metric-icon" style="background:var(--amber);">'
-                f'{icon("alert", 21, 2)}</div><div><div class="metric-value">{n_watch}</div>'
-                f'<div class="metric-label">ควรจับตา</div></div></div>',
-                unsafe_allow_html=True,
-            )
-        with k3:
-            st.markdown(
-                f'<div class="metric-card"><div class="metric-icon" style="background:var(--red);">'
-                f'{icon("x", 21, 2)}</div><div><div class="metric-value">{n_fail}</div>'
-                f'<div class="metric-label">ไม่ผ่านเกณฑ์</div></div></div>',
-                unsafe_allow_html=True,
-            )
-        st.write("")
-        if diag_table_display is not None:
-            st.markdown(
-                f'<div class="section-card"><div class="section-title">'
-                f'<div class="section-num">{icon("check", 20, 2)}</div>'
-                f'<div class="section-title-text"><h3>ผลตรวจสอบข้อสมมติฐาน (Diagnostics)</h3></div></div>',
-                unsafe_allow_html=True,
-            )
-            diag_header_html = "".join(f"<th>{c}</th>" for c in diag_table_display.columns)
-            diag_rows_html = "".join(
-                "<tr>" + "".join(f"<td>{v}</td>" for v in row) + "</tr>"
-                for row in diag_table_display.values.tolist()
-            )
-            st.markdown(
-                f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
-                f'{diag_header_html}</tr></thead><tbody>{diag_rows_html}</tbody></table></div>',
-                unsafe_allow_html=True,
-            )
-            st.markdown('</div>', unsafe_allow_html=True)
-
-        st.markdown(
-            f'<div class="section-card"><div class="section-title">'
-            f'<div class="section-num">{icon("bars", 20, 2)}</div>'
-            f'<div class="section-title-text"><h3>ตารางค่าสัมประสิทธิ์ (ระยะยาว/ระยะสั้น)</h3></div></div>',
-            unsafe_allow_html=True,
-        )
-        combined_header_html2 = "".join(f"<th>{c}</th>" for c in combined_table.columns)
-        combined_rows_html2 = "".join(
-            "<tr>" + "".join(
-                f'<td style="font-weight:600;color:var(--brand-navy);">{v}</td>' if i == 0 else f"<td>{v}</td>"
-                for i, v in enumerate(row)
-            ) + "</tr>"
-            for row in combined_table.values.tolist()
-        )
-        st.markdown(
-            f'<div style="overflow-x:auto;"><table class="tfp-table tfp-table-left"><thead><tr>'
-            f'{combined_header_html2}</tr></thead><tbody>{combined_rows_html2}</tbody></table></div>',
-            unsafe_allow_html=True,
-        )
-        st.caption(f"Adj. R² (ระยะยาว) = {adj_r2_lr:.4f}  |  Adj. R² (ระยะสั้น) = {adj_r2_sr:.4f}")
-        st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
 # หน้า "คู่มือการใช้งาน" — ขั้นตอนการใช้งานระบบแบบสรุป ไม่ขึ้นกับข้อมูลที่ดึงมา
