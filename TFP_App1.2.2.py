@@ -2833,6 +2833,41 @@ def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataF
     )
 
 
+def _compute_influence_df(model_df: pd.DataFrame, dep_ln: str, active_lr_vars: list, lr_raw_map: dict):
+    """คำนวณสัดส่วนอิทธิพล (standardized coefficient) ของตัวแปรอิสระแต่ละตัวในสมการ
+    ระยะยาว เทียบกันเป็น % (รวมกันได้ 100%) — ดึงตรรกะเดิมออกมาจากหน้า "พยากรณ์ TFP"
+    เป็นฟังก์ชันกลาง เพื่อให้หน้า "แดชบอร์ดผู้บริหาร (สรุปหน้าเดียว)" เรียกใช้ซ้ำได้
+    คืนค่า (infl_df, None) เมื่อคำนวณได้ หรือ (None, ข้อความเหตุผล) เมื่อคำนวณไม่ได้"""
+    influence_vars = [
+        v for v in active_lr_vars
+        if v != "const" and v in lr_raw_map and v in model_df.columns
+    ]
+    if len(influence_vars) < 2:
+        return None, "ต้องมีตัวแปรอิสระอย่างน้อย 2 ตัวในสมการระยะยาว จึงจะเทียบสัดส่วนอิทธิพลกันได้"
+    sample_df = model_df[[dep_ln] + influence_vars].dropna()
+    y_std = sample_df[dep_ln].std() if not sample_df.empty else None
+    if sample_df.empty or len(sample_df) < 3 or not y_std or pd.isna(y_std):
+        return None, "ข้อมูลไม่พอสำหรับคำนวณสัดส่วนอิทธิพล (ต้องการอย่างน้อย 3 ปีที่มีข้อมูลครบทุกตัวแปร)"
+    rows = []
+    for v in influence_vars:
+        x_std = sample_df[v].std()
+        if not x_std or pd.isna(x_std) or x_std == 0:
+            continue
+        std_beta = lr_raw_map[v]["coef"] * (x_std / y_std)
+        rows.append({"code": v, "label": _var_full_name(v), "std_beta": std_beta})
+    if not rows:
+        return None, "ไม่สามารถคำนวณสัดส่วนอิทธิพลได้ (ส่วนเบี่ยงเบนมาตรฐานของตัวแปรบางตัวเป็น 0)"
+    infl_df = pd.DataFrame(rows)
+    infl_df["abs_beta"] = infl_df["std_beta"].abs()
+    total_abs = infl_df["abs_beta"].sum()
+    infl_df["สัดส่วน (%)"] = infl_df["abs_beta"] / total_abs * 100
+    infl_df["ทิศทาง"] = infl_df["std_beta"].apply(
+        lambda x: "หนุนเสริม TFP (+)" if x >= 0 else "ฉุดรั้ง TFP (−)"
+    )
+    infl_df = infl_df.sort_values("สัดส่วน (%)", ascending=False).reset_index(drop=True)
+    return infl_df, None
+
+
 if st.session_state.page == "home":
     if not st.session_state.research_authenticated:
         # หน้าล็อกอิน — แสดงแทนเนื้อหาบทสรุปผู้บริหารจนกว่าจะกรอก user/password ถูกต้อง
@@ -4051,6 +4086,356 @@ elif st.session_state.page == "forecast":
                             key="dl_influence_share",
                         )
         st.markdown('</div>', unsafe_allow_html=True)
+
+        # ================= ปุ่มไปหน้า "แดชบอร์ดผู้บริหาร (สรุปหน้าเดียว)" =================
+        # เก็บช่วงปีพยากรณ์ + สมมติฐานตัวแปรที่ตั้งไว้ในหน้านี้ (horizon, ตัวแปรที่
+        # เลือกในกล่อง "ผลกระทบของตัวแปร", ค่าที่สมมติเปลี่ยนแปลง) ไว้ใน session_state
+        # ก่อนพาไปหน้าแดชบอร์ดสรุป เพื่อให้หน้านั้นแสดงผลตรงกับที่ตั้งค่าไว้ที่นี่ทันที
+        # โดยไม่ต้องมาตั้งซ้ำ — เหมาะสำหรับเปิดฉายนำเสนอผู้บริหารแบบไม่ต้องเลื่อนจอ
+        if _arima_forecast_available:
+            st.write("")
+            st.markdown(
+                '<div style="text-align:center;color:var(--brand-navy-soft);'
+                'font-size:0.85rem;margin-bottom:8px;">'
+                'ตั้งค่าช่วงปีพยากรณ์และสมมติฐานตัวแปรด้านบนตามต้องการแล้ว '
+                'กดปุ่มด้านล่างเพื่อสรุปทุกอย่างไว้ในหน้าเดียวสำหรับนำเสนอผู้บริหาร</div>',
+                unsafe_allow_html=True,
+            )
+            _go_exec_col = st.columns([1, 1.6, 1])[1]
+            with _go_exec_col:
+                if st.button(
+                    f"📊 สร้างแดชบอร์ดผู้บริหาร (สรุปหน้าเดียว) →",
+                    key="forecast_goto_exec_dash", use_container_width=True, type="primary",
+                ):
+                    st.session_state.exec_dash_horizon = horizon
+                    st.session_state.exec_dash_chosen_var = chosen_var
+                    st.session_state.page = "exec_dashboard"
+                    st.rerun()
+
+# ------------------------------------------------------------------------------
+# หน้า "แดชบอร์ดผู้บริหาร (สรุปหน้าเดียว)" — สรุปผลพยากรณ์ + สมมติฐานที่ตั้งไว้จาก
+# หน้า "พยากรณ์ TFP" มาแสดงในมุมมองเดียวแบบกระชับที่สุด (การ์ด KPI + กราฟหลัก +
+# ตารางพยากรณ์ย่อ + สัดส่วนอิทธิพลตัวแปร + ข้อสรุปสำคัญ) จัดวางเป็นกริดแน่นเพื่อให้
+# ใช้ชี้แจง/นำเสนอได้โดยแทบไม่ต้องเลื่อนหน้าจอ — เหมาะกับการฉายให้ผู้บริหารดูสด ๆ
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "exec_dashboard":
+    st.session_state.setdefault("exec_presentation_mode", False)
+
+    # ----- CSS เฉพาะหน้านี้: ย่อ padding/ระยะห่าง/ขนาดตัวอักษรของการ์ดต่าง ๆ ให้แน่น
+    # ขึ้นกว่าหน้าอื่นในแอป (ซึ่งเว้นระยะไว้กว้างเพื่ออ่านทีละหมวด) เพื่อให้เนื้อหา
+    # ทั้งหมดของหน้านี้อัดพอดีในจอเดียวมากที่สุดสำหรับโหมดนำเสนอ -----
+    st.markdown(
+        """
+        <style>
+        .st-key-exec_dash_wrap .section-card { padding: 8px 16px; margin-bottom: 12px; }
+        .st-key-exec_dash_wrap .section-title { gap: 10px; }
+        .st-key-exec_dash_wrap .section-num { width: 32px; height: 32px; font-size: 0.95rem; }
+        .st-key-exec_dash_wrap .section-title h3 { font-size: 1rem; margin: 0; }
+        .st-key-exec_dash_wrap .metric-card { padding: 12px 14px; gap: 10px; }
+        .st-key-exec_dash_wrap .metric-icon { width: 36px; height: 36px; font-size: 1rem; }
+        .st-key-exec_dash_wrap .metric-value { font-size: 1.15rem; }
+        .st-key-exec_dash_wrap .metric-label { font-size: 0.72rem; }
+        .st-key-exec_dash_wrap .nxpo-summary-card { padding: 16px 18px; }
+        .st-key-exec_dash_wrap .nxpo-summary-card .value { font-size: 1.05rem; }
+        .st-key-exec_dash_wrap [data-testid="stVerticalBlock"] { gap: 0.5rem; }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
+    with st.container(key="exec_dash_wrap"):
+        _topbar_l, _topbar_r = st.columns([3, 1.4])
+        with _topbar_l:
+            st.markdown(
+                f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+                f'<div class="nxpo-topbar-logo">{icon("sparkle", 20, 2)}</div>'
+                f'<div class="nxpo-topbar-title"><span class="eyebrow">Executive Dashboard</span>'
+                f'<h2 style="font-size:1.3rem;">แดชบอร์ดผู้บริหาร (สรุปหน้าเดียว)</h2></div></div></div>',
+                unsafe_allow_html=True,
+            )
+        with _topbar_r:
+            st.markdown("<div style='height:6px;'></div>", unsafe_allow_html=True)
+            _btn_back, _btn_present = st.columns(2)
+            with _btn_back:
+                if st.button("← กลับ", key="exec_back_to_forecast", use_container_width=True):
+                    st.session_state.page = "forecast"
+                    st.rerun()
+            with _btn_present:
+                st.session_state.exec_presentation_mode = st.toggle(
+                    "โหมดนำเสนอ", value=st.session_state.exec_presentation_mode,
+                    key="exec_presentation_toggle",
+                    help="ซ่อนแถบเมนูด้านซ้ายชั่วคราว เพื่อให้เห็นแดชบอร์ดเต็มจอตอนนำเสนอ",
+                )
+
+        if st.session_state.exec_presentation_mode:
+            st.markdown(
+                '<style>[data-testid="stSidebar"], [data-testid="collapsedControl"] {display:none;}</style>',
+                unsafe_allow_html=True,
+            )
+
+        if not result_ready:
+            st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อสร้างแดชบอร์ดสรุปนี้")
+        else:
+            tfp_series = model_df[DEP_VAR].dropna().sort_index()
+            if tfp_series.empty:
+                st.info("ไม่พบข้อมูล TFP ในชุดข้อมูลที่ดึงมา")
+            else:
+                MIN_POINTS_FOR_ARIMA = 8
+                # ใช้จำนวนปีพยากรณ์ตามที่ตั้งไว้ในหน้า "พยากรณ์ TFP" (ถ้ายังไม่เคยตั้ง
+                # ใช้ค่าเริ่มต้น 5 ปี เหมือนกับ slider เริ่มต้นของหน้านั้น)
+                horizon = int(st.session_state.get("exec_dash_horizon", st.session_state.get("tfp_forecast_horizon", 5)))
+                last_val = float(tfp_series.iloc[-1])
+                last_year = int(tfp_series.index.max())
+                prev_val = float(tfp_series.iloc[-2]) if len(tfp_series) > 1 else None
+                yoy = ((last_val / prev_val) - 1) * 100 if prev_val else None
+
+                # อัตราการเติบโตเฉลี่ยของ TFP ย้อนหลัง (เฉลี่ย YoY ของข้อมูลจริงในช่วง
+                # สูงสุด 5 ปีล่าสุด) — ใช้เทียบภาพให้เห็นว่าที่ผ่านมาโตเฉลี่ยเท่าไร
+                _hist_n = min(5, len(tfp_series) - 1)
+                if _hist_n > 0:
+                    _hist_yoy = tfp_series.pct_change().dropna().iloc[-_hist_n:] * 100
+                    hist_avg_growth = float(_hist_yoy.mean())
+                else:
+                    hist_avg_growth = None
+
+                _has_forecast = len(tfp_series) >= MIN_POINTS_FOR_ARIMA
+                if _has_forecast:
+                    with st.spinner("กำลังพยากรณ์ตามช่วงปีที่ตั้งไว้..."):
+                        forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
+                    fc_year = int(forecast_df.index.max())
+                    fc_final = float(forecast_df.loc[fc_year, "mean"])
+                    growth_total = ((fc_final / last_val) - 1) * 100 if last_val else 0.0
+                    cagr = (((fc_final / last_val) ** (1 / horizon)) - 1) * 100 if last_val and horizon > 0 else 0.0
+
+                # ----- ดึงสมมติฐาน "สมมติตัวแปรเปลี่ยนแปลง" ที่ตั้งไว้ในหน้าพยากรณ์ TFP
+                # (ถ้ามี) มาคำนวณผลกระทบต่อ TFP ซ้ำ เพื่อโชว์เป็นการ์ดสมมติฐานเชิงนโยบาย
+                # หมายเหตุ: เป็นการประมาณอย่างง่ายจากค่าความยืดหยุ่นของสมการระยะยาว
+                # แยกจากแบบจำลอง ARIMA ข้างต้น (คนละวิธีคำนวณ) จึงใช้เป็นภาพประกอบ
+                # เชิงนโยบายเท่านั้น ไม่ใช่การพยากรณ์ร่วมสมการเดียวกัน -----
+                scenario_var = st.session_state.get("exec_dash_chosen_var")
+                scenario_pct_effect = None
+                scenario_shock = None
+                if scenario_var and scenario_var in lr_raw_map:
+                    scenario_shock = st.session_state.get(f"impact_shock_{scenario_var}")
+                    if scenario_shock is not None:
+                        _coef = lr_raw_map[scenario_var]["coef"]
+                        if scenario_var.startswith("ln_"):
+                            scenario_pct_effect = _coef * scenario_shock
+                        else:
+                            scenario_pct_effect = (math.exp(_coef * scenario_shock) - 1) * 100
+
+                st.caption(
+                    f"ข้อมูลล่าสุด: {thai_timestamp()} • ปีข้อมูล {tfp_series.index.min()}–{tfp_series.index.max()} "
+                    f"• ช่วงพยากรณ์ {horizon} ปีข้างหน้า (ตั้งค่าจากหน้า \"พยากรณ์ TFP\")"
+                )
+
+                # ================= แถว 1: การ์ด KPI สรุป 4 ใบ =================
+                def _exec_kpi(bg, icon_svg, value, label):
+                    return (
+                        f'<div class="metric-card"><div class="metric-icon" style="background:{bg};">{icon_svg}</div>'
+                        f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
+                    )
+
+                kpi_cols = st.columns(4)
+                with kpi_cols[0]:
+                    yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
+                    st.markdown(
+                        _exec_kpi("var(--brand-orange)", icon("bars", 18, 1.8), f"{last_val:,.2f}",
+                                  f"TFP ล่าสุด (ปี {last_year}) {yoy_text} เทียบปีก่อน"),
+                        unsafe_allow_html=True,
+                    )
+                with kpi_cols[1]:
+                    if _has_forecast:
+                        st.markdown(
+                            _exec_kpi("var(--blue)", icon("clock", 18, 1.8), f"{fc_final:,.2f}",
+                                      f"ค่าพยากรณ์ TFP (ปี {fc_year})"),
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown(_exec_kpi("var(--blue)", icon("clock", 18, 1.8), "-",
+                                               "ข้อมูลยังไม่พอสำหรับพยากรณ์"), unsafe_allow_html=True)
+                with kpi_cols[2]:
+                    hg_text = f"{hist_avg_growth:+.2f}%" if hist_avg_growth is not None else "-"
+                    st.markdown(
+                        _exec_kpi("var(--brand-navy)", icon("trend-up", 18, 1.8), hg_text,
+                                  f"อัตราเติบโตเฉลี่ยของ TFP (ย้อนหลัง {_hist_n} ปี)"),
+                        unsafe_allow_html=True,
+                    )
+                with kpi_cols[3]:
+                    if scenario_pct_effect is not None:
+                        st.markdown(
+                            _exec_kpi("var(--green)", icon("bulb", 18, 1.8), f"{scenario_pct_effect:+.2f}%",
+                                      f"สมมติฐาน: {_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
+                                      f"{'%' if scenario_var.startswith('ln_') else ''}"),
+                            unsafe_allow_html=True,
+                        )
+                    else:
+                        st.markdown(
+                            _exec_kpi("var(--green)", icon("bulb", 18, 1.8), f"{n_pass}/{n_pass + n_watch + n_fail}",
+                                      "ผ่านเกณฑ์ข้อสมมติฐาน (ยังไม่ได้ตั้งสมมติฐานตัวแปร)"),
+                            unsafe_allow_html=True,
+                        )
+                st.write("")
+
+                # ================= แถว 2: กราฟหลัก (ซ้าย) + ตารางพยากรณ์ย่อ/สรุป (ขวา) =================
+                col_main, col_side = st.columns([1.7, 1], gap="medium")
+                with col_main:
+                    st.markdown(
+                        f'<div class="section-card"><div class="section-title">'
+                        f'<div class="section-num">{icon("trend-up", 16, 2)}</div>'
+                        f'<div class="section-title-text"><h3>แนวโน้ม TFP และพยากรณ์ {horizon} ปีข้างหน้า</h3>'
+                        f'</div></div>',
+                        unsafe_allow_html=True,
+                    )
+                    if _has_forecast:
+                        _nice_line_chart_with_forecast(
+                            tfp_series, forecast_df, color="#F97316", forecast_color="#2F6FED", height=230,
+                        )
+                        if scenario_pct_effect is not None:
+                            _scn_final = fc_final * (1 + scenario_pct_effect / 100)
+                            st.markdown(
+                                f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);'
+                                f'line-height:1.5;margin-top:2px;">'
+                                f'💡 ถ้าเป็นไปตามสมมติฐานด้านบน TFP ปี {fc_year} อาจขยับไปที่ราว '
+                                f'<b style="color:var(--brand-navy);">{_scn_final:,.2f}</b> '
+                                f'(เทียบกับพยากรณ์ฐาน {fc_final:,.2f}) — เป็นภาพประกอบเชิงนโยบายอย่างง่าย '
+                                f'จากค่าความยืดหยุ่นของสมการระยะยาว ไม่ใช่การพยากรณ์ร่วมกับแบบจำลอง ARIMA โดยตรง</div>',
+                                unsafe_allow_html=True,
+                            )
+                    else:
+                        _nice_line_chart(tfp_series, color="#F97316", height=230)
+                        st.info(f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                with col_side:
+                    if _has_forecast:
+                        st.markdown(
+                            f'<div class="section-card"><div class="section-title">'
+                            f'<div class="section-num">{icon("calendar", 16, 2)}</div>'
+                            f'<div class="section-title-text"><h3>พยากรณ์ TFP รายปี</h3></div></div>',
+                            unsafe_allow_html=True,
+                        )
+                        _fc_head = forecast_df["mean"].head(min(4, horizon))
+                        _fc_rows_html = ""
+                        _prev = last_val
+                        for _yr, _val in _fc_head.items():
+                            _g = ((_val / _prev) - 1) * 100 if _prev else 0.0
+                            _prev = _val
+                            _fc_rows_html += (
+                                f'<tr><td>{int(_yr)}</td><td>{_val:,.2f}</td>'
+                                f'<td style="color:{"var(--green)" if _g >= 0 else "var(--red)"};">{_g:+.2f}%</td></tr>'
+                            )
+                        st.markdown(
+                            f'<div style="overflow-x:auto;"><table class="tfp-table" style="font-size:0.85rem;">'
+                            f'<thead><tr><th>ปี</th><th>ค่าพยากรณ์</th><th>อัตราเติบโต</th></tr></thead>'
+                            f'<tbody>{_fc_rows_html}</tbody></table></div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown('</div>', unsafe_allow_html=True)
+
+                        _trend_icon = "trend-up" if growth_total >= 0 else "trend-down"
+                        _trend_word = "เพิ่มขึ้น" if growth_total >= 0 else "ลดลง"
+                        st.markdown(
+                            f'<div class="nxpo-summary-card">'
+                            f'<div class="label">{icon("sparkle", 12, 2)} สรุปจากแบบจำลอง</div>'
+                            f'<div class="value">TFP มีแนวโน้ม{_trend_word}เฉลี่ย {cagr:+.1f}% ต่อปี</div>'
+                            f'<div class="from-label">ในช่วง {horizon} ปีข้างหน้า '
+                            f'<span class="growth-badge">{icon(_trend_icon, 12, 2)} {growth_total:+.1f}%</span></div>'
+                            f'</div>',
+                            unsafe_allow_html=True,
+                        )
+
+                st.write("")
+
+                # ================= แถว 3: สัดส่วนอิทธิพลตัวแปร (ซ้าย) + คุณภาพแบบจำลอง/ข้อสรุป (ขวา) =================
+                col_infl, col_notes = st.columns([1.3, 1], gap="medium")
+                with col_infl:
+                    st.markdown(
+                        f'<div class="section-card"><div class="section-title">'
+                        f'<div class="section-num">{icon("bars", 16, 1.8)}</div>'
+                        f'<div class="section-title-text"><h3>ตัวแปรที่มีอิทธิพลต่อ TFP มากที่สุด</h3></div></div>',
+                        unsafe_allow_html=True,
+                    )
+                    infl_df, infl_err = _compute_influence_df(model_df, dep_ln, active_lr_vars, lr_raw_map)
+                    if infl_df is None:
+                        st.info(infl_err)
+                    else:
+                        _top_infl = infl_df.head(4)
+                        dir_scale = alt.Scale(
+                            domain=["หนุนเสริม TFP (+)", "ฉุดรั้ง TFP (−)"], range=["#16A34A", "#EF4444"],
+                        )
+                        bars = alt.Chart(_top_infl).mark_bar(
+                            cornerRadiusTopRight=5, cornerRadiusBottomRight=5, height=16,
+                        ).encode(
+                            x=alt.X("สัดส่วน (%):Q", title=None, axis=alt.Axis(grid=False, domain=False,
+                                                                                labelFontSize=10, labelColor="#5B6B7C")),
+                            y=alt.Y("label:N", sort="-x", title=None,
+                                    axis=alt.Axis(domain=False, labelFontSize=11, labelColor="#16324A", labelLimit=220)),
+                            color=alt.Color("ทิศทาง:N", scale=dir_scale, legend=None),
+                            tooltip=[alt.Tooltip("label:N", title="ตัวแปร"),
+                                     alt.Tooltip("สัดส่วน (%):Q", title="สัดส่วน", format=".1f")],
+                        )
+                        chart = (
+                            bars.properties(height=max(120, 34 * len(_top_infl)),
+                                            padding={"left": 5, "right": 5, "top": 2, "bottom": 2})
+                            .configure_view(strokeWidth=0)
+                            .configure_axis(labelFont=FONT_FAMILY)
+                        )
+                        st.altair_chart(chart, use_container_width=True)
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                with col_notes:
+                    st.markdown(
+                        f'<div class="section-card"><div class="section-title">'
+                        f'<div class="section-num">{icon("check", 16, 2)}</div>'
+                        f'<div class="section-title-text"><h3>คุณภาพแบบจำลอง</h3></div></div>',
+                        unsafe_allow_html=True,
+                    )
+                    _n_total = n_pass + n_watch + n_fail
+                    _r2_text = (
+                        f"ระยะยาว {adj_r2_lr:.2f} • ระยะสั้น {adj_r2_sr:.2f}"
+                        if adj_r2_lr is not None and adj_r2_sr is not None else "-"
+                    )
+                    st.markdown(
+                        f'<div style="font-size:0.85rem;color:var(--brand-navy);line-height:1.9;">'
+                        f'✅ ผ่านเกณฑ์ข้อสมมติฐาน <b>{n_pass}/{_n_total}</b> รายการ<br>'
+                        f'📐 ความแม่นยำ (Adj. R²): {_r2_text}'
+                        f'{" • ARIMA(" + ",".join(map(str, arima_order)) + ")" if _has_forecast else ""}'
+                        f'</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.markdown('</div>', unsafe_allow_html=True)
+
+                    _top_var_label = infl_df.iloc[0]["label"] if infl_df is not None and not infl_df.empty else None
+                    _insight_lines = []
+                    if _has_forecast:
+                        _insight_lines.append(
+                            f"TFP มีแนวโน้ม{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}ต่อเนื่องถึงปี {fc_year}"
+                        )
+                    if _top_var_label:
+                        _insight_lines.append(f"'{_top_var_label}' เป็นตัวแปรที่มีอิทธิพลต่อ TFP มากที่สุดในสมการปัจจุบัน")
+                    _insight_lines.append(
+                        f"แบบจำลองผ่านเกณฑ์ข้อสมมติฐาน {n_pass} จาก {_n_total} รายการ"
+                        + (" — ควรตีความผลด้วยความระมัดระวัง" if n_fail > 0 else "")
+                    )
+                    if scenario_pct_effect is not None:
+                        _insight_lines.append(
+                            f"สมมติฐานที่ตั้งไว้ ({_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
+                            f"{'%' if scenario_var.startswith('ln_') else ''}) "
+                            f"อาจส่งผลต่อ TFP ประมาณ {scenario_pct_effect:+.2f}%"
+                        )
+                    st.markdown(
+                        f'<div class="section-card"><div class="section-title">'
+                        f'<div class="section-num">{icon("bulb", 16, 1.8)}</div>'
+                        f'<div class="section-title-text"><h3>ประเด็นสำคัญ</h3></div></div>'
+                        + "".join(
+                            f'<div style="font-size:0.83rem;color:var(--brand-navy);margin:4px 0;">'
+                            f'<b>{i+1}.</b> {line}</div>'
+                            for i, line in enumerate(_insight_lines)
+                        )
+                        + '</div>',
+                        unsafe_allow_html=True,
+                    )
 
 # ------------------------------------------------------------------------------
 # หน้า "ข้อมูลและตัวแปร" — ตารางข้อมูลที่ใช้จริงในโมเดล + คำอธิบายตัวแปรแต่ละตัว
