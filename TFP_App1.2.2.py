@@ -2598,6 +2598,241 @@ if "gsheet_raw_df" in st.session_state:
 # เดิม — ต้องล็อกอินก่อนถึงจะเห็น) กับ "Dashboard" (กราฟแนวโน้ม TFP + ตัวแปรอิสระ
 # ที่เปิดให้บุคคลภายนอกเข้าชมได้โดยไม่ต้องล็อกอิน)
 # ------------------------------------------------------------------------------
+# ------------------------------------------------------------------------------
+# ฟังก์ชันวาดกราฟเส้น/พยากรณ์ ARIMA — อยู่ใน scope กลาง (ไม่ผูกกับหน้าใดหน้าหนึ่ง)
+# เพราะทั้งหน้า Dashboard (สรุปย่อ) และหน้า "พยากรณ์ TFP" (แบบเต็ม/โต้ตอบได้)
+# ต้องเรียกใช้ร่วมกัน
+# ------------------------------------------------------------------------------
+def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
+    """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
+    ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
+    และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
+    tooltip บอกปีและค่าที่ชี้เมื่อเอาเมาส์ไปวาง — และปีบนแกน x เป็น string
+    (ordinal) เสมอ กัน Vega-Lite ตีความเป็นตัวเลขแล้วใส่ , คั่นหลักพัน"""
+    s = series.copy()
+    s.index = s.index.map(str)
+    df = s.reset_index()
+    df.columns = ["ปี", "ค่า"]
+
+    n = len(df)
+    step = max(1, round(n / 12))
+    tick_vals = df["ปี"].iloc[::step].tolist()
+    if df["ปี"].iloc[-1] not in tick_vals:
+        tick_vals.append(df["ปี"].iloc[-1])
+
+    base = alt.Chart(df).encode(
+        x=alt.X(
+            "ปี:O", sort=None, title=None,
+            axis=alt.Axis(values=tick_vals, labelAngle=0, grid=False,
+                           domain=False, tickColor="#E9ECF1",
+                           labelColor="#5B6B7C", labelFontSize=11, labelPadding=6),
+        ),
+        y=alt.Y(
+            "ค่า:Q", title=None,
+            axis=alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
+                           domain=False, tickColor="#E9ECF1",
+                           labelColor="#5B6B7C", labelFontSize=11),
+        ),
+        tooltip=[
+            alt.Tooltip("ปี:O", title="ปี"),
+            alt.Tooltip("ค่า:Q", title="ค่า", format=".4f"),
+        ],
+    )
+    area = base.mark_area(
+        interpolate="monotone",
+        line=False,
+        color=alt.Gradient(
+            gradient="linear",
+            stops=[
+                alt.GradientStop(color=color, offset=0),
+                alt.GradientStop(color="#FFFFFF", offset=1),
+            ],
+            x1=1, x2=1, y1=1, y2=0,
+        ),
+        opacity=0.35,
+    )
+    line = base.mark_line(
+        interpolate="monotone", color=color, strokeWidth=2.6,
+        point=alt.OverlayMarkDef(filled=True, size=32, color=color, stroke="#FFFFFF", strokeWidth=1.6),
+    )
+    chart = (
+        (area + line)
+        .properties(height=height, padding={"left": 4, "right": 10, "top": 8, "bottom": 4})
+        .configure_view(strokeWidth=0)
+        .configure_axis(labelFont=FONT_FAMILY, titleFont=FONT_FAMILY)
+    )
+    st.altair_chart(chart, use_container_width=True)
+
+@st.cache_data(show_spinner=False)
+def _auto_arima_forecast(series: pd.Series, periods: int,
+                          max_p: int = 4, max_d: int = 2, max_q: int = 4):
+    """หาโมเดล ARIMA(p,d,q) ที่เหมาะกับข้อมูลที่สุดด้วยวิธี grid search
+    (ลองทุกชุด p,d,q ในช่วงที่กำหนด แล้วเลือกชุดที่ค่า AIC ต่ำที่สุด — AIC ยิ่งต่ำ
+    ยิ่งหมายถึงโมเดลอธิบายข้อมูลได้ดีโดยไม่ซับซ้อนเกินจำเป็น) จากนั้นพยากรณ์ล่วงหน้า
+    `periods` ปี พร้อมช่วงความเชื่อมั่น 95%
+
+    คืนค่า (forecast_df, order) โดย forecast_df มี index เป็นปีในอนาคต และ
+    คอลัมน์ mean / lower / upper ส่วน order คือ (p, d, q) ที่เลือกใช้จริง
+    ถ้าหาโมเดลที่ fit ได้ไม่สำเร็จเลย จะ fallback เป็น random walk with drift (0,1,0)"""
+    y = series.astype(float).values
+
+    # หาลำดับ differencing (d) ที่เหมาะสมก่อนด้วย ADF test (Augmented Dickey-Fuller)
+    # แทนที่จะปล่อยให้ AIC เป็นตัวเลือก d เอง เพราะ AIC เปรียบเทียบข้าม d ต่างกัน
+    # ไม่ได้ตรงๆ (ข้อมูลที่มีแนวโน้ม/ไม่ stationary มักได้โมเดล d=0 ที่ AIC ต่ำ
+    # หลอกๆ จากการฟิตแบบ ARMA แต่พอพยากรณ์ระยะยาวค่าจะไหลกลับไปหาค่าเฉลี่ยของ
+    # อนุกรมทั้งหมดแทนที่จะไปตามแนวโน้มจริง ทำให้ค่าพยากรณ์รูดฮวบผิดปกติ)
+    def _select_d(vals, max_diff):
+        d = 0
+        cur = vals.copy()
+        while d < max_diff:
+            try:
+                pvalue = adfuller(cur, autolag="AIC")[1]
+            except Exception:
+                break
+            if pvalue < 0.05:
+                break
+            cur = np.diff(cur)
+            d += 1
+        return d
+
+    fixed_d = _select_d(y, max_d)
+
+    best_aic = np.inf
+    best_order = None
+    best_fit = None
+    for p in range(0, max_p + 1):
+        for d in (fixed_d,):
+            for q in range(0, max_q + 1):
+                if p == 0 and q == 0:
+                    continue
+                try:
+                    fit = ARIMA(y, order=(p, d, q)).fit()
+                    if np.isfinite(fit.aic) and fit.aic < best_aic:
+                        best_aic = fit.aic
+                        best_order = (p, d, q)
+                        best_fit = fit
+                except Exception:
+                    continue
+
+    if best_fit is None:
+        # กันเหนียว: ถ้าไม่มีชุด (p,d,q) ไหน fit ได้เลย ใช้ random walk with
+        # drift แทน (โมเดลพื้นฐานที่สุด ยังพยากรณ์แนวโน้มต่อได้เสมอ)
+        best_fit = ARIMA(y, order=(0, 1, 0), trend="t").fit()
+        best_order = (0, 1, 0)
+
+    fc = best_fit.get_forecast(steps=periods)
+    summary = fc.summary_frame(alpha=0.05)
+    last_year = int(series.index.max())
+    future_years = [last_year + i for i in range(1, periods + 1)]
+    forecast_df = pd.DataFrame(
+        {
+            "mean": summary["mean"].values,
+            "lower": summary["mean_ci_lower"].values,
+            "upper": summary["mean_ci_upper"].values,
+        },
+        index=future_years,
+    )
+    return forecast_df, best_order
+
+def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
+                                    color: str = "#F97316", forecast_color: str = "#2F6FED",
+                                    height: int = 340):
+    """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
+    ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
+    hist = hist_series.copy()
+    hist.index = hist.index.map(int)
+    years_hist = list(hist.index)
+    years_fc = list(forecast_df.index)
+    all_years = years_hist + years_fc
+    year_order = [str(y) for y in all_years]
+
+    df = pd.DataFrame({"ปี": year_order, "ปี_num": all_years})
+    df["ข้อมูลจริง"] = df["ปี_num"].map(hist.to_dict())
+
+    # เชื่อมจุดสุดท้ายของข้อมูลจริงเข้ากับเส้นพยากรณ์ ไม่ให้เส้นขาดตอน
+    last_year, last_val = years_hist[-1], float(hist.iloc[-1])
+    fc_mean = {last_year: last_val, **forecast_df["mean"].to_dict()}
+    fc_lower = {last_year: last_val, **forecast_df["lower"].to_dict()}
+    fc_upper = {last_year: last_val, **forecast_df["upper"].to_dict()}
+    df["พยากรณ์"] = df["ปี_num"].map(fc_mean)
+    df["ขอบล่าง"] = df["ปี_num"].map(fc_lower)
+    df["ขอบบน"] = df["ปี_num"].map(fc_upper)
+
+    n = len(df)
+    step = max(1, round(n / 12))
+    tick_vals = df["ปี"].iloc[::step].tolist()
+    if df["ปี"].iloc[-1] not in tick_vals:
+        tick_vals.append(df["ปี"].iloc[-1])
+
+    x_enc = alt.X(
+        "ปี:O", sort=year_order, title=None,
+        axis=alt.Axis(values=tick_vals, labelAngle=0, grid=False,
+                       domain=False, tickColor="#E9ECF1",
+                       labelColor="#5B6B7C", labelFontSize=11, labelPadding=6),
+    )
+    y_axis = alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
+                       domain=False, tickColor="#E9ECF1",
+                       labelColor="#5B6B7C", labelFontSize=11)
+
+    base = alt.Chart(df)
+
+    ci_band = base.mark_area(opacity=0.15, color=forecast_color).encode(
+        x=x_enc, y=alt.Y("ขอบล่าง:Q", title=None, axis=y_axis), y2="ขอบบน:Q",
+    )
+    hist_area = base.mark_area(
+        interpolate="monotone", line=False,
+        color=alt.Gradient(
+            gradient="linear",
+            stops=[alt.GradientStop(color=color, offset=0),
+                   alt.GradientStop(color="#FFFFFF", offset=1)],
+            x1=1, x2=1, y1=1, y2=0,
+        ),
+        opacity=0.35,
+    ).encode(x=x_enc, y=alt.Y("ข้อมูลจริง:Q", title=None, axis=y_axis))
+    hist_line = base.mark_line(
+        interpolate="monotone", color=color, strokeWidth=2.6,
+        point=alt.OverlayMarkDef(filled=True, size=30, color=color, stroke="#FFFFFF", strokeWidth=1.6),
+    ).encode(
+        x=x_enc, y=alt.Y("ข้อมูลจริง:Q"),
+        tooltip=[alt.Tooltip("ปี:O", title="ปี"),
+                 alt.Tooltip("ข้อมูลจริง:Q", title="ค่าจริง", format=".4f")],
+    )
+    fc_line = base.mark_line(
+        interpolate="monotone", color=forecast_color, strokeWidth=2.6, strokeDash=[6, 4],
+        point=alt.OverlayMarkDef(filled=True, size=30, color=forecast_color, stroke="#FFFFFF", strokeWidth=1.6),
+    ).encode(
+        x=x_enc, y=alt.Y("พยากรณ์:Q"),
+        tooltip=[alt.Tooltip("ปี:O", title="ปี"),
+                 alt.Tooltip("พยากรณ์:Q", title="ค่าพยากรณ์", format=".4f")],
+    )
+    fc_points = base.mark_point(color=forecast_color, filled=True, size=45).transform_filter(
+        alt.datum["ปี_num"] > last_year
+    ).encode(x=x_enc, y=alt.Y("พยากรณ์:Q"))
+
+    chart = (
+        (ci_band + hist_area + hist_line + fc_line + fc_points)
+        .properties(height=height, padding={"left": 4, "right": 10, "top": 8, "bottom": 4})
+        .configure_view(strokeWidth=0)
+        .configure_axis(labelFont=FONT_FAMILY, titleFont=FONT_FAMILY)
+    )
+    st.altair_chart(chart, use_container_width=True)
+    # flex-wrap:wrap กัน legend ตกขอบขวาเวลาหน้าจอแคบ (แทนที่จะโดนตัดหาย
+    # ก็ให้มันขึ้นบรรทัดใหม่แทน), row-gap เผื่อกรณีตัดบรรทัด
+    st.markdown(
+        f'<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:18px;row-gap:6px;'
+        f'font-size:0.82rem;color:var(--brand-navy-soft);margin-top:-6px;">'
+        f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
+        f'border-radius:50%;background:{color};margin-right:5px;"></span>ข้อมูลจริง</span>'
+        f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
+        f'border-radius:50%;background:{forecast_color};margin-right:5px;"></span>พยากรณ์ (ARIMA)</span>'
+        f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
+        f'border-radius:2px;background:{forecast_color};opacity:0.3;margin-right:5px;"></span>'
+        f'ช่วงความเชื่อมั่น 95%</span>'
+        f'</div>',
+        unsafe_allow_html=True,
+    )
+
+
 if st.session_state.page == "home":
     if not st.session_state.research_authenticated:
         # หน้าล็อกอิน — แสดงแทนเนื้อหาบทสรุปผู้บริหารจนกว่าจะกรอก user/password ถูกต้อง
@@ -3084,235 +3319,136 @@ elif st.session_state.page == "dashboard":
     )
     st.write("")
 
-    def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 340):
-        """สร้างกราฟเส้นด้วย Altair แทน st.line_chart เดิม เพื่อให้ดูสวยและอ่านง่าย
-        ขึ้นกว่าเดิม: เส้นโค้งมน มีพื้นที่ใต้เส้นแบบไล่สีจาง ๆ, เส้น grid บางๆ,
-        และ label บนแกนปีที่สุ่มแสดงเป็นช่วง ๆ (ไม่ยัดทุกปีจนอ่านไม่ออก) พร้อม
-        tooltip บอกปีและค่าที่ชี้เมื่อเอาเมาส์ไปวาง — และปีบนแกน x เป็น string
-        (ordinal) เสมอ กัน Vega-Lite ตีความเป็นตัวเลขแล้วใส่ , คั่นหลักพัน"""
-        s = series.copy()
-        s.index = s.index.map(str)
-        df = s.reset_index()
-        df.columns = ["ปี", "ค่า"]
 
-        n = len(df)
-        step = max(1, round(n / 12))
-        tick_vals = df["ปี"].iloc[::step].tolist()
-        if df["ปี"].iloc[-1] not in tick_vals:
-            tick_vals.append(df["ปี"].iloc[-1])
+    if not result_ready:
+        st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อดูภาพรวมในหน้านี้")
+    else:
+        # ================= แดชบอร์ดสรุปภาพรวมหน้าเดียว สำหรับนำเสนอผู้บริหาร =================
+        # หมายเหตุ: กราฟ/เครื่องมือแบบเต็ม (ปรับช่วงปีพยากรณ์, กราฟรายตัวแปร,
+        # จำลองสถานการณ์ what-if, กราฟสัดส่วนอิทธิพล) ย้ายไปอยู่ที่หน้า "พยากรณ์ TFP"
+        # ทั้งหมดแล้ว หน้านี้ตั้งใจให้กระชับที่สุด เน้นตัวเลข/กราฟสำคัญที่สุดเท่านั้น
+        # เพื่อให้นำเสนอได้ในมุมมองเดียวโดยไม่ต้องเลื่อนหน้าจอมาก
+        tfp_series = model_df[DEP_VAR].dropna().sort_index()
+        if tfp_series.empty:
+            st.info("ไม่พบข้อมูล TFP ในชุดข้อมูลที่ดึงมา")
+        else:
+            st.caption(f"ข้อมูลล่าสุด: {thai_timestamp()} • ปีข้อมูล {tfp_series.index.min()}–{tfp_series.index.max()}")
 
-        base = alt.Chart(df).encode(
-            x=alt.X(
-                "ปี:O", sort=None, title=None,
-                axis=alt.Axis(values=tick_vals, labelAngle=0, grid=False,
-                               domain=False, tickColor="#E9ECF1",
-                               labelColor="#5B6B7C", labelFontSize=11, labelPadding=6),
-            ),
-            y=alt.Y(
-                "ค่า:Q", title=None,
-                axis=alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
-                               domain=False, tickColor="#E9ECF1",
-                               labelColor="#5B6B7C", labelFontSize=11),
-            ),
-            tooltip=[
-                alt.Tooltip("ปี:O", title="ปี"),
-                alt.Tooltip("ค่า:Q", title="ค่า", format=".4f"),
-            ],
-        )
-        area = base.mark_area(
-            interpolate="monotone",
-            line=False,
-            color=alt.Gradient(
-                gradient="linear",
-                stops=[
-                    alt.GradientStop(color=color, offset=0),
-                    alt.GradientStop(color="#FFFFFF", offset=1),
-                ],
-                x1=1, x2=1, y1=1, y2=0,
-            ),
-            opacity=0.35,
-        )
-        line = base.mark_line(
-            interpolate="monotone", color=color, strokeWidth=2.6,
-            point=alt.OverlayMarkDef(filled=True, size=32, color=color, stroke="#FFFFFF", strokeWidth=1.6),
-        )
-        chart = (
-            (area + line)
-            .properties(height=height, padding={"left": 4, "right": 10, "top": 8, "bottom": 4})
-            .configure_view(strokeWidth=0)
-            .configure_axis(labelFont=FONT_FAMILY, titleFont=FONT_FAMILY)
-        )
-        st.altair_chart(chart, use_container_width=True)
+            MIN_POINTS_FOR_ARIMA = 8
+            DASH_HORIZON = 5  # ช่วงพยากรณ์คงที่สำหรับหน้าสรุปนี้ (ปรับช่วงปีได้เต็มที่ที่หน้า "พยากรณ์ TFP")
 
-    @st.cache_data(show_spinner=False)
-    def _auto_arima_forecast(series: pd.Series, periods: int,
-                              max_p: int = 4, max_d: int = 2, max_q: int = 4):
-        """หาโมเดล ARIMA(p,d,q) ที่เหมาะกับข้อมูลที่สุดด้วยวิธี grid search
-        (ลองทุกชุด p,d,q ในช่วงที่กำหนด แล้วเลือกชุดที่ค่า AIC ต่ำที่สุด — AIC ยิ่งต่ำ
-        ยิ่งหมายถึงโมเดลอธิบายข้อมูลได้ดีโดยไม่ซับซ้อนเกินจำเป็น) จากนั้นพยากรณ์ล่วงหน้า
-        `periods` ปี พร้อมช่วงความเชื่อมั่น 95%
+            def _exec_kpi(bg, icon_svg, value, label):
+                return (
+                    f'<div class="metric-card"><div class="metric-icon" style="background:{bg};">{icon_svg}</div>'
+                    f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
+                )
 
-        คืนค่า (forecast_df, order) โดย forecast_df มี index เป็นปีในอนาคต และ
-        คอลัมน์ mean / lower / upper ส่วน order คือ (p, d, q) ที่เลือกใช้จริง
-        ถ้าหาโมเดลที่ fit ได้ไม่สำเร็จเลย จะ fallback เป็น random walk with drift (0,1,0)"""
-        y = series.astype(float).values
+            last_val = float(tfp_series.iloc[-1])
+            last_year = int(tfp_series.index.max())
+            prev_val = float(tfp_series.iloc[-2]) if len(tfp_series) > 1 else None
+            yoy = ((last_val / prev_val) - 1) * 100 if prev_val else None
 
-        # หาลำดับ differencing (d) ที่เหมาะสมก่อนด้วย ADF test (Augmented Dickey-Fuller)
-        # แทนที่จะปล่อยให้ AIC เป็นตัวเลือก d เอง เพราะ AIC เปรียบเทียบข้าม d ต่างกัน
-        # ไม่ได้ตรงๆ (ข้อมูลที่มีแนวโน้ม/ไม่ stationary มักได้โมเดล d=0 ที่ AIC ต่ำ
-        # หลอกๆ จากการฟิตแบบ ARMA แต่พอพยากรณ์ระยะยาวค่าจะไหลกลับไปหาค่าเฉลี่ยของ
-        # อนุกรมทั้งหมดแทนที่จะไปตามแนวโน้มจริง ทำให้ค่าพยากรณ์รูดฮวบผิดปกติ)
-        def _select_d(vals, max_diff):
-            d = 0
-            cur = vals.copy()
-            while d < max_diff:
-                try:
-                    pvalue = adfuller(cur, autolag="AIC")[1]
-                except Exception:
-                    break
-                if pvalue < 0.05:
-                    break
-                cur = np.diff(cur)
-                d += 1
-            return d
+            _has_forecast = len(tfp_series) >= MIN_POINTS_FOR_ARIMA
+            if _has_forecast:
+                with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
+                    forecast_df, arima_order = _auto_arima_forecast(tfp_series, DASH_HORIZON)
+                fc_final = float(forecast_df.loc[forecast_df.index.max(), "mean"])
+                fc_year = int(forecast_df.index.max())
+                growth_total = ((fc_final / last_val) - 1) * 100 if last_val else 0.0
+                cagr = (((fc_final / last_val) ** (1 / DASH_HORIZON)) - 1) * 100 if last_val else 0.0
 
-        fixed_d = _select_d(y, max_d)
+            kpi_cols = st.columns(4)
+            with kpi_cols[0]:
+                st.markdown(
+                    _exec_kpi("var(--brand-orange)", icon("bars", 21, 1.8), f"{last_val:,.2f}",
+                              f"ค่า TFP ล่าสุด (ปี {last_year})"),
+                    unsafe_allow_html=True,
+                )
+            with kpi_cols[1]:
+                yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
+                st.markdown(
+                    _exec_kpi("var(--blue)", icon("trend-up", 21, 1.8), yoy_text, "เทียบปีก่อนหน้า (YoY)"),
+                    unsafe_allow_html=True,
+                )
+            with kpi_cols[2]:
+                if _has_forecast:
+                    st.markdown(
+                        _exec_kpi("var(--brand-navy)", icon("clock", 21, 1.8), f"{fc_final:,.2f}",
+                                  f"พยากรณ์ปี {fc_year} ({growth_total:+.1f}%)"),
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(_exec_kpi("var(--brand-navy)", icon("clock", 21, 1.8), "-",
+                                           "ข้อมูลยังไม่พอสำหรับพยากรณ์"), unsafe_allow_html=True)
+            with kpi_cols[3]:
+                n_total = n_pass + n_watch + n_fail
+                st.markdown(
+                    _exec_kpi("var(--green)", icon("check", 21, 2), f"{n_pass}/{n_total}",
+                              "ผ่านเกณฑ์ข้อสมมติฐาน"),
+                    unsafe_allow_html=True,
+                )
+            st.write("")
 
-        best_aic = np.inf
-        best_order = None
-        best_fit = None
-        for p in range(0, max_p + 1):
-            for d in (fixed_d,):
-                for q in range(0, max_q + 1):
-                    if p == 0 and q == 0:
-                        continue
-                    try:
-                        fit = ARIMA(y, order=(p, d, q)).fit()
-                        if np.isfinite(fit.aic) and fit.aic < best_aic:
-                            best_aic = fit.aic
-                            best_order = (p, d, q)
-                            best_fit = fit
-                    except Exception:
-                        continue
+            st.markdown(
+                f'<div class="section-card"><div class="section-title">'
+                f'<div class="section-num">{icon("trend-up", 20, 2)}</div>'
+                f'<div class="section-title-text"><h3>แนวโน้มดัชนี TFP และพยากรณ์ {DASH_HORIZON} ปีข้างหน้า</h3>'
+                f'</div></div>',
+                unsafe_allow_html=True,
+            )
+            if _has_forecast:
+                _nice_line_chart_with_forecast(
+                    tfp_series, forecast_df, color="#F97316", forecast_color="#2F6FED", height=260,
+                )
+            else:
+                _nice_line_chart(tfp_series, color="#F97316", height=260)
+                st.info(
+                    f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA "
+                    f"อย่างน่าเชื่อถือ (ต้องการอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
+                )
+            st.markdown('</div>', unsafe_allow_html=True)
+            st.write("")
 
-        if best_fit is None:
-            # กันเหนียว: ถ้าไม่มีชุด (p,d,q) ไหน fit ได้เลย ใช้ random walk with
-            # drift แทน (โมเดลพื้นฐานที่สุด ยังพยากรณ์แนวโน้มต่อได้เสมอ)
-            best_fit = ARIMA(y, order=(0, 1, 0), trend="t").fit()
-            best_order = (0, 1, 0)
+            if _has_forecast:
+                _trend_icon = "trend-up" if growth_total >= 0 else "trend-down"
+                _trend_word = "เพิ่มขึ้น" if growth_total >= 0 else "ลดลง"
+                st.markdown(
+                    f'<div class="nxpo-summary-card">'
+                    f'<div class="label">{icon("sparkle", 14, 2)} สรุปภาพรวมสำหรับผู้บริหาร</div>'
+                    f'<div class="value">TFP มีแนวโน้ม{_trend_word}อย่างต่อเนื่อง</div>'
+                    f'<div class="from-label">จากปี {last_year} ({last_val:,.2f}) '
+                    f'สู่ปี {fc_year} ({fc_final:,.2f})'
+                    f'<span class="growth-badge">{icon(_trend_icon, 13, 2)} {growth_total:+.1f}%</span></div>'
+                    f'<div class="divider"></div>'
+                    f'<ul class="nxpo-summary-list">'
+                    f'<li><span class="tick">{icon("check", 11, 2.4)}</span>อัตราการเติบโตเฉลี่ย (CAGR) {cagr:+.1f}% ต่อปี</li>'
+                    f'<li><span class="tick">{icon("check", 11, 2.4)}</span>แบบจำลองผ่านเกณฑ์ข้อสมมติฐาน {n_pass} จาก {n_total} รายการ</li>'
+                    f'<li><span class="tick">{icon("check", 11, 2.4)}</span>ความแม่นยำของแบบจำลอง (Adj. R²): ระยะยาว '
+                    f'{adj_r2_lr:.2f} • ระยะสั้น {adj_r2_sr:.2f}</li>'
+                    f'</ul></div>',
+                    unsafe_allow_html=True,
+                )
+                st.write("")
 
-        fc = best_fit.get_forecast(steps=periods)
-        summary = fc.summary_frame(alpha=0.05)
-        last_year = int(series.index.max())
-        future_years = [last_year + i for i in range(1, periods + 1)]
-        forecast_df = pd.DataFrame(
-            {
-                "mean": summary["mean"].values,
-                "lower": summary["mean_ci_lower"].values,
-                "upper": summary["mean_ci_upper"].values,
-            },
-            index=future_years,
-        )
-        return forecast_df, best_order
+            if st.button("ดูกราฟรายตัวแปร จำลองสถานการณ์ และปรับช่วงปีพยากรณ์ →", key="dash_goto_forecast"):
+                st.session_state.page = "forecast"
+                st.rerun()
 
-    def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
-                                        color: str = "#F97316", forecast_color: str = "#2F6FED",
-                                        height: int = 340):
-        """เหมือน _nice_line_chart แต่ต่อเส้นพยากรณ์ (เส้นประสีน้ำเงิน) และแถบ
-        ช่วงความเชื่อมั่น 95% (พื้นที่สีน้ำเงินจาง ๆ) ต่อจากข้อมูลจริงให้ในกราฟเดียวกัน"""
-        hist = hist_series.copy()
-        hist.index = hist.index.map(int)
-        years_hist = list(hist.index)
-        years_fc = list(forecast_df.index)
-        all_years = years_hist + years_fc
-        year_order = [str(y) for y in all_years]
 
-        df = pd.DataFrame({"ปี": year_order, "ปี_num": all_years})
-        df["ข้อมูลจริง"] = df["ปี_num"].map(hist.to_dict())
-
-        # เชื่อมจุดสุดท้ายของข้อมูลจริงเข้ากับเส้นพยากรณ์ ไม่ให้เส้นขาดตอน
-        last_year, last_val = years_hist[-1], float(hist.iloc[-1])
-        fc_mean = {last_year: last_val, **forecast_df["mean"].to_dict()}
-        fc_lower = {last_year: last_val, **forecast_df["lower"].to_dict()}
-        fc_upper = {last_year: last_val, **forecast_df["upper"].to_dict()}
-        df["พยากรณ์"] = df["ปี_num"].map(fc_mean)
-        df["ขอบล่าง"] = df["ปี_num"].map(fc_lower)
-        df["ขอบบน"] = df["ปี_num"].map(fc_upper)
-
-        n = len(df)
-        step = max(1, round(n / 12))
-        tick_vals = df["ปี"].iloc[::step].tolist()
-        if df["ปี"].iloc[-1] not in tick_vals:
-            tick_vals.append(df["ปี"].iloc[-1])
-
-        x_enc = alt.X(
-            "ปี:O", sort=year_order, title=None,
-            axis=alt.Axis(values=tick_vals, labelAngle=0, grid=False,
-                           domain=False, tickColor="#E9ECF1",
-                           labelColor="#5B6B7C", labelFontSize=11, labelPadding=6),
-        )
-        y_axis = alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
-                           domain=False, tickColor="#E9ECF1",
-                           labelColor="#5B6B7C", labelFontSize=11)
-
-        base = alt.Chart(df)
-
-        ci_band = base.mark_area(opacity=0.15, color=forecast_color).encode(
-            x=x_enc, y=alt.Y("ขอบล่าง:Q", title=None, axis=y_axis), y2="ขอบบน:Q",
-        )
-        hist_area = base.mark_area(
-            interpolate="monotone", line=False,
-            color=alt.Gradient(
-                gradient="linear",
-                stops=[alt.GradientStop(color=color, offset=0),
-                       alt.GradientStop(color="#FFFFFF", offset=1)],
-                x1=1, x2=1, y1=1, y2=0,
-            ),
-            opacity=0.35,
-        ).encode(x=x_enc, y=alt.Y("ข้อมูลจริง:Q", title=None, axis=y_axis))
-        hist_line = base.mark_line(
-            interpolate="monotone", color=color, strokeWidth=2.6,
-            point=alt.OverlayMarkDef(filled=True, size=30, color=color, stroke="#FFFFFF", strokeWidth=1.6),
-        ).encode(
-            x=x_enc, y=alt.Y("ข้อมูลจริง:Q"),
-            tooltip=[alt.Tooltip("ปี:O", title="ปี"),
-                     alt.Tooltip("ข้อมูลจริง:Q", title="ค่าจริง", format=".4f")],
-        )
-        fc_line = base.mark_line(
-            interpolate="monotone", color=forecast_color, strokeWidth=2.6, strokeDash=[6, 4],
-            point=alt.OverlayMarkDef(filled=True, size=30, color=forecast_color, stroke="#FFFFFF", strokeWidth=1.6),
-        ).encode(
-            x=x_enc, y=alt.Y("พยากรณ์:Q"),
-            tooltip=[alt.Tooltip("ปี:O", title="ปี"),
-                     alt.Tooltip("พยากรณ์:Q", title="ค่าพยากรณ์", format=".4f")],
-        )
-        fc_points = base.mark_point(color=forecast_color, filled=True, size=45).transform_filter(
-            alt.datum["ปี_num"] > last_year
-        ).encode(x=x_enc, y=alt.Y("พยากรณ์:Q"))
-
-        chart = (
-            (ci_band + hist_area + hist_line + fc_line + fc_points)
-            .properties(height=height, padding={"left": 4, "right": 10, "top": 8, "bottom": 4})
-            .configure_view(strokeWidth=0)
-            .configure_axis(labelFont=FONT_FAMILY, titleFont=FONT_FAMILY)
-        )
-        st.altair_chart(chart, use_container_width=True)
-        # flex-wrap:wrap กัน legend ตกขอบขวาเวลาหน้าจอแคบ (แทนที่จะโดนตัดหาย
-        # ก็ให้มันขึ้นบรรทัดใหม่แทน), row-gap เผื่อกรณีตัดบรรทัด
-        st.markdown(
-            f'<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:18px;row-gap:6px;'
-            f'font-size:0.82rem;color:var(--brand-navy-soft);margin-top:-6px;">'
-            f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
-            f'border-radius:50%;background:{color};margin-right:5px;"></span>ข้อมูลจริง</span>'
-            f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
-            f'border-radius:50%;background:{forecast_color};margin-right:5px;"></span>พยากรณ์ (ARIMA)</span>'
-            f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
-            f'border-radius:2px;background:{forecast_color};opacity:0.3;margin-right:5px;"></span>'
-            f'ช่วงความเชื่อมั่น 95%</span>'
-            f'</div>',
-            unsafe_allow_html=True,
-        )
-
+# ------------------------------------------------------------------------------
+# หน้า "พยากรณ์ TFP" — มุมมองแบบเต็ม/โต้ตอบได้: กราฟพยากรณ์ ARIMA พร้อมแถบ
+# KPI + slider เลือกช่วงปี, กราฟแนวโน้มรายตัวแปร, เครื่องมือจำลองสถานการณ์
+# (what-if) และกราฟสัดส่วนอิทธิพลของแต่ละตัวแปร — ย้ายมาจากหน้า Dashboard เดิม
+# เพื่อให้หน้า Dashboard เหลือแค่สรุปภาพรวมสั้นๆ หน้าเดียวสำหรับผู้บริหาร
+# ------------------------------------------------------------------------------
+elif st.session_state.page == "forecast":
+    st.markdown(
+        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+        f'<div class="nxpo-topbar-logo">{icon("trend-up", 22, 2)}</div>'
+        f'<div class="nxpo-topbar-title"><span class="eyebrow">TFP Forecast</span>'
+        f'<h2>พยากรณ์ TFP</h2></div></div></div>',
+        unsafe_allow_html=True,
+    )
     if not result_ready:
         st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อดูกราฟแนวโน้มในหน้านี้")
     else:
@@ -3917,30 +4053,6 @@ elif st.session_state.page == "dashboard":
         st.markdown('</div>', unsafe_allow_html=True)
 
 # ------------------------------------------------------------------------------
-# หน้า "พยากรณ์ TFP" — มุมมองย่อของกราฟแนวโน้ม TFP (กราฟพยากรณ์ ARIMA แบบเต็ม
-# พร้อมแถบ KPI/slider เลือกช่วงปี อยู่ในหน้า Dashboard อยู่แล้ว หน้านี้เน้นดูค่า
-# ย้อนหลังล่าสุด + ลิงก์กลับไปหน้า Dashboard เพื่อพยากรณ์แบบเต็มรูปแบบ)
-# ------------------------------------------------------------------------------
-elif st.session_state.page == "forecast":
-    st.markdown(
-        f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
-        f'<div class="nxpo-topbar-logo">{icon("trend-up", 22, 2)}</div>'
-        f'<div class="nxpo-topbar-title"><span class="eyebrow">TFP Forecast</span>'
-        f'<h2>พยากรณ์ TFP</h2></div></div></div>',
-        unsafe_allow_html=True,
-    )
-    if not result_ready:
-        st.info("คลิก \"คลิกดึงข้อมูลอัตโนมัติ\" จากแถบด้านซ้ายก่อน เพื่อดูค่าและพยากรณ์ TFP")
-    else:
-        # หมายเหตุ: การ์ด KPI และกราฟแนวโน้ม TFP แบบเต็ม (พร้อมพยากรณ์ ARIMA และ
-        # แถบเลื่อนเลือกปี) แสดงอยู่ในหน้า Dashboard อยู่แล้ว หน้านี้จึงไม่แสดงซ้ำ
-        # และพาไปหน้า Dashboard แทน
-        st.info("ดูกราฟพยากรณ์ TFP แบบเต็มรูปแบบ (พร้อมช่วงความเชื่อมั่น 95% และเลือกจำนวนปีที่ต้องการ) ได้ที่หน้า Dashboard")
-        if st.button("ไปที่หน้า Dashboard →", key="fc_goto_dashboard"):
-            st.session_state.page = "dashboard"
-            st.rerun()
-
-# ------------------------------------------------------------------------------
 # หน้า "ข้อมูลและตัวแปร" — ตารางข้อมูลที่ใช้จริงในโมเดล + คำอธิบายตัวแปรแต่ละตัว
 # ------------------------------------------------------------------------------
 elif st.session_state.page == "data_vars":
@@ -4081,6 +4193,25 @@ elif st.session_state.page == "data_admin":
         f'<h2>จัดการข้อมูลอัตโนมัติ</h2></div></div></div>',
         unsafe_allow_html=True,
     )
+    # หน้านี้จำกัดให้เฉพาะคณะวิจัยที่ล็อกอินแล้วเท่านั้น เพราะเป็นการจัดการแหล่งข้อมูล
+    # ต้นทางของระบบ (เปลี่ยนลิงก์ Google Sheet ได้) — ไม่ควรเปิดให้บุคคลภายนอกเข้าถึง
+    if not st.session_state.research_authenticated:
+        st.markdown(
+            f'<div class="section-card" style="max-width:420px;margin:40px auto;'
+            f'text-align:center;">'
+            f'<div class="section-title" style="justify-content:center;">'
+            f'<div class="section-num">🔒</div>'
+            f'<div class="section-title-text"><h3>สำหรับคณะวิจัยเท่านั้น</h3></div></div>'
+            f'<p style="color:var(--brand-navy-soft);font-size:0.9rem;margin-top:-6px;">'
+            f'กรุณาเข้าสู่ระบบด้วยบัญชีคณะวิจัยก่อน จึงจะจัดการข้อมูลอัตโนมัติหน้านี้ได้</p></div>',
+            unsafe_allow_html=True,
+        )
+        _data_admin_login_col = st.columns([1, 1.4, 1])[1]
+        with _data_admin_login_col:
+            if st.button("ไปที่หน้าเข้าสู่ระบบ →", use_container_width=True, key="data_admin_goto_login"):
+                st.session_state.page = "home"
+                st.rerun()
+        st.stop()
     st.markdown(
         f'<div class="section-card"><div class="section-title">'
         f'<div class="section-num">{icon("cloud", 20, 2)}</div>'
