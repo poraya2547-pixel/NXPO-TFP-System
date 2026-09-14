@@ -223,6 +223,17 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
+/* ให้ position:sticky ของโลโก้ทำงานได้จริง ต้องมีกล่องแม่ที่ scroll ได้เองชัดเจน
+   (มีความสูงจำกัด + overflow-y auto) — ระบุตรงๆ ไว้หลายจุดกันเผื่อ Streamlit
+   เปลี่ยนโครงสร้าง DOM ในแต่ละเวอร์ชัน (ก่อนหน้านี้ลองแค่ sticky บนตัวโลโก้เฉยๆ
+   ยังไม่ค้าง เพราะกล่องแม่อาจจะยังไม่ได้กำหนด overflow ไว้ชัดเจนพอ) */
+section[data-testid="stSidebar"] > div:first-child {
+    height: 100vh !important; overflow-y: auto !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    overflow-y: visible !important;
+}
 section[data-testid="stSidebar"] .block-container { padding-top: 0.3rem; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 /* หัวแถบเมนู (ที่ครอบปุ่มหุบ "«") เดิมมีที่ว่างเปล่าด้านบนเยอะมากก่อนถึงโลโก้
