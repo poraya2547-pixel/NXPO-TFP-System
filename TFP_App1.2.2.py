@@ -231,16 +231,22 @@ section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !imp
 /* ปุ่มเปิดกลับ (ตอนหุบแถบเมนูไปแล้ว) เดิมเป็นแค่ไอคอนลอยๆ ไม่มีกรอบ ผู้ใช้จริง
    ทักว่าไม่รู้ว่ากดเปิดกลับได้ — เพิ่มกรอบ/พื้นหลัง/เงาให้เห็นชัดว่าเป็นปุ่มกดได้ */
 [data-testid="collapsedControl"] {
-    background: #FFFFFF !important; border: 1px solid var(--card-border) !important;
+    background: var(--gold-tint) !important; border: 1.5px solid var(--brand-orange) !important;
     border-radius: 10px !important; box-shadow: var(--shadow-soft) !important;
-    padding: 4px !important;
+    padding: 4px !important; color: var(--brand-orange-dark) !important;
 }
-[data-testid="collapsedControl"]:hover { border-color: var(--brand-orange) !important; }
+[data-testid="collapsedControl"] svg { color: var(--brand-orange-dark) !important; fill: var(--brand-orange-dark) !important; }
+[data-testid="collapsedControl"]:hover {
+    border-color: var(--brand-orange-dark) !important; background: #FCE3C4 !important;
+}
 
-/* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
+/* ----- การ์ดโลโก้ด้านบนแถบเมนู -----
+   เดิมจัดกึ่งกลาง (justify-content:center) แต่ผู้ใช้จริงอยากให้ชิดมุมซ้ายแทน
+   และดึงขึ้นไปให้ใกล้แถวปุ่มหุบ "«" มากขึ้น (ลด margin-top ติดลบเล็กน้อย) แทนที่
+   จะลอยห่างลงมา เพราะที่ว่างด้านบนเสียเปล่าไปเยอะ */
 .sidebar-logo-card {
-    display: flex; align-items: center; justify-content: center; gap: 24px;
-    margin-bottom: 18px;
+    display: flex; align-items: center; justify-content: flex-start; gap: 14px;
+    margin-top: -10px; margin-bottom: 14px;
 }
 
 /* ----- ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป —
@@ -1188,8 +1194,8 @@ if os.path.exists(var_intro_bg_path):
 
 logo1_path = os.path.join(APP_DIR, "สอวช_Logo.png")
 logo2_path = os.path.join(APP_DIR, "สวค_Logo.png")
-_LOGO1_SIZE = 74  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ผู้ใช้จริงทักว่าเดิม (110px) ใหญ่เกินไป ลดลง
-_LOGO2_SIZE = 52  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ลดสัดส่วนตามกัน
+_LOGO1_SIZE = 52  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ผู้ใช้จริงขอให้ย่อลงอีกรอบ
+_LOGO2_SIZE = 38  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ลดสัดส่วนตามกัน
 
 # โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) — วางไฟล์ทั้งสองไว้ในโฟลเดอร์
 # เดียวกับ app.py นี้ โดยตั้งชื่อไฟล์ตามด้านล่าง (หรือแก้ path ให้ตรงกับไฟล์จริง)
