@@ -223,8 +223,19 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
+section[data-testid="stSidebar"] .block-container { padding-top: 0.3rem; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
+/* หัวแถบเมนู (ที่ครอบปุ่มหุบ "«") เดิมมีที่ว่างเปล่าด้านบนเยอะมากก่อนถึงโลโก้
+   (ผู้ใช้จริงทักมาว่าเสียพื้นที่โดยเปล่าประโยชน์ โดยเฉพาะบนมือถือ) — บีบให้แน่นขึ้น */
+[data-testid="stSidebarHeader"] { padding: 0.3rem 0.6rem !important; min-height: 0 !important; }
+/* ปุ่มเปิดกลับ (ตอนหุบแถบเมนูไปแล้ว) เดิมเป็นแค่ไอคอนลอยๆ ไม่มีกรอบ ผู้ใช้จริง
+   ทักว่าไม่รู้ว่ากดเปิดกลับได้ — เพิ่มกรอบ/พื้นหลัง/เงาให้เห็นชัดว่าเป็นปุ่มกดได้ */
+[data-testid="collapsedControl"] {
+    background: #FFFFFF !important; border: 1px solid var(--card-border) !important;
+    border-radius: 10px !important; box-shadow: var(--shadow-soft) !important;
+    padding: 4px !important;
+}
+[data-testid="collapsedControl"]:hover { border-color: var(--brand-orange) !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
 .sidebar-logo-card {
@@ -1177,8 +1188,8 @@ if os.path.exists(var_intro_bg_path):
 
 logo1_path = os.path.join(APP_DIR, "สอวช_Logo.png")
 logo2_path = os.path.join(APP_DIR, "สวค_Logo.png")
-_LOGO1_SIZE = 110  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก)
-_LOGO2_SIZE = 76   # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก)
+_LOGO1_SIZE = 74  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ผู้ใช้จริงทักว่าเดิม (110px) ใหญ่เกินไป ลดลง
+_LOGO2_SIZE = 52  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ลดสัดส่วนตามกัน
 
 # โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) — วางไฟล์ทั้งสองไว้ในโฟลเดอร์
 # เดียวกับ app.py นี้ โดยตั้งชื่อไฟล์ตามด้านล่าง (หรือแก้ path ให้ตรงกับไฟล์จริง)
