@@ -269,7 +269,7 @@ section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !imp
    จะลอยห่างลงมา เพราะที่ว่างด้านบนเสียเปล่าไปเยอะ */
 .sidebar-logo-card {
     display: flex; align-items: center; justify-content: flex-start; gap: 14px;
-    margin-top: -10px; margin-bottom: 14px;
+    margin-top: -20px; margin-bottom: 14px;
     /* ปักหมุดโลโก้ไว้บนสุดของแถบเมนูเสมอ ไม่ให้เลื่อนหายไปพร้อมเนื้อหาด้านล่าง
        ตอนผู้ใช้ scroll ลงไปดูเมนูที่อยู่ล่างๆ (เดิมโลโก้อยู่ในบล็อกเดียวกับเมนู
        ที่ scroll ได้ทั้งหมด พอเลื่อนโลโก้เลยหายไปด้วย) ใส่พื้นหลังทึบกันไม่ให้
@@ -1223,8 +1223,8 @@ if os.path.exists(var_intro_bg_path):
 
 logo1_path = os.path.join(APP_DIR, "สอวช_Logo.png")
 logo2_path = os.path.join(APP_DIR, "สวค_Logo.png")
-_LOGO1_SIZE = 52  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ผู้ใช้จริงขอให้ย่อลงอีกรอบ
-_LOGO2_SIZE = 38  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ลดสัดส่วนตามกัน
+_LOGO1_SIZE = 68  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ขยายขึ้น 30% จาก 52px
+_LOGO2_SIZE = 49  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ขยายขึ้น 30% จาก 38px ตามกัน
 
 # โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) — วางไฟล์ทั้งสองไว้ในโฟลเดอร์
 # เดียวกับ app.py นี้ โดยตั้งชื่อไฟล์ตามด้านล่าง (หรือแก้ path ให้ตรงกับไฟล์จริง)
