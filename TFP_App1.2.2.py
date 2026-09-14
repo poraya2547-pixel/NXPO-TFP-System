@@ -239,6 +239,18 @@ section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !imp
 [data-testid="collapsedControl"]:hover {
     border-color: var(--brand-orange-dark) !important; background: #FCE3C4 !important;
 }
+/* ปุ่มหุบแถบเมนู (ตอนแถบเมนูยังเปิดอยู่ "«") เป็นคนละอิลิเมนต์กับปุ่มเปิดกลับด้านบน
+   (collapsedControl ใช้ตอนหุบไปแล้วเท่านั้น) เดิมพอทำปุ่มเปิดกลับเป็นสีส้มไปแล้ว
+   ปุ่มหุบตัวนี้ยังเป็นสีเทาเริ่มต้นอยู่ ดูไม่เข้าชุดกัน (ปุ่มเดียวกันแต่คนละสีคนละ
+   สถานะ) ทำให้เป็นสีส้มชุดเดียวกันด้วย */
+[data-testid="stSidebarCollapseButton"] button {
+    background: var(--gold-tint) !important; border: 1.5px solid var(--brand-orange) !important;
+    border-radius: 10px !important; color: var(--brand-orange-dark) !important;
+}
+[data-testid="stSidebarCollapseButton"] button:hover {
+    border-color: var(--brand-orange-dark) !important; background: #FCE3C4 !important;
+}
+[data-testid="stSidebarCollapseButton"] svg { color: var(--brand-orange-dark) !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู -----
    เดิมจัดกึ่งกลาง (justify-content:center) แต่ผู้ใช้จริงอยากให้ชิดมุมซ้ายแทน
@@ -247,6 +259,12 @@ section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !imp
 .sidebar-logo-card {
     display: flex; align-items: center; justify-content: flex-start; gap: 14px;
     margin-top: -10px; margin-bottom: 14px;
+    /* ปักหมุดโลโก้ไว้บนสุดของแถบเมนูเสมอ ไม่ให้เลื่อนหายไปพร้อมเนื้อหาด้านล่าง
+       ตอนผู้ใช้ scroll ลงไปดูเมนูที่อยู่ล่างๆ (เดิมโลโก้อยู่ในบล็อกเดียวกับเมนู
+       ที่ scroll ได้ทั้งหมด พอเลื่อนโลโก้เลยหายไปด้วย) ใส่พื้นหลังทึบกันไม่ให้
+       เนื้อหาด้านล่างทะลุขึ้นมาทับตอน sticky ด้วย */
+    position: sticky; top: 0; z-index: 20; background: #FFFFFF;
+    padding-top: 6px; padding-bottom: 10px;
 }
 
 /* ----- ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป —
