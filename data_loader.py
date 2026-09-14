@@ -19,6 +19,7 @@ RDH_GDP จากแท็บ Researcher) เพียงแต่อ่าน�
 
 import re
 import time
+from typing import Optional
 
 import gspread
 from google.oauth2.service_account import Credentials
@@ -41,23 +42,6 @@ RESEARCHER_TAB = "Researcher"  # ชื่อแท็บ RDH_GDP จาก OECD
 # service unavailable) — คุ้มค่าที่จะลองใหม่อัตโนมัติ ต่างจาก 4xx อย่าง 403/404
 # ที่เป็นปัญหาสิทธิ์/การตั้งค่าซึ่งลองกี่ครั้งก็ไม่หาย
 _RETRYABLE_STATUS_CODES = {500, 502, 503, 504}
-
-# จับรูปแบบ Sheet ID จากลิงก์ Google Sheet เต็มรูปแบบ เช่น
-# "https://docs.google.com/spreadsheets/d/<SHEET_ID>/edit#gid=0" -> "<SHEET_ID>"
-_SHEET_URL_ID_RE = re.compile(r"/spreadsheets/d/([a-zA-Z0-9_-]+)")
-
-
-def _resolve_sheet_id(sheet_url_or_id: str = None) -> str:
-    """แปลงค่าที่คณะวิจัยกรอกเข้ามา (ลิงก์เต็มของ Google Sheet หรือแค่ Sheet ID
-    ล้วนๆ ก็ได้) ให้กลายเป็น Sheet ID ที่ใช้เรียก gspread ได้จริง — ถ้าไม่ได้
-    กรอกอะไรมาเลย (None/ว่าง) จะคืนค่า SHEET_ID เริ่มต้นที่ตั้งไว้ในโค้ดแทน"""
-    if not sheet_url_or_id or not str(sheet_url_or_id).strip():
-        return SHEET_ID
-    text = str(sheet_url_or_id).strip()
-    m = _SHEET_URL_ID_RE.search(text)
-    if m:
-        return m.group(1)
-    return text  # สมมติว่าผู้ใช้กรอก Sheet ID มาตรงๆ (ไม่ใช่ลิงก์เต็ม)
 
 
 def _call_with_retry(func, *args, max_attempts: int = 3, base_delay: float = 1.5, **kwargs):
@@ -124,9 +108,21 @@ def _get_client() -> gspread.Client:
         ) from file_error
 
 
+def _extract_sheet_id(sheet_id_or_url: str) -> str:
+    """รับได้ทั้ง Sheet ID เปล่า ๆ (เช่น "1K3POp...") หรือลิงก์ Google Sheet เต็ม
+    รูปแบบ (เช่น "https://docs.google.com/spreadsheets/d/<ID>/edit#gid=0") แล้ว
+    ดึงเฉพาะส่วน Sheet ID ออกมาให้ใช้กับ gspread.open_by_key() ได้เสมอ ไม่ว่า
+    ผู้ใช้จะวางมาแบบไหนก็ตาม (ก็อปมาทั้งแท่งจาก address bar ก็ใช้ได้)"""
+    match = re.search(r"/d/([a-zA-Z0-9-_]+)", sheet_id_or_url)
+    if match:
+        return match.group(1)
+    return sheet_id_or_url.strip()
+
+
 def _load_researcher_rdh(client: gspread.Client, sheet_id: str, country: str = "Thailand") -> pd.Series:
     """เทียบเท่า load_researcher_rdh() ใน TFP.py แต่ดึงจากแท็บ Google Sheet
-    แทนชีต Excel"""
+    แทนชีต Excel — รับ sheet_id เข้ามาโดยตรง (แทนที่จะใช้ SHEET_ID ตายตัว)
+    เพื่อให้สลับไปอ่าน Sheet อื่นที่คณะวิจัยระบุเองได้"""
     ws = _call_with_retry(lambda: client.open_by_key(sheet_id).worksheet(RESEARCHER_TAB))
     values = _call_with_retry(ws.get_all_values)
     try:
@@ -141,17 +137,17 @@ def _load_researcher_rdh(client: gspread.Client, sheet_id: str, country: str = "
     return vals.rename("RDH_GDP")
 
 
-def load_data_gsheet(rdh_source: str = RDH_SOURCE, url: str = None) -> pd.DataFrame:
+def load_data_gsheet(rdh_source: str = RDH_SOURCE, url: Optional[str] = None) -> pd.DataFrame:
     """เทียบเท่า load_data() ใน TFP.py ทุกขั้นตอน (rename, ตั้งปีเป็น index,
     หาร % ด้วย 100, ดึง RDH_GDP จากแท็บ Researcher) แต่อ่านจาก Google Sheets
     คืนค่าเป็น DataFrame รูปแบบเดียวกับที่ TFP.build_model_frame() คาดหวัง
 
-    พารามิเตอร์ url: ลิงก์ Google Sheet เต็มรูปแบบ หรือ Sheet ID ล้วนๆ ก็ได้
-    ที่คณะวิจัยกรอกเองจากหน้า "จัดการข้อมูลอัตโนมัติ" ในเว็บแอป — ถ้าไม่ระบุ
-    (None/ว่าง) จะใช้ SHEET_ID เริ่มต้นที่ตั้งไว้ด้านบนของไฟล์นี้แทนตามปกติ
-    (Sheet ที่ใช้ลิงก์นี้ต้องมีโครงสร้างแท็บ "Data"/"Researcher" เหมือนเดิมทุก
-    ประการ ตามที่อธิบายไว้ในคอมเมนต์หัวไฟล์ ไม่เช่นนั้นจะโหลดข้อมูลไม่สำเร็จ)"""
-    sheet_id = _resolve_sheet_id(url)
+    พารามิเตอร์ url (ใหม่): ถ้าระบุมา (จะเป็น Sheet ID เปล่า ๆ หรือลิงก์ Google
+    Sheet เต็มรูปแบบก็ได้) จะใช้ Sheet นั้นแทน SHEET_ID เริ่มต้นด้านบน — สำหรับ
+    กรณี Sheet ต้นแบบหาย/ลืมลิงก์เดิม แล้วคณะวิจัยสร้าง Sheet ใหม่โครงสร้าง
+    เหมือนเดิมมาแทน (ต้องมีแท็บ "Data"/"Researcher" เหมือนเดิมทุกประการ) ถ้าไม่
+    ระบุ (None ตามค่าเริ่มต้น) จะใช้ SHEET_ID เดิมเหมือนที่ผ่านมาทุกประการ"""
+    sheet_id = _extract_sheet_id(url) if url else SHEET_ID
     client = _get_client()
     ws = _call_with_retry(lambda: client.open_by_key(sheet_id).worksheet(DATA_TAB))
     values = _call_with_retry(ws.get_all_values)
