@@ -269,7 +269,7 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; margin-top: -151.2px !important; }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; margin-top: -226.8px !important; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
@@ -370,13 +370,13 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
    การทดสอบความแม่นยำ) แต่ละคำมีไอคอนวงกลมเล็กด้านหน้าให้ดูเป็นระเบียบและหรูขึ้น ----- */
 .glossary-group { margin-bottom: 24px; }
 .glossary-group:last-child { margin-bottom: 0; }
+.glossary-group:first-child { margin-top: 10mm; }
 .glossary-group-label {
-    display: flex; align-items: center; gap: 8px; font-size: 0.76rem; font-weight: 700;
+    display: flex; align-items: center; gap: 10px; font-size: 1.22rem; font-weight: 700;
     color: var(--brand-orange-dark); text-transform: uppercase; letter-spacing: 0.05em;
     margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);
 }
-.glossary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-@media (max-width: 800px) { .glossary-grid { grid-template-columns: 1fr; } }
+.glossary-grid { display: grid; grid-template-columns: 1fr; gap: 12px; }
 .glossary-term-card {
     background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFA 100%);
     border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 16px;
@@ -2947,7 +2947,7 @@ if "var_audit_log" not in st.session_state:
 NAV_ITEMS = [
     ("Dashboard พยากรณ์ TFP", "forecast"),
     ("ทำความรู้จักตัวแปร", "data_vars"),
-    ("คู่มือการใช้งาน", "manual"),
+    ("คู่มือ & ศัพท์ที่ควรรู้", "manual"),
 ]
 
 # กลุ่มเมนูรอง (แสดงแยกด้วยเส้นคั่น ใต้กลุ่มเมนูหลักด้านบน) — งานที่จำกัดสิทธิ์
@@ -6121,7 +6121,7 @@ elif st.session_state.page == "manual":
     st.markdown(
         f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
         f'<div class="nxpo-topbar-logo">{icon("book", 22, 2)}</div>'
-        f'<div class="nxpo-topbar-title"><h2>คู่มือการใช้งาน</h2>'
+        f'<div class="nxpo-topbar-title"><h2>คู่มือ &amp; ศัพท์ที่ควรรู้</h2>'
         f'<span class="eyebrow">User Guide</span></div></div></div>',
         unsafe_allow_html=True,
     )
@@ -6203,7 +6203,7 @@ elif st.session_state.page == "manual":
     ]
     _glossary_html = "".join(
         f'<div class="glossary-group">'
-        f'<div class="glossary-group-label">{icon(group_icon, 14, 2)} {group_name}</div>'
+        f'<div class="glossary-group-label">{icon(group_icon, 22, 2)} {group_name}</div>'
         f'<div class="glossary-grid">'
         + "".join(
             f'<div class="glossary-term-card">'
