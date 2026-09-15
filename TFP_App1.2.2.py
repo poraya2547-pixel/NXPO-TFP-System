@@ -271,7 +271,7 @@ section[data-testid="stSidebar"] {
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
     padding-top: 1.2rem !important;
-    margin-top: -100px !important;
+    margin-top: -80px !important;
 }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
