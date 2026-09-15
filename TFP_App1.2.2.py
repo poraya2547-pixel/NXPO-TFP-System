@@ -2890,50 +2890,30 @@ if st.session_state.portal_role is None:
         '</div></div>',
         unsafe_allow_html=True,
     )
+
+    # ----- ปุ่มเข้าใช้งาน 2 ปุ่มเล็กๆ วางต่อจาก hero เลย (แทนการ์ดใหญ่ 2 ใบแบบเดิม)
+    # กดปุ่มไหนก็เข้าใช้งานได้ทันที ส่วนการ์ด 3 ขั้นตอนด้านล่าง (ดึงข้อมูล/รันโมเดล/
+    # ดูผลพยากรณ์) ยังคงไว้เหมือนเดิมตามที่ขอ -----
+    if "show_research_login" not in st.session_state:
+        st.session_state.show_research_login = False
+
     st.write("")
-    st.markdown(
-        '<p style="text-align:center;color:var(--brand-navy-soft);font-size:0.95rem;'
-        'margin-bottom:14px;">กรุณาเลือกว่าคุณเข้าใช้งานในฐานะใด</p>',
-        unsafe_allow_html=True,
-    )
-    _role_cols = st.columns(2)
-    with _role_cols[0]:
-        with st.container(key="role_card_visitor", border=True):
-            st.markdown(
-                f'<div style="text-align:center;">'
-                f'<div style="width:48px;height:48px;border-radius:14px;margin:0 auto 12px;'
-                f'background-image:linear-gradient(155deg,var(--brand-orange),var(--brand-orange-dark));'
-                f'color:#fff;display:flex;align-items:center;justify-content:center;'
-                f'box-shadow:0 5px 12px rgba(217,109,15,0.3);">{icon("search", 22, 2)}</div>'
-                f'<div style="font-family:var(--font-elegant);font-weight:700;font-size:1.1rem;'
-                f'color:var(--brand-navy);margin-bottom:4px;">ผู้เยี่ยมชม</div>'
-                f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.6;'
-                f'margin-bottom:16px;">ดู Dashboard พยากรณ์ TFP ทำความรู้จักตัวแปร '
-                f'และคู่มือการใช้งาน</div></div>',
-                unsafe_allow_html=True,
-            )
-            if st.button("เข้าใช้งานในฐานะผู้เยี่ยมชม", use_container_width=True, key="pick_role_visitor"):
-                st.session_state.portal_role = "visitor"
-                st.session_state.page = "forecast"
-                st.rerun()
-    with _role_cols[1]:
-        with st.container(key="role_card_research", border=True):
-            st.markdown(
-                f'<div style="text-align:center;">'
-                f'<div style="width:48px;height:48px;border-radius:14px;margin:0 auto 12px;'
-                f'background-image:linear-gradient(155deg,var(--brand-navy),#0E2436);'
-                f'color:#fff;display:flex;align-items:center;justify-content:center;'
-                f'box-shadow:0 5px 12px rgba(11,26,40,0.3);">{icon("lock", 22, 2)}</div>'
-                f'<div style="font-family:var(--font-elegant);font-weight:700;font-size:1.1rem;'
-                f'color:var(--brand-navy);margin-bottom:4px;">คณะวิจัย</div>'
-                f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.6;'
-                f'margin-bottom:16px;">จัดการข้อมูลอัตโนมัติ ตั้งค่าระบบ '
-                f'และเข้าถึงทุกเมนูของผู้เยี่ยมชมได้ด้วย (ต้องเข้าสู่ระบบก่อน)</div></div>',
-                unsafe_allow_html=True,
-            )
-            if _research_login_config_error:
-                st.error(_research_login_config_error)
-            else:
+    _entry_cols = st.columns([0.18, 0.22, 0.6])
+    with _entry_cols[0]:
+        if st.button("เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
+            st.session_state.portal_role = "visitor"
+            st.session_state.page = "forecast"
+            st.rerun()
+    with _entry_cols[1]:
+        if st.button("เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
+            st.session_state.show_research_login = not st.session_state.show_research_login
+
+    if st.session_state.show_research_login:
+        if _research_login_config_error:
+            st.error(_research_login_config_error)
+        else:
+            _portal_login_col = st.columns([1, 1.4, 1])[1]
+            with _portal_login_col:
                 with st.form("portal_research_login_form", clear_on_submit=False):
                     _portal_login_user = st.text_input("ชื่อผู้ใช้ (Username)", key="portal_login_user")
                     _portal_login_pass = st.text_input(
@@ -2957,6 +2937,30 @@ if st.session_state.portal_role is None:
                         st.rerun()
                     else:
                         st.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+
+    # ----- การ์ด 3 ขั้นตอนแนะนำการใช้งาน — ของเดิมที่เคยอยู่ในหน้า "forecast"
+    # ตอนยังไม่ดึงข้อมูล ย้าย/คัดลอกมาไว้ที่หน้า landing นี้ด้วยตามที่ขอ -----
+    st.write("")
+    _welcome_steps = [
+        ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้ายมือ"),
+        ("sparkle", "ระบบรันโมเดลให้อัตโนมัติ", "ระบบจะเลือกโมเดล ARIMA ที่เหมาะสม"),
+        ("trend-up", "ดูผลพยากรณ์ที่นี่", "กราฟแสดงแนวโน้ม TFP และตัวแปรในสมการ"),
+    ]
+    _welcome_cols = st.columns(3)
+    for _wcol, (ic, title, desc) in zip(_welcome_cols, _welcome_steps):
+        with _wcol:
+            st.markdown(
+                '<div class="nxpo-control-card" style="text-align:center;">'
+                f'<div style="width:42px;height:42px;border-radius:12px;margin:0 auto 12px;'
+                f'background-image:linear-gradient(155deg,var(--brand-orange),var(--brand-orange-dark));'
+                f'color:#fff;display:flex;align-items:center;justify-content:center;'
+                f'box-shadow:0 5px 12px rgba(217,109,15,0.3);">{icon(ic, 20, 2)}</div>'
+                f'<div style="font-family:var(--font-elegant);font-weight:600;font-size:1rem;'
+                f'color:var(--brand-navy);margin-bottom:4px;">{title}</div>'
+                f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.55;">{desc}</div>'
+                '</div>',
+                unsafe_allow_html=True,
+            )
     st.stop()
 
 with st.sidebar:
