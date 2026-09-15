@@ -5405,7 +5405,6 @@ elif st.session_state.page == "exec_dashboard":
                 .st-key-exec_dash_wrap .metric-card, .st-key-exec_dash_wrap .section-card, .st-key-exec_dash_wrap .kpi-strip,
                 .st-key-exec_dash_wrap .nxpo-summary-card {
                     background: linear-gradient(180deg, #EDF0F3 0%, #E1E5EA 100%) !important;
-                    background-image: none !important;
                     border-color: rgba(255,255,255,0.14) !important;
                     box-shadow: 0 10px 26px rgba(0,0,0,0.3) !important;
                 }
