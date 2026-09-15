@@ -259,10 +259,10 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
 }
 section[data-testid="stSidebar"] .block-container {
     /* เดิม padding-top: 1.2rem; ผู้ใช้ขอให้ขยับเนื้อหา (โลโก้/ปุ่ม) ข้างในแถบเมนู
-       ขึ้นอีก 10มม. ให้ชิดขอบบนมากขึ้น เนื่องจาก padding เป็นค่าติดลบไม่ได้
-       จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน (คำนวณ: 1.2rem - 10mm) */
+       ขึ้นทีละนิดหลายรอบ (รวมแล้วขึ้น 10มม. + อีก 1ซม./10มม. = 20มม.) เนื่องจาก
+       padding เป็นค่าติดลบไม่ได้ จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน */
     padding-top: 0;
-    margin-top: calc(1.2rem - 10mm);
+    margin-top: calc(1.2rem - 20mm);
 }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
