@@ -218,64 +218,50 @@ st.markdown("""
     background-size: auto, auto, 24px 24px, auto;
 }
 
+/* ----- ปุ่ม >> ย่อ/ขยาย sidebar (collapsedControl) — เปลี่ยนพื้นหลังเป็นสีส้ม
+   ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit ----- */
+[data-testid="collapsedControl"] {
+    background-color: var(--brand-orange) !important;
+    border-radius: 8px;
+}
+[data-testid="collapsedControl"] svg {
+    color: #FFFFFF !important;
+}
+[data-testid="collapsedControl"]:hover {
+    background-color: var(--brand-orange-dark) !important;
+}
+
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-/* ให้ position:sticky ของโลโก้ทำงานได้จริง ต้องมีกล่องแม่ที่ scroll ได้เองชัดเจน
-   (มีความสูงจำกัด + overflow-y auto) — ระบุตรงๆ ไว้หลายจุดกันเผื่อ Streamlit
-   เปลี่ยนโครงสร้าง DOM ในแต่ละเวอร์ชัน (ก่อนหน้านี้ลองแค่ sticky บนตัวโลโก้เฉยๆ
-   ยังไม่ค้าง เพราะกล่องแม่อาจจะยังไม่ได้กำหนด overflow ไว้ชัดเจนพอ) */
-section[data-testid="stSidebar"] > div:first-child {
-    height: 100vh !important; overflow-y: auto !important;
-}
-section[data-testid="stSidebar"] [data-testid="stSidebarContent"],
-section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
-    overflow-y: visible !important;
-}
-section[data-testid="stSidebar"] .block-container { padding-top: 0.3rem; }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
-/* หัวแถบเมนู (ที่ครอบปุ่มหุบ "«") เดิมมีที่ว่างเปล่าด้านบนเยอะมากก่อนถึงโลโก้
-   (ผู้ใช้จริงทักมาว่าเสียพื้นที่โดยเปล่าประโยชน์ โดยเฉพาะบนมือถือ) — บีบให้แน่นขึ้น */
-[data-testid="stSidebarHeader"] { padding: 0.3rem 0.6rem !important; min-height: 0 !important; }
-/* ปุ่มเปิดกลับ (ตอนหุบแถบเมนูไปแล้ว) เดิมเป็นแค่ไอคอนลอยๆ ไม่มีกรอบ ผู้ใช้จริง
-   ทักว่าไม่รู้ว่ากดเปิดกลับได้ — เพิ่มกรอบ/พื้นหลัง/เงาให้เห็นชัดว่าเป็นปุ่มกดได้ */
-[data-testid="collapsedControl"] {
-    background: var(--gold-tint) !important; border: 1.5px solid var(--brand-orange) !important;
-    border-radius: 10px !important; box-shadow: var(--shadow-soft) !important;
-    padding: 4px !important; color: var(--brand-orange-dark) !important;
-}
-[data-testid="collapsedControl"] svg { color: var(--brand-orange-dark) !important; fill: var(--brand-orange-dark) !important; }
-[data-testid="collapsedControl"]:hover {
-    border-color: var(--brand-orange-dark) !important; background: #FCE3C4 !important;
-}
-/* ปุ่มหุบแถบเมนู (ตอนแถบเมนูยังเปิดอยู่ "«") เป็นคนละอิลิเมนต์กับปุ่มเปิดกลับด้านบน
-   (collapsedControl ใช้ตอนหุบไปแล้วเท่านั้น) เดิมพอทำปุ่มเปิดกลับเป็นสีส้มไปแล้ว
-   ปุ่มหุบตัวนี้ยังเป็นสีเทาเริ่มต้นอยู่ ดูไม่เข้าชุดกัน (ปุ่มเดียวกันแต่คนละสีคนละ
-   สถานะ) ทำให้เป็นสีส้มชุดเดียวกันด้วย */
-[data-testid="stSidebarCollapseButton"] button {
-    background: var(--gold-tint) !important; border: 1.5px solid var(--brand-orange) !important;
-    border-radius: 10px !important; color: var(--brand-orange-dark) !important;
-}
-[data-testid="stSidebarCollapseButton"] button:hover {
-    border-color: var(--brand-orange-dark) !important; background: #FCE3C4 !important;
-}
-[data-testid="stSidebarCollapseButton"] svg { color: var(--brand-orange-dark) !important; }
 
-/* ----- การ์ดโลโก้ด้านบนแถบเมนู -----
-   เดิมจัดกึ่งกลาง (justify-content:center) แต่ผู้ใช้จริงอยากให้ชิดมุมซ้ายแทน
-   และดึงขึ้นไปให้ใกล้แถวปุ่มหุบ "«" มากขึ้น (ลด margin-top ติดลบเล็กน้อย) แทนที่
-   จะลอยห่างลงมา เพราะที่ว่างด้านบนเสียเปล่าไปเยอะ */
+/* ----- มือถือ/จอแคบ: ฟิกแถบเมนูด้านซ้ายให้ค้างอยู่กับที่ ไม่เลื่อนตามเนื้อหา
+   หลัก (เดิมตอนเปิดแถบเมนูบนมือถือแล้วเลื่อนหน้าเว็บ แถบเมนูทั้งก้อน — โลโก้/
+   ปุ่มด้านบน — จะเลื่อนหายไปพร้อมกับเนื้อหา ต้องเลื่อนกลับขึ้นไปดูใหม่ทุกครั้ง
+   จึงล็อกให้แถบเมนูเกาะติดขอบจอตลอดแทน) ไม่แตะต้อง layout บนจอกว้าง/เดสก์ท็อป
+   เพราะฝั่งนั้นเนื้อหาหลักวางเรียงข้างแถบเมนูแบบ flex ปกติอยู่แล้ว ถ้าฟิกด้วย
+   จะทำให้เนื้อหาหลักไปทับแถบเมนูแทน ----- */
+@media (max-width: 768px) {
+    section[data-testid="stSidebar"] {
+        position: fixed !important;
+        top: 0 !important;
+        left: 0 !important;
+        height: 100vh !important;
+        /* ถ้าเนื้อหาภายในแถบเมนูเองยาวเกินจอ ให้เลื่อนได้เฉพาะภายในแถบนี้แทน
+           (เนื้อหาหลักด้านหลังยังคงเลื่อนตามปกติ ไม่กระทบกัน) */
+        overflow-y: auto !important;
+        z-index: 999991 !important;
+    }
+}
+
+/* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
 .sidebar-logo-card {
-    display: flex; align-items: center; justify-content: flex-start; gap: 14px;
-    margin-top: -20px; margin-bottom: 14px;
-    /* ปักหมุดโลโก้ไว้บนสุดของแถบเมนูเสมอ ไม่ให้เลื่อนหายไปพร้อมเนื้อหาด้านล่าง
-       ตอนผู้ใช้ scroll ลงไปดูเมนูที่อยู่ล่างๆ (เดิมโลโก้อยู่ในบล็อกเดียวกับเมนู
-       ที่ scroll ได้ทั้งหมด พอเลื่อนโลโก้เลยหายไปด้วย) ใส่พื้นหลังทึบกันไม่ให้
-       เนื้อหาด้านล่างทะลุขึ้นมาทับตอน sticky ด้วย */
-    position: sticky; top: 0; z-index: 20; background: #FFFFFF;
-    padding-top: 6px; padding-bottom: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    margin-bottom: 18px;
 }
 
 /* ----- ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป —
@@ -1223,8 +1209,8 @@ if os.path.exists(var_intro_bg_path):
 
 logo1_path = os.path.join(APP_DIR, "สอวช_Logo.png")
 logo2_path = os.path.join(APP_DIR, "สวค_Logo.png")
-_LOGO1_SIZE = 68  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก) — ขยายขึ้น 30% จาก 52px
-_LOGO2_SIZE = 49  # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก) — ขยายขึ้น 30% จาก 38px ตามกัน
+_LOGO1_SIZE = 110  # px — ขนาดโลโก้ สอวช (ปรับแยกต่างหาก)
+_LOGO2_SIZE = 76   # px — ขนาดโลโก้ สวค (ปรับแยกต่างหาก)
 
 # โลโก้สถาบันการศึกษา (มหาวิทยาลัย + ภาควิชา) — วางไฟล์ทั้งสองไว้ในโฟลเดอร์
 # เดียวกับ app.py นี้ โดยตั้งชื่อไฟล์ตามด้านล่าง (หรือแก้ path ให้ตรงกับไฟล์จริง)
