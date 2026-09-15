@@ -3235,6 +3235,57 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
     return origins_df, metrics, None
 
 
+def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
+    """สร้างกราฟเส้นเทียบ MAPE ของ ARIMA vs Naive ที่เปลี่ยนไปตามเกณฑ์ตัดจุดทดสอบ
+    (จำนวนปีฝึกขั้นต่ำ) ทุกค่าพร้อมกันในกราฟเดียว แทนที่จะต้องเลื่อนสไลเดอร์ดูทีละจุด
+    ช่วยให้เห็นว่า ARIMA แม่นขึ้นแบบมีแนวโน้มต่อเนื่องเมื่อข้อมูลฝึกมากขึ้นจริง หรือ
+    เป็นแค่ความบังเอิญของตัวอย่างเล็กช่วงปลายอนุกรม (จุดที่มีจำนวนตัวอย่างเหลือน้อย
+    จะมีเส้นแกว่งแรงกว่า ให้สังเกตช่วงที่จำนวนจุดยังพอสมควร (ดูจาก tooltip) เป็นหลัก)
+    คำนวณจาก roll_df ที่ _run_rolling_backtest คืนมาแล้ว ไม่ต้องรัน ARIMA ซ้ำ
+    คืนค่า Altair chart object หรือ None ถ้าไม่มีจุดที่คำนวณได้เลย"""
+    train_sizes = sorted(roll_df["จำนวนปีที่ฝึก"].unique())
+
+    def _mape(actual, pred):
+        return float(np.mean(np.abs((actual - pred) / actual)) * 100)
+
+    rows = []
+    for t in train_sizes:
+        sub = roll_df[roll_df["จำนวนปีที่ฝึก"] >= t]
+        if len(sub) < 3:
+            continue
+        rows.append({"เกณฑ์": int(t), "โมเดล": "ARIMA", "MAPE": _mape(sub["ค่าจริง"], sub["ARIMA"]),
+                     "จำนวนจุด": int(len(sub))})
+        rows.append({"เกณฑ์": int(t), "โมเดล": "Naive", "MAPE": _mape(sub["ค่าจริง"], sub["Naive"]),
+                     "จำนวนจุด": int(len(sub))})
+    if not rows:
+        return None
+    chart_df = pd.DataFrame(rows)
+
+    color_scale = alt.Scale(domain=["ARIMA", "Naive"], range=["#16324A", "#F97316"])
+    base = alt.Chart(chart_df).encode(
+        x=alt.X(
+            "เกณฑ์:Q", title="ตัดจุดที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก",
+            axis=alt.Axis(grid=False, domain=False, tickColor="#E9ECF1",
+                           labelColor="#5B6B7C", labelFontSize=11),
+        ),
+        y=alt.Y(
+            "MAPE:Q", title="MAPE เฉลี่ย (%)",
+            axis=alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
+                           domain=False, tickColor="#E9ECF1", labelColor="#5B6B7C", labelFontSize=11),
+        ),
+        color=alt.Color("โมเดล:N", scale=color_scale, legend=alt.Legend(title=None, orient="top")),
+        tooltip=[
+            alt.Tooltip("เกณฑ์:Q", title="ตัดจุดที่น้อยกว่า (ปี)"),
+            alt.Tooltip("โมเดล:N", title="โมเดล"),
+            alt.Tooltip("MAPE:Q", title="MAPE", format=".2f"),
+            alt.Tooltip("จำนวนจุด:Q", title="จำนวนจุดที่เหลือ"),
+        ],
+    )
+    line = base.mark_line(interpolate="monotone", strokeWidth=2.4)
+    points = base.mark_point(size=45, filled=True)
+    return (line + points).properties(height=height).configure_view(strokeWidth=0)
+
+
 def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
                                     color: str = "#F97316", forecast_color: str = "#2F6FED",
                                     height: int = 340, display_from_year: int = None):
@@ -4245,6 +4296,19 @@ elif st.session_state.page == "forecast":
                                 f'{roll_metrics["arima_mape_crisis"]:.2f}% เทียบ Naive '
                                 f'{roll_metrics["naive_mape_crisis"]:.2f}%</p>',
                                 unsafe_allow_html=True,
+                            )
+
+                        # ----- กราฟแนวโน้ม MAPE เทียบทุกเกณฑ์ตัดจุดพร้อมกัน -----
+                        # ดีกว่าดูทีละจุดจากสไลเดอร์ เพราะเห็นทั้งเส้นแนวโน้มรวดเดียวว่า
+                        # ARIMA ดีขึ้นแบบค่อยเป็นค่อยไปจริงหรือเป็นความบังเอิญของจุดปลาย
+                        _mape_chart = _mape_threshold_chart(roll_df)
+                        if _mape_chart is not None:
+                            st.altair_chart(_mape_chart, use_container_width=True)
+                            st.caption(
+                                "เอาเมาส์ชี้จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือ ณ เกณฑ์นั้น — "
+                                "ถ้าเส้น ARIMA ลดลงแบบมีแนวโน้มต่อเนื่องตามเกณฑ์ที่สูงขึ้น แปลว่าข้อมูล "
+                                "ฝึกน้อยเกินไปเป็นสาเหตุจริง แต่ถ้าเส้นแกว่งไปมาแล้วเพิ่งลดฮวบตอนจุด "
+                                "ทดสอบเหลือน้อยมาก ๆ อันนั้นน่าจะเป็นความบังเอิญของตัวอย่างเล็กมากกว่า"
                             )
 
                         # ----- กรองจุดทดสอบที่ฝึกด้วยข้อมูลน้อยเกินไปออก -----
