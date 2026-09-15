@@ -4116,21 +4116,24 @@ elif st.session_state.page == "forecast":
         # nxpo-hero ที่มี CSS เตรียมไว้ในไฟล์อยู่แล้ว — พอดึงข้อมูลสำเร็จแล้วหน้านี้
         # จะสลับกลับไปเป็น topbar + Dashboard เต็มรูปแบบตามปกติ (ดูเงื่อนไข else ด้านล่าง)
         st.markdown(
-            f'<div class="nxpo-hero" style="{hero_bg_style}"><div class="nxpo-hero-flex">'
-            '<div class="nxpo-hero-left" style="flex:1 1 58%;max-width:58%;">'
-            '<span class="nxpo-hero-badge-eyebrow">NXPO Data Center • Econometric Analytics</span>'
-            '<h1>ระบบวิเคราะห์และพยากรณ์<br>ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>'
-            '<p class="desc">วิเคราะห์แนวโน้มผลิตภาพของประเทศไทยด้วยแบบจำลองเศรษฐมิติ<br>'
-            'พร้อมระบบพยากรณ์และสรุปผลอัตโนมัติ</p>'
-            f'<div class="cta-hint">{icon("arrow-right", 14, 2)} เริ่มต้นการวิเคราะห์ข้อมูลได้จากเมนูด้านซ้าย</div>'
-            '<div class="nxpo-hero-chips">'
-            f'<span class="nxpo-hero-chip">{icon("search", 14, 2)} วิเคราะห์ข้อมูล</span>'
-            f'<span class="nxpo-hero-chip">{icon("trend-up", 14, 2)} พยากรณ์ TFP</span>'
-            f'<span class="nxpo-hero-chip">{icon("check", 14, 2)} ตรวจสอบแบบจำลอง</span>'
-            f'<span class="nxpo-hero-chip">{icon("sparkle", 14, 2)} สรุปผลอัตโนมัติ</span>'
-            '</div>'
-            '</div>'
-            '</div></div>',
+            f'<div class="nxpo-topbar"><div class="nxpo-topbar-left">'
+            f'<div class="nxpo-topbar-logo">{icon("trend-up", 22, 2)}</div>'
+            f'<div class="nxpo-topbar-title"><h2>Dashboard พยากรณ์ TFP</h2>'
+            f'<span class="eyebrow">TFP Forecast Dashboard</span></div></div></div>',
+            unsafe_allow_html=True,
+        )
+        st.markdown(
+            f'<div class="section-card" style="text-align:center;padding:34px 28px;">'
+            f'<div style="width:52px;height:52px;border-radius:14px;margin:0 auto 14px;'
+            f'background-image:linear-gradient(155deg,var(--brand-orange),var(--brand-orange-dark));'
+            f'color:#fff;display:flex;align-items:center;justify-content:center;'
+            f'box-shadow:0 8px 20px rgba(217,109,15,0.3);">{icon("database", 26, 2)}</div>'
+            f'<div style="font-family:var(--font-elegant);font-weight:600;font-size:1.15rem;'
+            f'color:var(--brand-navy);margin-bottom:6px;">ยังไม่มีข้อมูลให้แสดงผล</div>'
+            f'<div style="font-size:0.92rem;color:var(--brand-navy-soft);line-height:1.6;max-width:480px;margin:0 auto;">'
+            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล รันโมเดล '
+            f'และแสดงผลพยากรณ์ TFP ที่นี่</div>'
+            '</div>',
             unsafe_allow_html=True,
         )
         _welcome_steps = [
