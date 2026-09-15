@@ -233,13 +233,34 @@ header[data-testid="stHeader"] {
 }
 
 /* ----- ปุ่ม >> ย่อ/ขยาย sidebar (collapsedControl) — เปลี่ยนพื้นหลังเป็นสีส้ม
-   ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit ----- */
+   ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit -----
+   หมายเหตุ: ปุ่มนี้อยู่ "ข้างใน" header[data-testid="stHeader"] ที่เราซ่อนไว้
+   ด้านบนด้วย visibility: hidden ซึ่งเป็นคุณสมบัติที่ลูกจะรับค่ามาจากพ่อ (inherit)
+   ถ้าไม่กำหนด visibility: visible ให้ปุ่มนี้ชัดๆ มันจะถูกซ่อนหายไปด้วย
+   (เป็นสาเหตุที่ปุ่มเปิด/ปิดแถบเมนูหายไปทั้งที่ตั้งใจซ่อนแค่แถบหัวเว็บ) -----*/
 [data-testid="collapsedControl"] {
+    visibility: visible !important;
     background-color: var(--brand-orange) !important;
     border-radius: 8px;
 }
 [data-testid="collapsedControl"] svg {
-    color: #FFFFFF !important;
+    /* ซ่อนไอคอนลูกศร «« เดิมของ Streamlit ออก แล้วใช้ไอคอนขีดสามขีด (hamburger)
+       ที่วาดเองด้วย ::after ด้านล่างแทน */
+    display: none !important;
+}
+[data-testid="collapsedControl"] {
+    position: relative;
+    min-width: 2.2rem;
+    min-height: 2.2rem;
+}
+[data-testid="collapsedControl"]::after {
+    content: "";
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 18px; height: 2px;
+    background: #FFFFFF;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 -6px 0 #FFFFFF, 0 6px 0 #FFFFFF;
 }
 [data-testid="collapsedControl"]:hover {
     background-color: var(--brand-orange-dark) !important;
@@ -259,10 +280,10 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
 }
 section[data-testid="stSidebar"] .block-container {
     /* เดิม padding-top: 1.2rem; ผู้ใช้ขอให้ขยับเนื้อหา (โลโก้/ปุ่ม) ข้างในแถบเมนู
-       ขึ้นทีละนิดหลายรอบ (รวมแล้วขึ้น 10+10+15+20+20 = 75มม.) เนื่องจาก padding
-       เป็นค่าติดลบไม่ได้ จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน */
+       ขึ้นทีละนิดหลายรอบ (รวมแล้วขึ้น 10+10+15+20+20+30 = 105มม.) เนื่องจาก
+       padding เป็นค่าติดลบไม่ได้ จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน */
     padding-top: 0;
-    margin-top: calc(1.2rem - 75mm);
+    margin-top: calc(1.2rem - 105mm);
 }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
