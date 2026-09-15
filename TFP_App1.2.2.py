@@ -807,22 +807,30 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 }
 
 /* ----- กรอบช่อง "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า" -----
-   เดิม dropdown นี้ลอยอยู่เฉย ๆ ไม่มีกรอบ ไม่เด่นจากส่วนอื่นของหน้า จึงใส่กรอบ
-   ให้ดูเป็นกล่องชัดเจนขึ้น (ครอบด้วย st.container(key="tfp_horizon_frame"))
-   พร้อมขยับ label "จำนวนปีที่..." เข้ามาจากขอบซ้าย 2mm และเว้นระยะห่างจาก
-   ตัว dropdown (กล่องเลือกด้านล่าง label) อีก 4mm ตามที่ขอ */
-.st-key-tfp_horizon_frame {
-    border: 1.5px solid rgba(22,50,74,0.22);
-    border-radius: 12px;
-    padding: 14px 16px 16px;
-    margin-bottom: 18px;
-    background: #FFFDF9;
+   เดิม dropdown นี้ลอยอยู่เฉย ๆ ไม่มีกรอบ ไม่เด่นจากส่วนอื่นของหน้า จึงครอบด้วย
+   st.container(key="tfp_horizon_frame", border=True) (ใช้กรอบในตัวของ Streamlit
+   เป็นฐาน เพื่อให้เห็นกรอบแน่ ๆ ไม่ต้องพึ่ง CSS custom ล้วน ๆ อย่างเดียว) แล้วค่อย
+   ใช้ CSS ด้านล่างปรับสี/มุมโค้ง/ระยะห่างทับอีกที พร้อมขยับ label "จำนวนปีที่..."
+   เข้ามาจากขอบซ้าย 2mm และเว้นระยะห่างจากตัว dropdown ด้านล่าง label อีก 4mm
+   ใส่ !important และ selector สำรองไว้หลายแบบ เพราะโครงสร้าง HTML ภายในของ
+   st.container(border=True)/st.selectbox อาจต่างกันเล็กน้อยตามเวอร์ชัน Streamlit */
+.st-key-tfp_horizon_frame,
+div[data-testid="stVerticalBlockBorderWrapper"].st-key-tfp_horizon_frame {
+    border: 1.5px solid rgba(22,50,74,0.35) !important;
+    border-radius: 12px !important;
+    padding: 14px 16px 16px !important;
+    margin-bottom: 18px !important;
+    background: #FFFDF9 !important;
 }
+.st-key-tfp_horizon_frame [data-testid="stWidgetLabel"],
 .st-key-tfp_horizon_frame label {
-    margin-left: 2mm;
+    margin-left: 2mm !important;
+}
+.st-key-tfp_horizon_frame [data-testid="stWidgetLabel"] {
+    margin-bottom: 4mm !important;
 }
 .st-key-tfp_horizon_frame [data-baseweb="select"] {
-    margin-top: 4mm;
+    margin-top: 4mm !important;
 }
 
 /* ----- การ์ด CTA สร้างสรุป AI (ธีม "Exclusive") -----
@@ -3938,7 +3946,7 @@ elif st.session_state.page == "forecast":
                 # ครอบด้วย st.container(key="tfp_horizon_frame") เพื่อให้ selector
                 # .st-key-tfp_horizon_frame ใน CSS ด้านบน (ค้นหาคำว่า "tfp_horizon_frame")
                 # จับกรอบ+ระยะห่างของช่องนี้เป็นกลุ่มเดียว โดยไม่กระทบ selectbox อื่นในหน้า
-                with st.container(key="tfp_horizon_frame"):
+                with st.container(key="tfp_horizon_frame", border=True):
                     horizon = st.selectbox(
                         "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
                         options=[3, 5, 10, 15],
@@ -4238,6 +4246,54 @@ elif st.session_state.page == "forecast":
                                 f'{roll_metrics["naive_mape_crisis"]:.2f}%</p>',
                                 unsafe_allow_html=True,
                             )
+
+                        # ----- กรองจุดทดสอบที่ฝึกด้วยข้อมูลน้อยเกินไปออก -----
+                        # จุดทดสอบช่วงต้นๆ ของ rolling backtest ฝึกด้วยข้อมูลแค่ไม่กี่ปี
+                        # (เท่า MIN_POINTS_FOR_ARIMA) ซึ่งน้อยเกินกว่าที่ ARIMA จะประมาณค่า
+                        # พารามิเตอร์ได้แม่นยำ อาจดึงค่าเฉลี่ยความคลาดเคลื่อนโดยรวมให้ดูแย่
+                        # กว่าความสามารถจริงของโมเดล ส่วนนี้ให้ผู้ใช้เลือกตัดจุดทดสอบที่ฝึก
+                        # ด้วยข้อมูลน้อยกว่าเกณฑ์ออก แล้วคำนวณ MAPE ใหม่จาก origins_df เดิม
+                        # (ไม่ต้องรัน ARIMA ซ้ำ เพราะข้อมูลรายจุดคำนวณไว้แล้วใน roll_df)
+                        _train_sizes_seen = roll_df["จำนวนปีที่ฝึก"]
+                        _min_ts, _max_ts = int(_train_sizes_seen.min()), int(_train_sizes_seen.max())
+                        if _max_ts > _min_ts:
+                            _default_mature = min(_max_ts, max(_min_ts, MIN_POINTS_FOR_ARIMA * 2))
+                            mature_threshold = st.slider(
+                                "ตัดจุดทดสอบที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก (ดูผลเฉพาะจุดที่โมเดลมีข้อมูลฝึกพอสมควรแล้ว)",
+                                min_value=_min_ts, max_value=_max_ts, value=_default_mature,
+                                key="tfp_rolling_mature_threshold",
+                                help="จุดทดสอบช่วงต้น ๆ ฝึกด้วยข้อมูลน้อยมาก ทำให้ ARIMA ประมาณค่า "
+                                     "พารามิเตอร์ได้ไม่แม่น และอาจดึงค่าเฉลี่ยความคลาดเคลื่อนโดยรวมให้ดู "
+                                     "แย่กว่าความเป็นจริง เลื่อนแถบนี้เพื่อดูว่าผลเปลี่ยนไปแค่ไหนถ้าตัดจุด "
+                                     "ทดสอบที่ข้อมูลฝึกน้อยเกินไปออก",
+                            )
+                            _mature_df = roll_df[roll_df["จำนวนปีที่ฝึก"] >= mature_threshold]
+
+                            def _mape_local(actual, pred):
+                                return float(np.mean(np.abs((actual - pred) / actual)) * 100)
+
+                            if len(_mature_df) >= 3:
+                                _arima_mape_mat = _mape_local(_mature_df["ค่าจริง"], _mature_df["ARIMA"])
+                                _naive_mape_mat = _mape_local(_mature_df["ค่าจริง"], _mature_df["Naive"])
+                                _mat_better = _arima_mape_mat < _naive_mape_mat
+                                st.markdown(
+                                    f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;">'
+                                    f'เฉพาะจุดที่ฝึกด้วยข้อมูล ≥ {mature_threshold} ปี ({len(_mature_df)} จุด): '
+                                    f'ARIMA MAPE {_arima_mape_mat:.2f}% เทียบ Naive {_naive_mape_mat:.2f}%'
+                                    + (' — <b style="color:var(--green);">ARIMA แม่นกว่าเมื่อมีข้อมูลฝึกเพียงพอ</b> '
+                                       '(สนับสนุนว่าที่ ARIMA แพ้ในภาพรวมส่วนหนึ่งมาจากจุดทดสอบช่วงต้นที่ข้อมูลฝึกน้อยเกินไป)'
+                                       if _mat_better else
+                                       ' — Naive ยังคงแม่นกว่าหรือใกล้เคียงแม้ตัดจุดข้อมูลฝึกน้อยออกแล้ว '
+                                       '(สนับสนุนว่าอนุกรมนี้มีพฤติกรรมใกล้ random walk มากกว่าจะเป็นปัญหาข้อมูลฝึกไม่พอ)')
+                                    + '</p>',
+                                    unsafe_allow_html=True,
+                                )
+                            else:
+                                st.caption(
+                                    "จุดทดสอบที่ผ่านเกณฑ์นี้น้อยเกินไป (น้อยกว่า 3 จุด) ยังสรุปไม่ได้ "
+                                    "ลองลดค่าขั้นต่ำลง"
+                                )
+
                         _roll_rows_html = ""
                         for _, r in roll_df.iterrows():
                             _arima_diff = abs(r["ARIMA"] - r["ค่าจริง"])
