@@ -269,7 +269,7 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; margin-top: -75.6px !important; }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; margin-top: -151.2px !important; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
@@ -351,6 +351,14 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="second
 section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] p,
 section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] span {
     color: #FFFFFF !important;
+}
+
+/* ----- กล่องพื้นขาวสำหรับข้อความคำอธิบาย (เช่นในส่วน Backtesting) — เดิมข้อความ
+   ลอยอยู่บนพื้นหลังลายจุด (dot-grid) ของ .stApp โดยตรง ทำให้กลืนกับพื้นหลังจนอ่านยาก
+   ใส่กล่องพื้นขาว-ครีมนวลพร้อมเส้นขอบบาง ๆ ให้ตัวอักษรอ่านง่ายขึ้นชัดเจน ----- */
+.bt-desc-box {
+    background: #FFFFFF; border: 1px solid var(--card-border); border-radius: 12px;
+    padding: 12px 16px; margin: 8px 0 14px;
 }
 
 /* ----- แถบสถานะ (แทน st.success/st.error/st.info ค่าเริ่มต้นของ Streamlit ที่เป็น
@@ -4344,11 +4352,11 @@ elif st.session_state.page == "forecast":
                 # จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว พร้อม Naive forecast เป็นเส้นฐาน
                 with st.expander("🎯 ทดสอบความแม่นยำของโมเดลย้อนหลัง (Backtesting)"):
                     st.markdown(
-                        '<p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
-                        'margin-top:0;">ทดสอบว่า ถ้าเราไม่รู้ผลจริงของปีล่าสุด ๆ แล้วให้แบบจำลอง ARIMA '
-                        'ทายปีเหล่านั้นจากข้อมูลก่อนหน้า จะทายได้ใกล้เคียงค่าจริงแค่ไหน — '
-                        'เทียบกับ "Naive forecast" <span style="white-space:nowrap;">(สมมติค่าปีสุดท้ายคงที่ไปเรื่อย ๆ '
-                        'โดยไม่ใช้แบบจำลองใดเลย) เป็นเส้นฐานว่า ARIMA ทายแม่นกว่าการเดาเปล่า ๆ แค่ไหน</span></p>',
+                        '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
+                        'margin-top:0;margin-bottom:0;">ทดสอบความแม่นยำของ ARIMA โดยใช้ข้อมูลในอดีตเพื่อพยากรณ์ค่าของ'
+                        'ปีล่าสุดที่สมมติว่ายังไม่ทราบค่าจริง แล้วเปรียบเทียบค่าพยากรณ์กับค่าจริง '
+                        'พร้อมเทียบกับ Naive Forecast ซึ่งใช้ค่าปีล่าสุดเป็นค่าพยากรณ์พื้นฐาน '
+                        'เพื่อประเมินว่า ARIMA ให้ผลการพยากรณ์ที่แม่นยำกว่าวิธีพื้นฐานเพียงใด</p></div>',
                         unsafe_allow_html=True,
                     )
                     bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
@@ -4435,15 +4443,18 @@ elif st.session_state.page == "forecast":
                             unsafe_allow_html=True,
                         )
                         st.markdown(
-                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:10px;">'
-                            f'ฝึกโมเดลด้วยข้อมูล {bt_metrics["train_years"]} ปีแรก แล้วทดสอบทาย '
-                            f'{bt_metrics["test_years"]} ปีสุดท้าย (เลือก ARIMA{bt_metrics["order"]} ด้วย AIC) — '
-                            f'<span style="white-space:nowrap;">'
-                            + ('ARIMA ทายแม่นกว่า Naive ในช่วงทดสอบนี้'
+                            f'<div class="bt-desc-box">'
+                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:0;">'
+                            f'แบ่งข้อมูลเป็น {bt_metrics["train_years"]} ปีสำหรับฝึกแบบจำลอง และ '
+                            f'{bt_metrics["test_years"]} ปีล่าสุดสำหรับทดสอบการพยากรณ์ '
+                            f'โดยเลือก ARIMA{bt_metrics["order"]} ด้วยเกณฑ์ AIC</p>'
+                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;margin-bottom:0;">'
+                            + ('ผลการทดสอบพบว่า ARIMA พยากรณ์ได้แม่นยำกว่า Naive Forecast ในช่วงทดสอบ'
                                if _bt_better else
-                               'ในช่วงทดสอบนี้ Naive ทายใกล้เคียงหรือแม่นกว่า ARIMA เล็กน้อย '
-                               'ซึ่งเกิดขึ้นได้กับอนุกรมเวลาสั้น ๆ ควรตีความผลด้วยความระมัดระวัง')
-                            + '</span></p>',
+                               'ผลการทดสอบพบว่า Naive Forecast พยากรณ์ได้ใกล้เคียงค่าจริงกว่า ARIMA เล็กน้อย '
+                               'ในช่วงทดสอบ ซึ่งอาจเกิดขึ้นได้กับอนุกรมเวลาที่มีข้อมูลจำกัด '
+                               'จึงควรตีความผลการเปรียบเทียบอย่างระมัดระวัง')
+                            + '</p></div>',
                             unsafe_allow_html=True,
                         )
 
@@ -4454,11 +4465,11 @@ elif st.session_state.page == "forecast":
                 # จุดเริ่มทดสอบ (rolling-origin) ไปทีละปีทั่วทั้งอนุกรม แล้วรวมผลทุกจุด
                 with st.expander("🔁 ทดสอบย้อนหลังหลายหน้าต่าง (Rolling-origin Backtest)"):
                     st.markdown(
-                        '<p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
-                        'margin-top:0;">การทดสอบด้านบนซ่อนข้อมูลไว้แค่ช่วงเดียว (5 ปีสุดท้าย) '
-                        'ซึ่งอาจบังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19) ทำให้สรุปว่าโมเดลไหนดีกว่า '
-                        'ได้ไม่ครบถ้วน การทดสอบนี้จะเลื่อนจุดเริ่มทดสอบไปทีละปีทั่วทั้งอนุกรม '
-                        'แล้วรวมผลทุกจุดเข้าด้วยกัน เพื่อดูว่า ARIMA แม่นกว่า Naive โดยเฉลี่ยจริงหรือไม่</p>',
+                        '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
+                        'margin-top:0;margin-bottom:0;">การทดสอบนี้ใช้วิธี Rolling-Origin Evaluation โดยเลื่อนช่วงทดสอบไปทีละปี'
+                        'ตลอดอนุกรมเวลา แทนการทดสอบเฉพาะ 5 ปีสุดท้าย เพื่อให้ผลการประเมินครอบคลุมหลายช่วงเวลา'
+                        'และลดผลกระทบจากเหตุการณ์เฉพาะช่วง เช่น โควิด-19 จากนั้นจึงรวบรวมผลการพยากรณ์ทั้งหมด'
+                        'เพื่อเปรียบเทียบว่า ARIMA แม่นกว่า Naive Forecast โดยเฉลี่ยหรือไม่</p></div>',
                         unsafe_allow_html=True,
                     )
                     with st.spinner("กำลังทดสอบย้อนหลังหลายหน้าต่าง..."):
@@ -4492,14 +4503,14 @@ elif st.session_state.page == "forecast":
                         st.write("")
                         if roll_metrics.get("n_crisis", 0) > 0 and roll_metrics.get("n_normal", 0) > 0:
                             st.markdown(
-                                f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);">'
+                                f'<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
                                 f'แยกตามช่วงเวลา — '
                                 f'ช่วงปกติ ({roll_metrics["n_normal"]} จุด): ARIMA MAPE '
                                 f'{roll_metrics["arima_mape_normal"]:.2f}% เทียบ Naive '
                                 f'{roll_metrics["naive_mape_normal"]:.2f}% &nbsp;|&nbsp; '
                                 f'ช่วงโควิด 2563–2565 ({roll_metrics["n_crisis"]} จุด): ARIMA MAPE '
                                 f'{roll_metrics["arima_mape_crisis"]:.2f}% เทียบ Naive '
-                                f'{roll_metrics["naive_mape_crisis"]:.2f}%</p>',
+                                f'{roll_metrics["naive_mape_crisis"]:.2f}%</p></div>',
                                 unsafe_allow_html=True,
                             )
 
@@ -4509,11 +4520,12 @@ elif st.session_state.page == "forecast":
                         _mape_chart = _mape_threshold_chart(roll_df)
                         if _mape_chart is not None:
                             st.altair_chart(_mape_chart, use_container_width=True)
-                            st.caption(
-                                "เอาเมาส์ชี้จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือ ณ เกณฑ์นั้น — "
-                                "ถ้าเส้น ARIMA ลดลงแบบมีแนวโน้มต่อเนื่องตามเกณฑ์ที่สูงขึ้น แปลว่าข้อมูล "
-                                "ฝึกน้อยเกินไปเป็นสาเหตุจริง แต่ถ้าเส้นแกว่งไปมาแล้วเพิ่งลดฮวบตอนจุด "
-                                "ทดสอบเหลือน้อยมาก ๆ อันนั้นน่าจะเป็นความบังเอิญของตัวอย่างเล็กมากกว่า"
+                            st.markdown(
+                                '<div class="bt-desc-box"><p style="font-size:0.78rem;color:var(--brand-navy-soft);margin:0;">'
+                                "เลื่อนเมาส์ไปที่จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือ ณ เกณฑ์นั้น "
+                                "โดยพิจารณาว่าเส้น ARIMA ลดลงอย่างต่อเนื่องหรือเกิดการลดลงเฉพาะช่วงที่มีข้อมูลทดสอบน้อย "
+                                "เพื่อแยกแยะระหว่าง ผลจากข้อมูลฝึกที่ไม่เพียงพอ กับ ความผันผวนจากกลุ่มตัวอย่างขนาดเล็ก</p></div>",
+                                unsafe_allow_html=True,
                             )
 
                         # ----- กรองจุดทดสอบที่ฝึกด้วยข้อมูลน้อยเกินไปออก -----
@@ -4588,15 +4600,15 @@ elif st.session_state.page == "forecast":
                             unsafe_allow_html=True,
                         )
                         st.markdown(
-                            '<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:10px;">'
+                            '<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
                             + ('ตลอดทั้งอนุกรม ARIMA ทายแม่นกว่า Naive โดยเฉลี่ย ซึ่งสนับสนุนว่าผลที่ '
                                'Naive แม่นกว่าในช่วงทดสอบ 5 ปีล่าสุดด้านบน เป็นผลเฉพาะช่วงที่มีโควิด-19 '
                                'แทรก (structural break) ไม่ใช่ภาพรวมความสามารถของโมเดล'
                                if _roll_better else
-                               'ตลอดทั้งอนุกรม Naive ยังคงแม่นกว่าหรือใกล้เคียง ARIMA โดยเฉลี่ย '
-                               'ซึ่งอาจบ่งชี้ว่าอนุกรมนี้มีความผันผวนสูงจน ARIMA ไม่ได้ให้ความแม่นยำ '
-                               'เพิ่มขึ้นมากนักเมื่อเทียบกับการเดาค่าคงที่')
-                            + '</p>',
+                               'Naive Forecast ยังคงแม่นยำกว่าหรือใกล้เคียง ARIMA โดยเฉลี่ย '
+                               'สะท้อนว่าอนุกรมเวลานี้อาจมีความผันผวนสูง ทำให้ ARIMA ไม่ได้เพิ่มความแม่นยำ'
+                               'ในการพยากรณ์ได้มากกว่าวิธีพื้นฐานอย่างชัดเจน')
+                            + '</p></div>',
                             unsafe_allow_html=True,
                         )
             else:
