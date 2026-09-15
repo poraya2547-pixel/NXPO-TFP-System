@@ -4199,7 +4199,7 @@ elif st.session_state.page == "forecast":
             f'<div style="font-family:var(--font-elegant);font-weight:600;font-size:1.15rem;'
             f'color:var(--brand-navy);margin-bottom:6px;">ยังไม่มีข้อมูลให้แสดงผล</div>'
             f'<div style="font-size:0.92rem;color:var(--brand-navy-soft);line-height:1.6;max-width:480px;margin:0 auto;">'
-            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล รันโมเดล '
+            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล '
             f'และแสดงผลพยากรณ์ TFP ที่นี่</div>'
             '</div>',
             unsafe_allow_html=True,
