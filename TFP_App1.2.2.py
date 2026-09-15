@@ -269,7 +269,10 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; margin-top: -226.8px !important; }
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    padding-top: 1.2rem !important;
+    margin-top: -226.8px !important;
+}
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
