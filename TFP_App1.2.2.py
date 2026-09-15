@@ -218,6 +218,20 @@ st.markdown("""
     background-size: auto, auto, 24px 24px, auto;
 }
 
+/* ----- แถบหัวเว็บเริ่มต้นของ Streamlit (เมนู "..."/ปุ่ม Deploy) — เป็นตัวการที่
+   ทำให้เกิดพื้นที่ว่างสีขาวโล่งๆ ด้านบนสุดของหน้าเว็บ (ทั้งฝั่งแถบเมนูซ้ายและ
+   เนื้อหาหลัก) เพราะปกติ Streamlit เผื่อพื้นที่ด้านบนไว้ให้แถบนี้เสมอ แอปนี้มี
+   แถบเมนู/หัวข้อของตัวเองอยู่แล้ว (nxpo-topbar) จึงซ่อนแถบเริ่มต้นนี้ทิ้งไปเลย
+   และลด padding-top ของเนื้อหาหลักที่เผื่อพื้นที่ไว้ให้แถบนี้ลงด้วย ----- */
+header[data-testid="stHeader"] {
+    height: 0rem !important;
+    min-height: 0rem !important;
+    visibility: hidden;
+}
+[data-testid="stMain"] .block-container {
+    padding-top: 1.5rem !important;
+}
+
 /* ----- ปุ่ม >> ย่อ/ขยาย sidebar (collapsedControl) — เปลี่ยนพื้นหลังเป็นสีส้ม
    ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit ----- */
 [data-testid="collapsedControl"] {
