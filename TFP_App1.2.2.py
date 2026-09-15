@@ -232,12 +232,27 @@ st.markdown("""
     background-color: var(--brand-orange-dark) !important;
 }
 
+/* ----- แถบหัวเว็บของ Streamlit (Share / ⭐ / ✏️ / GitHub / ⋮) เดิมเป็นพื้นขาว
+   ตัดกับพื้นหลังครีมของแอปด้านล่าง — เปลี่ยนให้โปร่งใสเพื่อให้เห็นพื้นหลังไล่เฉด
+   เดียวกับ .stApp ทะลุขึ้นมาแทน (ไม่ใช้สีทึบเพราะพื้นหลังจริงเป็น gradient
+   ไม่ใช่สีเดียว การทำให้โปร่งใสจึงกลืนกับพื้นหลังได้พอดีทุกจุด) รวมถึงซ่อนเส้นสี
+   บาง ๆ (decoration bar) ที่ Streamlit วาดคั่นใต้แถบนี้ไว้ด้วย ----- */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stToolbar"] { background: transparent !important; }
+
 /* ----- ลดพื้นที่ว่างด้านบนสุดของเนื้อหาหลัก (เดิม Streamlit เว้น padding-top
    ไว้เยอะเกินไป ดูเหมือนมีช่องว่างลอยอยู่เหนือ hero banner) — ลดลงประมาณ 1 นิ้ว
    (~96px) ให้เนื้อหาเริ่มต้นชิดขึ้นกว่าเดิม ใช้ selector กว้าง ๆ ของพื้นที่หลัก
-   (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว) -----
+   (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว)
+   จากนั้นดึงการ์ด hero ขึ้นไปอีก 2 ซม. (~75.6px) ด้วย margin-top ติดลบ
+   ตามที่ขอเพิ่มเติม (ปรับตัวเลข -75.6px นี้เพิ่ม/ลดได้ถ้าต้องการชิดกว่านี้อีก) -----
 [data-testid="stAppViewContainer"] > .main .block-container {
     padding-top: 1.5rem !important;
+    margin-top: -75.6px !important;
 }
 
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
