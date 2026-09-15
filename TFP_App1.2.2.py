@@ -232,20 +232,35 @@ st.markdown("""
     background-color: var(--brand-orange-dark) !important;
 }
 
+/* ----- แถบหัวเว็บของ Streamlit (Share / ⭐ / ✏️ / GitHub / ⋮) เดิมเป็นพื้นขาว
+   ตัดกับพื้นหลังครีมของแอปด้านล่าง — เปลี่ยนให้โปร่งใสเพื่อให้เห็นพื้นหลังไล่เฉด
+   เดียวกับ .stApp ทะลุขึ้นมาแทน (ไม่ใช้สีทึบเพราะพื้นหลังจริงเป็น gradient
+   ไม่ใช่สีเดียว การทำให้โปร่งใสจึงกลืนกับพื้นหลังได้พอดีทุกจุด) รวมถึงซ่อนเส้นสี
+   บาง ๆ (decoration bar) ที่ Streamlit วาดคั่นใต้แถบนี้ไว้ด้วย ----- */
+header[data-testid="stHeader"] {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+[data-testid="stDecoration"] { display: none !important; }
+[data-testid="stToolbar"] { background: transparent !important; }
+
 /* ----- ลดพื้นที่ว่างด้านบนสุดของเนื้อหาหลัก (เดิม Streamlit เว้น padding-top
    ไว้เยอะเกินไป ดูเหมือนมีช่องว่างลอยอยู่เหนือ hero banner) — ลดลงประมาณ 1 นิ้ว
    (~96px) ให้เนื้อหาเริ่มต้นชิดขึ้นกว่าเดิม ใช้ selector กว้าง ๆ ของพื้นที่หลัก
-   (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว) -----
-.main .block-container,
-section.main .block-container,
+   (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว)
+   จากนั้นดึงการ์ด hero ขึ้นไปอีก 2 ซม. (~75.6px) ด้วย margin-top ติดลบ
+   ตามที่ขอเพิ่มเติม (ปรับตัวเลข -75.6px นี้เพิ่ม/ลดได้ถ้าต้องการชิดกว่านี้อีก) -----
+[data-testid="stAppViewContainer"] > .main .block-container,
 section[data-testid="stMain"] .block-container,
-div[data-testid="stAppViewContainer"] .block-container,
-div[data-testid="stMainBlockContainer"] {
+section[data-testid="stMain"] > div,
+div[data-testid="stMainBlockContainer"],
+div[data-testid="block-container"] {
     padding-top: 1.5rem !important;
+    margin-top: -300px !important;
 }
-/* เผื่อบางเวอร์ชันของ Streamlit ใส่ระยะห่างเพิ่มที่ตัว section.main เองด้วย
-   (ไม่ใช่แค่ block-container ข้างใน) เลยกันไว้อีกชั้นให้ชัวร์ */
-section.main, section[data-testid="stMain"] {
+/* เผื่อ Streamlit เวอร์ชันที่ใช้จริงใส่ padding-top ไว้ที่ตัว "section" หลักเอง
+   (คนละจุดกับ .block-container ด้านใน) — เคลียร์ไว้ด้วยกันพลาด */
+section[data-testid="stMain"] {
     padding-top: 0 !important;
 }
 
@@ -254,7 +269,7 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem !important; }
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
