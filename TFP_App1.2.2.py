@@ -399,7 +399,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 .glossary-term-name {
     font-family: var(--font-elegant); font-weight: 600; font-size: 0.98rem; color: var(--brand-navy);
 }
-.glossary-term-def { font-size: 0.86rem; color: var(--brand-navy-soft); line-height: 1.6; margin: 0; }
+.glossary-term-def { font-size: 0.86rem; color: var(--brand-navy-soft); line-height: 1.6; margin: 0; text-wrap: pretty; }
 
 .status-banner {
     display: flex; align-items: center; gap: 8px; border-radius: 10px;
@@ -3647,7 +3647,7 @@ def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataF
     # flex-wrap:wrap กัน legend ตกขอบขวาเวลาหน้าจอแคบ (แทนที่จะโดนตัดหาย
     # ก็ให้มันขึ้นบรรทัดใหม่แทน), row-gap เผื่อกรณีตัดบรรทัด
     st.markdown(
-        f'<div style="display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:18px;row-gap:6px;'
+        f'<div class="chart-legend-row" style="display:flex;flex-wrap:wrap;justify-content:flex-end;column-gap:18px;row-gap:6px;'
         f'font-size:0.82rem;color:var(--brand-navy-soft);margin-top:-6px;">'
         f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
         f'border-radius:50%;background:{color};margin-right:5px;"></span>ข้อมูลจริง</span>'
@@ -5449,7 +5449,8 @@ elif st.session_state.page == "exec_dashboard":
                    จนแทบมองไม่เห็น เปลี่ยนเป็นสีขาวโปร่งแสงให้อ่านออกชัดเจน ----- */
                 .st-key-exec_dash_wrap [data-testid="stCaptionContainer"],
                 .st-key-exec_dash_wrap [data-testid="stCaptionContainer"] p,
-                .st-key-exec_dash_wrap .exec-chart-footnote {
+                .st-key-exec_dash_wrap .exec-chart-footnote,
+                .st-key-exec_dash_wrap .chart-legend-row {
                     color: rgba(255,255,255,0.75) !important;
                 }
                 /* กราฟ/แถวข้อมูลจริงยังใช้พื้นสว่างของตัวเองต่อไปโดยตั้งใจ (เหมือน
