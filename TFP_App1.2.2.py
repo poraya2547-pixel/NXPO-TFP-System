@@ -806,6 +806,25 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
     background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
 }
 
+/* ----- กรอบช่อง "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า" -----
+   เดิม dropdown นี้ลอยอยู่เฉย ๆ ไม่มีกรอบ ไม่เด่นจากส่วนอื่นของหน้า จึงใส่กรอบ
+   ให้ดูเป็นกล่องชัดเจนขึ้น (ครอบด้วย st.container(key="tfp_horizon_frame"))
+   พร้อมขยับ label "จำนวนปีที่..." เข้ามาจากขอบซ้าย 2mm และเว้นระยะห่างจาก
+   ตัว dropdown (กล่องเลือกด้านล่าง label) อีก 4mm ตามที่ขอ */
+.st-key-tfp_horizon_frame {
+    border: 1.5px solid rgba(22,50,74,0.22);
+    border-radius: 12px;
+    padding: 14px 16px 16px;
+    margin-bottom: 18px;
+    background: #FFFDF9;
+}
+.st-key-tfp_horizon_frame label {
+    margin-left: 2mm;
+}
+.st-key-tfp_horizon_frame [data-baseweb="select"] {
+    margin-top: 4mm;
+}
+
 /* ----- การ์ด CTA สร้างสรุป AI (ธีม "Exclusive") -----
    ปรับจากแบนเนอร์สีส้มสดเดิม เป็นพื้นกรมท่าเข้ม (โทนเดียวกับ sidebar card มืด
    ที่ใช้อยู่แล้วในหน้าเว็บ) + เส้นขอบ/แสงส้มบาง ๆ แทน เพื่อให้รู้สึกถึงฟีเจอร์
@@ -3916,15 +3935,19 @@ elif st.session_state.page == "forecast":
                 # ไว้ล่วงหน้า (3/5/10/15 ปี) ตามที่ขอ พร้อมแสดงช่วงปีจริงในตัวเลือก
                 # เลย (เช่น "2023–2027 (5 ปี)") ให้เห็นภาพทันทีว่าพยากรณ์ถึงปีไหน
                 _last_data_year = int(tfp_series.index.max())
-                horizon = st.selectbox(
-                    "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
-                    options=[3, 5, 10, 15],
-                    index=1,
-                    format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
-                    key="tfp_forecast_horizon",
-                    help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
-                         "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
-                )
+                # ครอบด้วย st.container(key="tfp_horizon_frame") เพื่อให้ selector
+                # .st-key-tfp_horizon_frame ใน CSS ด้านบน (ค้นหาคำว่า "tfp_horizon_frame")
+                # จับกรอบ+ระยะห่างของช่องนี้เป็นกลุ่มเดียว โดยไม่กระทบ selectbox อื่นในหน้า
+                with st.container(key="tfp_horizon_frame"):
+                    horizon = st.selectbox(
+                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
+                        options=[3, 5, 10, 15],
+                        index=1,
+                        format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
+                        key="tfp_forecast_horizon",
+                        help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
+                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                    )
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
