@@ -366,7 +366,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
    เดิมช่องไฟระหว่างบล็อกของ Streamlit (gap 1rem) + เส้นคั่น <hr> + margin ของ
    การ์ดโลโก้/caption รวมกันแล้วดันเนื้อหายาวเกินความสูงจอโน้ตบุ๊กทั่วไป ----- */
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]
-    div[data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
+    div[data-testid="stVerticalBlock"] { gap: 0.9rem !important; }
 section[data-testid="stSidebar"] .sidebar-logo-card { margin-bottom: 8px; gap: 16px; }
 section[data-testid="stSidebar"] .sidebar-logo-card img { max-height: 76px !important; }
 section[data-testid="stSidebar"] .sidebar-section-label { margin: 2px 0 4px 6px; }
