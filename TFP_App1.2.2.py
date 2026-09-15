@@ -199,6 +199,7 @@ st.markdown("""
     --card-border: #E7E1D6;
     --gold-tint: #F6EFDC;
     --green: #16A34A;
+    --green-deep: #15803D;   /* เขียวเข้มสำหรับตัวเลขบนพื้นสว่าง (อ่านชัดกว่า --green) */
     --amber: #F59E0B;
     --red: #EF4444;
     --blue: #2F6FED;
@@ -359,6 +360,29 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primary"] span {
     color: #FFFFFF !important;
 }
+
+/* ----- บีบระยะห่างในแถบเมนูซ้ายให้ทุกส่วน (โลโก้ / ปุ่มดึงข้อมูล / เมนูหลัก /
+   เมนูคณะวิจัย / ป้ายผู้จัดทำ) อยู่ครบในหน้าจอเดียว ไม่ต้องเลื่อนขึ้นลง —
+   เดิมช่องไฟระหว่างบล็อกของ Streamlit (gap 1rem) + เส้นคั่น <hr> + margin ของ
+   การ์ดโลโก้/caption รวมกันแล้วดันเนื้อหายาวเกินความสูงจอโน้ตบุ๊กทั่วไป ----- */
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]
+    div[data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
+section[data-testid="stSidebar"] .sidebar-logo-card { margin-bottom: 8px; gap: 16px; }
+section[data-testid="stSidebar"] .sidebar-logo-card img { max-height: 76px !important; }
+section[data-testid="stSidebar"] .sidebar-section-label { margin: 2px 0 4px 6px; }
+section[data-testid="stSidebar"] hr {
+    margin: 8px 0 !important; border-color: var(--card-border) !important;
+}
+section[data-testid="stSidebar"] div[data-testid="stButton"] button {
+    padding: 8px 14px !important; margin-bottom: 0 !important;
+}
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
+section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
+    margin: 2px 0 0 0 !important; font-size: 0.75rem !important; line-height: 1.35 !important;
+}
+section[data-testid="stSidebar"] .status-banner { margin: 4px 0 0 !important; padding: 6px 10px; }
+section[data-testid="stSidebar"] .corner-badge { margin-top: 10px; padding-top: 8px; gap: 4px; }
+section[data-testid="stSidebar"] .corner-badge-logos img { max-height: 24px !important; }
 
 /* ----- กล่องพื้นขาวสำหรับข้อความคำอธิบาย (เช่นในส่วน Backtesting) — เดิมข้อความ
    ลอยอยู่บนพื้นหลังลายจุด (dot-grid) ของ .stApp โดยตรง ทำให้กลืนกับพื้นหลังจนอ่านยาก
@@ -617,8 +641,8 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
     display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; position: relative; z-index: 1;
 }
 .nxpo-summary-card .growth-badge {
-    display: inline-flex; align-items: center; gap: 4px; background: rgba(22,163,74,0.22);
-    color: #6EE7A0; border: 1px solid rgba(110,231,160,0.3); border-radius: 999px;
+    display: inline-flex; align-items: center; gap: 4px; background: rgba(22,163,74,0.30);
+    color: #22C55E; border: 1px solid rgba(34,197,94,0.45); border-radius: 999px;
     padding: 3px 10px; font-size: 0.85rem; font-weight: 700;
 }
 .nxpo-summary-card .from-label {
@@ -3071,7 +3095,7 @@ if st.session_state.portal_role is None:
     st.stop()
 
 with st.sidebar:
-    _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 12
+    _logo_divider_height = 64
     st.markdown(
         f'<div class="sidebar-logo-card">'
         f'{logo1_html}'
@@ -5317,6 +5341,20 @@ elif st.session_state.page == "exec_dashboard":
            รอบๆ ในเลย์เอาต์ 2 คอลัมน์ — บีบ padding ของเซลล์ให้แน่นขึ้นเฉพาะจุดนี้
            (ไม่กระทบตาราง .tfp-table ที่ใช้อยู่ที่อื่นในแอป) ให้บาลานซ์กับส่วนอื่น */
         .compact-fc-table td, .compact-fc-table th { padding: 6px 8px !important; }
+        /* เดิมกรอบตารางนี้ใช้ overflow-y:auto แล้วเบราว์เซอร์จองพื้นที่แถบเลื่อน
+           (scrollbar) กว้างราว 12-15px ทางขวา ทำให้ "ตัวตาราง" แคบกว่าการ์ดอื่น
+           ที่อยู่บน/ล่าง ขอบขวาจึงดูไม่ตรงกัน — แก้โดยทำแถบเลื่อนให้บางและโปร่ง
+           พร้อมตรึงหัวตาราง (sticky) ไว้ด้านบนเวลาเลื่อนดูปีถัด ๆ ไป */
+        .compact-fc-table { scrollbar-width: thin; scrollbar-color: rgba(148,163,184,0.55) transparent; }
+        .compact-fc-table::-webkit-scrollbar { width: 6px; height: 6px; }
+        .compact-fc-table::-webkit-scrollbar-track { background: transparent; }
+        .compact-fc-table::-webkit-scrollbar-thumb {
+            background: rgba(148,163,184,0.55); border-radius: 999px;
+        }
+        .compact-fc-table table.tfp-table { table-layout: fixed; }
+        .compact-fc-table table.tfp-table thead th {
+            position: sticky; top: 0; z-index: 2;
+        }
         /* ----- ฝังปุ่ม "กลับ" + สลับ "โหมดนำเสนอ" ไว้ในมุมขวาบนของแถบ hero สีกรมท่า
            เอง แทนที่จะปล่อยให้ลอยเป็นแถวแยกใต้ hero ซึ่งทำให้เกิดช่องว่างแปลก ๆ
            ระหว่าง hero กับแถวปุ่ม (เห็นได้ชัดตอนจอกว้าง) — ใช้ position:absolute
@@ -5632,10 +5670,10 @@ elif st.session_state.page == "exec_dashboard":
                             _prev = _val
                             _fc_rows_html += (
                                 f'<tr><td>{int(_yr)}</td><td>{_val:,.2f}</td>'
-                                f'<td style="color:{"var(--green)" if _g >= 0 else "var(--red)"};">{_g:+.2f}%</td></tr>'
+                                f'<td style="color:{"var(--green-deep)" if _g >= 0 else "var(--red)"};font-weight:700;">{_g:+.2f}%</td></tr>'
                             )
                         st.markdown(
-                            f'<div class="compact-fc-table" style="overflow-x:auto;max-height:172px;overflow-y:auto;">'
+                            f'<div class="compact-fc-table" style="overflow-x:auto;max-height:220px;overflow-y:auto;'f'border-radius:12px;">'
                             f'<table class="tfp-table" style="font-size:0.8rem;">'
                             f'<thead><tr><th>ปี</th><th>ค่าพยากรณ์</th><th>อัตราเติบโต</th></tr></thead>'
                             f'<tbody>{_fc_rows_html}</tbody></table></div>',
@@ -6168,48 +6206,39 @@ elif st.session_state.page == "manual":
     _glossary_groups = [
         ("trend-up", "ตัวชี้วัดหลัก", [
             ("TFP (Total Factor Productivity)",
-             "ผลิตภาพการผลิตรวม — วัดว่าเศรษฐกิจผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนจำนวนเท่าเดิม "
-             "ส่วนที่เพิ่มขึ้นเกินกว่านั้นมักสะท้อนถึงเทคโนโลยีและนวัตกรรมที่ดีขึ้น"),
+             "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม"),
         ]),
         ("settings", "แบบจำลองและสมการ", [
             ("ARIMA",
-             "แบบจำลองพยากรณ์อนุกรมเวลา ที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต "
-             "เหมาะกับข้อมูลที่มีแนวโน้ม/รูปแบบต่อเนื่องจากอดีต เช่น TFP รายปี"),
+             "แบบจำลองที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต เหมาะกับข้อมูลรายปีอย่าง TFP"),
             ("พจน์ปรับตัวของสมการ (ECM)",
-             "ส่วนที่บอกว่า เมื่อค่าจริงเบี่ยงเบนไปจาก \"จุดสมดุลระยะยาว\" แล้ว จะปรับตัวกลับเข้าสู่จุดสมดุลนั้นเร็วแค่ไหน"),
+             "บอกว่าเมื่อค่าจริงเบี่ยงจาก \"จุดสมดุลระยะยาว\" แล้ว จะปรับกลับเข้าสู่สมดุลเร็วแค่ไหน"),
             ("ระยะสั้น / ระยะยาว (Short-run / Long-run)",
-             "ความสัมพันธ์ระยะยาวคือจุดสมดุลที่ตัวแปรต่างๆ จะเข้าหาในที่สุด ส่วนความสัมพันธ์ระยะสั้น "
-             "คือการปรับตัวปีต่อปีระหว่างทางก่อนถึงจุดสมดุลนั้น"),
+             "ระยะยาวคือจุดสมดุลที่ตัวแปรจะเข้าหาในที่สุด ระยะสั้นคือการปรับตัวปีต่อปีระหว่างทาง"),
             ("การทดสอบเสถียรภาพของอนุกรม (Unit Root / ADF Test)",
-             "ตรวจสอบว่าข้อมูลอนุกรมเวลามีแนวโน้มเปลี่ยนแปลงไม่มีที่สิ้นสุด (ไม่นิ่ง) หรือแกว่งอยู่รอบค่าเฉลี่ยคงที่ (นิ่ง) "
-             "ซึ่งมีผลต่อการเลือกใช้แบบจำลองที่ถูกต้อง"),
+             "ตรวจว่าข้อมูลแกว่งรอบค่าเฉลี่ยคงที่ (นิ่ง) หรือไม่นิ่ง มีผลต่อการเลือกแบบจำลอง"),
             ("AIC (Akaike Information Criterion)",
-             "ตัวเลขที่ใช้เทียบว่าโมเดลแบบไหน \"พอดี\" กับข้อมูลที่สุดโดยไม่ซับซ้อนเกินความจำเป็น ยิ่งค่าต่ำยิ่งดี"),
+             "ตัวเลขเทียบว่าโมเดลไหน \"พอดี\" กับข้อมูลโดยไม่ซับซ้อนเกินจำเป็น ยิ่งค่าต่ำยิ่งดี"),
         ]),
         ("bars", "สถิติที่ควรรู้", [
             ("p-value",
-             "ความน่าจะเป็นที่ผลลัพธ์ที่เห็นเกิดจากความบังเอิญล้วนๆ โดยทั่วไปถ้าต่ำกว่า 0.05 "
-             "จะถือว่าผลนั้น \"มีนัยสำคัญทางสถิติ\" คือไม่น่าจะเกิดจากความบังเอิญ"),
+             "ความน่าจะเป็นที่ผลลัพธ์เกิดจากความบังเอิญ ถ้าต่ำกว่า 0.05 ถือว่ามีนัยสำคัญทางสถิติ"),
             ("R² / Adjusted R²",
-             "สัดส่วนความผันแปรของ TFP ที่แบบจำลองอธิบายได้ ค่ายิ่งใกล้ 1 (หรือ 100%) ยิ่งอธิบายข้อมูลได้ดี"),
+             "สัดส่วนความผันแปรของ TFP ที่แบบจำลองอธิบายได้ ยิ่งใกล้ 1 (100%) ยิ่งอธิบายได้ดี"),
             ("ช่วงความเชื่อมั่น 95%",
-             "ช่วงตัวเลขที่คาดว่าค่าจริงในอนาคตจะตกอยู่ในช่วงนี้ด้วยความมั่นใจ 95% "
-             "ยิ่งพยากรณ์ไกลออกไปในอนาคต ช่วงนี้จะยิ่งกว้างขึ้น สะท้อนความไม่แน่นอนที่เพิ่มขึ้น"),
+             "ช่วงที่คาดว่าค่าจริงจะตกอยู่ด้วยความมั่นใจ 95% ยิ่งพยากรณ์ไกล ช่วงยิ่งกว้างขึ้น"),
             ("สัมประสิทธิ์มาตรฐาน (Standardized coefficient)",
-             "ค่าสัมประสิทธิ์ที่ปรับหน่วยของตัวแปรให้เทียบกันได้ ใช้บอกว่าตัวแปรไหน \"มีอิทธิพล\" "
-             "ต่อ TFP มากกว่ากันในสมการเดียวกัน"),
+             "ค่าที่ปรับหน่วยให้เทียบกันได้ บอกว่าตัวแปรไหนมีอิทธิพลต่อ TFP มากกว่ากัน"),
             ("ความยืดหยุ่น (Elasticity)",
-             "ตัวเลขที่บอกว่า ถ้าตัวแปรต้นเปลี่ยนไป 1% ตัวแปรที่สนใจ (เช่น TFP) จะเปลี่ยนไปโดยประมาณกี่ %"),
+             "ถ้าตัวแปรต้นเปลี่ยนไป 1% ตัวแปรที่สนใจ (เช่น TFP) จะเปลี่ยนไปโดยประมาณกี่ %"),
         ]),
         ("check", "การทดสอบความแม่นยำ", [
             ("Backtesting (ทดสอบย้อนหลัง)",
-             "การทดสอบความแม่นยำของแบบจำลอง โดยซ่อนข้อมูลปีล่าสุดไว้ชั่วคราว แล้วให้แบบจำลองทายค่าที่ซ่อนไว้ "
-             "จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว"),
+             "ซ่อนข้อมูลปีล่าสุดไว้ ให้แบบจำลองทายค่า แล้วเทียบกับค่าจริงเพื่อวัดความแม่นยำ"),
             ("MAPE (Mean Absolute Percentage Error)",
-             "ค่าเฉลี่ยความคลาดเคลื่อนของการพยากรณ์ในหน่วยเปอร์เซ็นต์ ยิ่งค่าต่ำยิ่งพยากรณ์แม่นยำ"),
+             "ค่าเฉลี่ยความคลาดเคลื่อนของการพยากรณ์เป็นเปอร์เซ็นต์ ยิ่งค่าต่ำยิ่งแม่นยำ"),
             ("Naive Forecast",
-             "วิธีพยากรณ์อย่างง่ายที่สุด โดยใช้ค่าปีล่าสุดเป็นค่าพยากรณ์ของทุกปีถัดไป ใช้เป็นเส้นฐานเทียบว่า "
-             "แบบจำลองที่ซับซ้อนกว่าให้ผลดีขึ้นจริงหรือไม่"),
+             "ใช้ค่าปีล่าสุดเป็นค่าพยากรณ์ของทุกปีถัดไป เป็นเส้นฐานเทียบกับแบบจำลองที่ซับซ้อนกว่า"),
         ]),
     ]
     _glossary_html = "".join(
