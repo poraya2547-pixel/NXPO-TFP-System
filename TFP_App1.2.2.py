@@ -5402,11 +5402,28 @@ elif st.session_state.page == "exec_dashboard":
                 <style>
                 .st-key-exec_dash_wrap { background: linear-gradient(180deg, #0B1A28 0%, #142C42 100%);
                     border-radius: 24px; padding: 18px; }
-                .st-key-exec_dash_wrap .metric-card, .st-key-exec_dash_wrap .section-card, .st-key-exec_dash_wrap .kpi-strip {
+                .st-key-exec_dash_wrap .metric-card, .st-key-exec_dash_wrap .section-card, .st-key-exec_dash_wrap .kpi-strip,
+                .st-key-exec_dash_wrap .nxpo-summary-card {
                     background: linear-gradient(180deg, #EDF0F3 0%, #E1E5EA 100%) !important;
+                    background-image: none !important;
                     border-color: rgba(255,255,255,0.14) !important;
                     box-shadow: 0 10px 26px rgba(0,0,0,0.3) !important;
                 }
+                /* การ์ด "สรุปจากแบบจำลอง" (nxpo-summary-card) เดิมเป็นพื้นกรมท่าเข้ม+ตัวหนังสือ
+                   สีขาวเสมอ ไม่ว่าจะเปิด dark mode หรือไม่ — พอพื้นหน้าทั้งหมดกลายเป็นกรมท่าเข้ม
+                   เหมือนกัน การ์ดนี้เลยกลืนไปกับพื้นหลังจนแยกไม่ออก ด้านบนพลิกพื้นการ์ดนี้ให้
+                   สว่างเหมือนการ์ดอื่น ๆ ในโหมดนี้ด้วย จึงต้องพลิกสีตัวหนังสือภายในเป็นเข้มตามไปด้วย
+                   (เดิมออกแบบมาให้ขาวบนพื้นเข้มเท่านั้น) ไม่งั้นตัวหนังสือขาวจะจมหายไปกับพื้นสว่างใหม่ */
+                .st-key-exec_dash_wrap .nxpo-summary-card .label,
+                .st-key-exec_dash_wrap .nxpo-summary-card .value,
+                .st-key-exec_dash_wrap .nxpo-summary-card .value-sub,
+                .st-key-exec_dash_wrap .nxpo-summary-card .trend-title,
+                .st-key-exec_dash_wrap .nxpo-summary-card .from-label,
+                .st-key-exec_dash_wrap .nxpo-summary-list li {
+                    color: var(--brand-navy) !important;
+                }
+                .st-key-exec_dash_wrap .nxpo-summary-card .divider { background: rgba(0,0,0,0.1) !important; }
+                .st-key-exec_dash_wrap .nxpo-summary-card::after { display: none !important; }
                 /* เปลี่ยนเฉพาะสีขอบซ้าย (border-left) เป็นขาวตามที่ขอ โดยไม่แตะ
                    ตัวแปร --exec-accent เดิม เพราะตัวแปรเดียวกันนี้ยังถูกใช้กำหนดสี
                    ไอคอนตรงกลางวงกลมด้วย (.metric-icon) ถ้าเปลี่ยนรวมกัน ไอคอนจะ
