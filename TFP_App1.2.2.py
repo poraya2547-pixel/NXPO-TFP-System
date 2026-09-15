@@ -250,9 +250,18 @@ header[data-testid="stHeader"] {
    (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว)
    จากนั้นดึงการ์ด hero ขึ้นไปอีก 2 ซม. (~75.6px) ด้วย margin-top ติดลบ
    ตามที่ขอเพิ่มเติม (ปรับตัวเลข -75.6px นี้เพิ่ม/ลดได้ถ้าต้องการชิดกว่านี้อีก) -----
-[data-testid="stAppViewContainer"] > .main .block-container {
+[data-testid="stAppViewContainer"] > .main .block-container,
+section[data-testid="stMain"] .block-container,
+section[data-testid="stMain"] > div,
+div[data-testid="stMainBlockContainer"],
+div[data-testid="block-container"] {
     padding-top: 1.5rem !important;
     margin-top: -75.6px !important;
+}
+/* เผื่อ Streamlit เวอร์ชันที่ใช้จริงใส่ padding-top ไว้ที่ตัว "section" หลักเอง
+   (คนละจุดกับ .block-container ด้านใน) — เคลียร์ไว้ด้วยกันพลาด */
+section[data-testid="stMain"] {
+    padding-top: 0 !important;
 }
 
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
