@@ -1334,7 +1334,7 @@ if _group_head_bg_path is not None:
         <style>
         .var-group-head {{
             background-image:
-                linear-gradient(180deg, rgba(251,242,221,0.94) 0%, rgba(246,239,220,0.94) 100%),
+                linear-gradient(180deg, rgba(251,242,221,0.55) 0%, rgba(246,239,220,0.55) 100%),
                 url(data:image/png;base64,{img_to_base64(_group_head_bg_path)}) !important;
             background-size: cover !important;
             background-position: center !important;
