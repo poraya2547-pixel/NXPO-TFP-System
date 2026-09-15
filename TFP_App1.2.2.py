@@ -805,6 +805,14 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 .backtest-table .tfp-table-cream th {
     background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
 }
+/* ตารางแบบเลื่อน (ใช้กับตาราง rolling-origin backtest ที่มีแถวเยอะ ~40 แถว) —
+   จำกัดความสูงแล้วเลื่อนแนวตั้งแทนที่จะดันหน้าเว็บให้ยาวลงไปเรื่อยๆ พร้อมปักหัวตาราง
+   ให้ค้างอยู่ด้านบนตอนเลื่อน (position: sticky) จะได้ยังเห็นชื่อคอลัมน์ตลอดเวลา */
+.backtest-table-scroll table.tfp-table-cream thead th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
 
 /* ----- กรอบช่อง "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า" -----
    เดิม dropdown นี้ลอยอยู่เฉย ๆ ไม่มีกรอบ ไม่เด่นจากส่วนอื่นของหน้า จึงครอบด้วย
@@ -3266,12 +3274,13 @@ def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
         x=alt.X(
             "เกณฑ์:Q", title="ตัดจุดที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก",
             axis=alt.Axis(grid=False, domain=False, tickColor="#E9ECF1",
-                           labelColor="#5B6B7C", labelFontSize=11),
+                           labelColor="#5B6B7C", labelFontSize=11, titlePadding=14),
         ),
         y=alt.Y(
             "MAPE:Q", title="MAPE เฉลี่ย (%)",
             axis=alt.Axis(grid=True, gridColor="#EEF1F5", gridDash=[3, 3],
-                           domain=False, tickColor="#E9ECF1", labelColor="#5B6B7C", labelFontSize=11),
+                           domain=False, tickColor="#E9ECF1", labelColor="#5B6B7C", labelFontSize=11,
+                           titlePadding=14),
         ),
         color=alt.Color("โมเดล:N", scale=color_scale, legend=alt.Legend(title=None, orient="top")),
         tooltip=[
@@ -3283,7 +3292,11 @@ def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
     )
     line = base.mark_line(interpolate="monotone", strokeWidth=2.4)
     points = base.mark_point(size=45, filled=True)
-    return (line + points).properties(height=height).configure_view(strokeWidth=0)
+    return (
+        (line + points)
+        .properties(height=height, padding={"left": 10, "right": 14, "top": 10, "bottom": 6})
+        .configure_view(strokeWidth=0)
+    )
 
 
 def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
@@ -4371,13 +4384,15 @@ elif st.session_state.page == "forecast":
                                 f'<td style="{_naive_style}">{r["Naive"]:,.2f}</td></tr>'
                             )
                         st.markdown(
-                            f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
+                            f'<div class="backtest-table backtest-table-scroll" '
+                            f'style="overflow-x:auto;overflow-y:auto;max-height:420px;">'
+                            f'<table class="tfp-table-cream">'
                             f'<thead><tr><th>ปีที่ทาย</th><th>จำนวนปีที่ฝึก</th><th>ค่าจริง</th>'
                             f'<th>ARIMA ทาย</th><th>Naive ทาย</th></tr></thead>'
                             f'<tbody>{_roll_rows_html}</tbody></table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
                             f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงกว่าในปีนั้น</p>',
+                            f'= ค่าทายที่ใกล้เคียงค่าจริงกว่าในปีนั้น &nbsp;|&nbsp; เลื่อนขึ้น-ลงในตารางเพื่อดูทุกจุดทดสอบ</p>',
                             unsafe_allow_html=True,
                         )
                         st.markdown(
