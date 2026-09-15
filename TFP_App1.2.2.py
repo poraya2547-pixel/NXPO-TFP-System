@@ -842,6 +842,31 @@ div[data-testid="stVerticalBlockBorderWrapper"].st-key-tfp_horizon_frame {
     margin-top: 4mm !important;
 }
 
+/* ----- ปุ่มเข้าใช้งาน "ผู้เยี่ยมชม" / "คณะวิจัย" บนหน้า landing (ก่อนเลือกบทบาท) -----
+   เดิมเป็นปุ่ม Streamlit ธรรมดาสีขาว-ขอบเทา ดูจืดไม่ชวนกด จึงตกแต่งใหม่ให้เป็น
+   ปุ่มทรงแคปซูล ไล่สีกรมท่าเข้ม ขอบส้มบาง ๆ เงาลอยให้ดูมีมิติ พร้อมเอฟเฟกต์ยกตัว
+   ขึ้นเล็กน้อยตอนโฮเวอร์ (translateY) ให้รู้สึกว่ากดได้ชัดเจนขึ้น — สโคปเฉพาะปุ่มใน
+   st.container(key="hero_entry_buttons") เท่านั้น ไม่กระทบปุ่มอื่นในแอป */
+.st-key-hero_entry_buttons button {
+    border-radius: 999px !important;
+    background-image: linear-gradient(155deg, var(--brand-navy) 0%, #0E2436 100%) !important;
+    color: #fff !important;
+    border: 1px solid rgba(242,129,29,0.4) !important;
+    font-weight: 700 !important;
+    padding: 10px 18px !important;
+    box-shadow: 0 10px 22px rgba(11,26,40,0.28), 0 2px 6px rgba(11,26,40,0.16) !important;
+    transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease !important;
+}
+.st-key-hero_entry_buttons button:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 16px 30px rgba(11,26,40,0.36), 0 3px 8px rgba(11,26,40,0.2) !important;
+    border-color: rgba(242,129,29,0.75) !important;
+    color: #fff !important;
+}
+.st-key-hero_entry_buttons button:active {
+    transform: translateY(0) !important;
+}
+
 /* ----- การ์ด CTA สร้างสรุป AI (ธีม "Exclusive") -----
    ปรับจากแบนเนอร์สีส้มสดเดิม เป็นพื้นกรมท่าเข้ม (โทนเดียวกับ sidebar card มืด
    ที่ใช้อยู่แล้วในหน้าเว็บ) + เส้นขอบ/แสงส้มบาง ๆ แทน เพื่อให้รู้สึกถึงฟีเจอร์
@@ -2891,22 +2916,26 @@ if st.session_state.portal_role is None:
         unsafe_allow_html=True,
     )
 
-    # ----- ปุ่มเข้าใช้งาน 2 ปุ่มเล็กๆ วางต่อจาก hero เลย (แทนการ์ดใหญ่ 2 ใบแบบเดิม)
-    # กดปุ่มไหนก็เข้าใช้งานได้ทันที ส่วนการ์ด 3 ขั้นตอนด้านล่าง (ดึงข้อมูล/รันโมเดล/
-    # ดูผลพยากรณ์) ยังคงไว้เหมือนเดิมตามที่ขอ -----
+    # ----- ปุ่มเข้าใช้งาน 2 ปุ่ม — ย้ายไปฝั่งขวา (ใต้ภาพประกอบของ hero พอดี)
+    # ใส่ไอคอนหน้าปุ่ม + ตกแต่งด้วย CSS ให้ดูเป็นปุ่มพรีเมียม (ไล่สีกรมท่าเข้ม
+    # ขอบส้มบาง ๆ เงาลอย และมีเอฟเฟกต์ยกตัวตอนโฮเวอร์ ให้รู้สึกว่ากดได้ชัดเจน)
+    # ครอบด้วย st.container(key="hero_entry_buttons") เพื่อให้ CSS ที่ชื่อ
+    # ".st-key-hero_entry_buttons" ด้านบน (ค้นหาคำว่า hero_entry_buttons) จับกลุ่ม
+    # ปุ่มทั้งสองได้โดยไม่กระทบปุ่มอื่นในหน้าเว็บ -----
     if "show_research_login" not in st.session_state:
         st.session_state.show_research_login = False
 
     st.write("")
-    _entry_cols = st.columns([0.18, 0.22, 0.6])
-    with _entry_cols[0]:
-        if st.button("เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
-            st.session_state.portal_role = "visitor"
-            st.session_state.page = "forecast"
-            st.rerun()
-    with _entry_cols[1]:
-        if st.button("เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
-            st.session_state.show_research_login = not st.session_state.show_research_login
+    with st.container(key="hero_entry_buttons"):
+        _entry_cols = st.columns([0.56, 0.22, 0.22])
+        with _entry_cols[1]:
+            if st.button("🔍 เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
+                st.session_state.portal_role = "visitor"
+                st.session_state.page = "forecast"
+                st.rerun()
+        with _entry_cols[2]:
+            if st.button("🔐 เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
+                st.session_state.show_research_login = not st.session_state.show_research_login
 
     if st.session_state.show_research_login:
         if _research_login_config_error:
