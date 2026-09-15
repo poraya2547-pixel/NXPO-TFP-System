@@ -1230,16 +1230,24 @@ if sys_bg_path:
 var_intro_bg_path = _resolve_bg_path(APP_DIR, "พื้นหลังตัวแปร.png")
 var_intro_bg_found = var_intro_bg_path is not None
 if var_intro_bg_found:
+    # หมายเหตุสำคัญ: หน้า "ทำความรู้จักตัวแปร" (ดูโค้ดด้านล่างที่คำว่า
+    # "ดีไซน์ใหม่ (โฉมเรียบหรู)") มี CSS rule .var-intro อีกชุดหนึ่งที่กำหนด
+    # `background: linear-gradient(...)` (shorthand) ไว้ ซึ่งจะไปเซ็ตทับ
+    # background-image/position/size/repeat ทั้งหมดที่ตั้งไว้ตรงนี้ให้กลับเป็น
+    # ค่าเริ่มต้น เพราะ selector specificity เท่ากันแต่รันหลังกว่า (CSS ใครมาทีหลัง
+    # ชนะเมื่อ specificity เท่ากัน) จึงต้องใส่ !important ทุกบรรทัดที่นี่ ไม่งั้นภาพ
+    # พื้นหลังจะถูกลบทิ้งเงียบๆ โดยไม่มี error ให้เห็นเลย (ดูเหมือนภาพไม่โหลดทั้งที่
+    # โค้ดหาไฟล์เจอถูกต้องแล้ว)
     st.markdown(
         f"""
         <style>
         .var-intro {{
             background-image:
                 linear-gradient(120deg, rgba(255,255,255,0.92) 0%, rgba(255,255,255,0.75) 45%, rgba(255,255,255,0.4) 100%),
-                url(data:image/png;base64,{img_to_base64(var_intro_bg_path)});
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+                url(data:image/png;base64,{img_to_base64(var_intro_bg_path)}) !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
         }}
         </style>
         """,
