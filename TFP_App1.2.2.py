@@ -1322,6 +1322,29 @@ if var_intro_bg_found:
         unsafe_allow_html=True,
     )
 
+# ----- ภาพพื้นหลังของหัวการ์ดแต่ละกลุ่มตัวแปร (ปัจจัยนำเข้า / ผลผลิต / ปัจจัย
+# แวดล้อมทางเศรษฐกิจ / พจน์ปรับตัวของสมการ) โดยเฉพาะ — วางไฟล์ "ปัจจัยหน้าข้อมูล.png"
+# ไว้โฟลเดอร์เดียวกับ app.py นี้ (ชื่อไฟล์ต้องตรงกันเป๊ะๆ) ถ้าเจอไฟล์จะซ้อนภาพนี้ไว้
+# หลัง .var-group-head พร้อมเคลือบไล่สีครีมโปร่งแสงทับอีกชั้น ให้ตัวหนังสือ/ไอคอน
+# ด้านหน้ายังอ่านง่าย — ถ้าไม่เจอไฟล์ ใช้พื้นไล่สีครีมธรรมดาต่อไปได้ตามเดิม
+_group_head_bg_path = _resolve_bg_path(APP_DIR, "ปัจจัยหน้าข้อมูล.png")
+if _group_head_bg_path is not None:
+    st.markdown(
+        f"""
+        <style>
+        .var-group-head {{
+            background-image:
+                linear-gradient(180deg, rgba(251,242,221,0.94) 0%, rgba(246,239,220,0.94) 100%),
+                url(data:image/png;base64,{img_to_base64(_group_head_bg_path)}) !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+        }}
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
 
 logo1_path = os.path.join(APP_DIR, "สอวช_Logo.png")
 logo2_path = os.path.join(APP_DIR, "สวค_Logo.png")
@@ -4355,8 +4378,8 @@ elif st.session_state.page == "forecast":
                         '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
                         'margin-top:0;margin-bottom:0;">ทดสอบความแม่นยำของ ARIMA โดยใช้ข้อมูลในอดีตเพื่อพยากรณ์ค่าของ'
                         'ปีล่าสุดที่สมมติว่ายังไม่ทราบค่าจริง แล้วเปรียบเทียบค่าพยากรณ์กับค่าจริง '
-                        'พร้อมเทียบกับ Naive Forecast ซึ่งใช้ค่าปีล่าสุดเป็นค่าพยากรณ์พื้นฐาน '
-                        'เพื่อประเมินว่า ARIMA ให้ผลการพยากรณ์ที่แม่นยำกว่าวิธีพื้นฐานเพียงใด</p></div>',
+                        '<span style="white-space:nowrap;">พร้อมเทียบกับ Naive Forecast ซึ่งใช้ค่าปีล่าสุดเป็นค่าพยากรณ์พื้นฐาน '
+                        'เพื่อประเมินว่า ARIMA ให้ผลการพยากรณ์ที่แม่นยำกว่าวิธีพื้นฐานเพียงใด</span></p></div>',
                         unsafe_allow_html=True,
                     )
                     bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
@@ -4453,7 +4476,7 @@ elif st.session_state.page == "forecast":
                                if _bt_better else
                                'ผลการทดสอบพบว่า Naive Forecast พยากรณ์ได้ใกล้เคียงค่าจริงกว่า ARIMA เล็กน้อย '
                                'ในช่วงทดสอบ ซึ่งอาจเกิดขึ้นได้กับอนุกรมเวลาที่มีข้อมูลจำกัด '
-                               'จึงควรตีความผลการเปรียบเทียบอย่างระมัดระวัง')
+                               'จึงควรตีความผลอย่างระมัดระวัง')
                             + '</p></div>',
                             unsafe_allow_html=True,
                         )
@@ -4524,7 +4547,7 @@ elif st.session_state.page == "forecast":
                                 '<div class="bt-desc-box"><p style="font-size:0.78rem;color:var(--brand-navy-soft);margin:0;">'
                                 "เลื่อนเมาส์ไปที่จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือ ณ เกณฑ์นั้น "
                                 "โดยพิจารณาว่าเส้น ARIMA ลดลงอย่างต่อเนื่องหรือเกิดการลดลงเฉพาะช่วงที่มีข้อมูลทดสอบน้อย "
-                                "เพื่อแยกแยะระหว่าง ผลจากข้อมูลฝึกที่ไม่เพียงพอ กับ ความผันผวนจากกลุ่มตัวอย่างขนาดเล็ก</p></div>",
+                                '<span style="white-space:nowrap;">เพื่อแยกแยะระหว่าง ผลจากข้อมูลฝึกที่ไม่เพียงพอ กับ ความผันผวนจากกลุ่มตัวอย่างขนาดเล็ก</span></p></div>',
                                 unsafe_allow_html=True,
                             )
 
@@ -4605,9 +4628,9 @@ elif st.session_state.page == "forecast":
                                'Naive แม่นกว่าในช่วงทดสอบ 5 ปีล่าสุดด้านบน เป็นผลเฉพาะช่วงที่มีโควิด-19 '
                                'แทรก (structural break) ไม่ใช่ภาพรวมความสามารถของโมเดล'
                                if _roll_better else
-                               'Naive Forecast ยังคงแม่นยำกว่าหรือใกล้เคียง ARIMA โดยเฉลี่ย '
+                               'Naive Forecast ใกล้เคียงกว่า ARIMA โดยเฉลี่ย '
                                'สะท้อนว่าอนุกรมเวลานี้อาจมีความผันผวนสูง ทำให้ ARIMA ไม่ได้เพิ่มความแม่นยำ'
-                               'ในการพยากรณ์ได้มากกว่าวิธีพื้นฐานอย่างชัดเจน')
+                               'การพยากรณ์ได้มากกว่าวิธีพื้นฐานอย่างชัดเจน')
                             + '</p></div>',
                             unsafe_allow_html=True,
                         )
