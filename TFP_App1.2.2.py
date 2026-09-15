@@ -849,18 +849,18 @@ div[data-testid="stVerticalBlockBorderWrapper"].st-key-tfp_horizon_frame {
    st.container(key="hero_entry_buttons") เท่านั้น ไม่กระทบปุ่มอื่นในแอป */
 .st-key-hero_entry_buttons button {
     border-radius: 999px !important;
-    background-image: linear-gradient(155deg, var(--brand-navy) 0%, #0E2436 100%) !important;
+    background-image: linear-gradient(155deg, var(--brand-orange) 0%, var(--brand-orange-dark) 100%) !important;
     color: #fff !important;
-    border: 1px solid rgba(242,129,29,0.4) !important;
+    border: 1px solid rgba(255,255,255,0.5) !important;
     font-weight: 700 !important;
     padding: 10px 18px !important;
-    box-shadow: 0 10px 22px rgba(11,26,40,0.28), 0 2px 6px rgba(11,26,40,0.16) !important;
+    box-shadow: 0 10px 22px rgba(217,109,15,0.32), 0 2px 6px rgba(217,109,15,0.18) !important;
     transition: transform .15s ease, box-shadow .15s ease, border-color .15s ease !important;
 }
 .st-key-hero_entry_buttons button:hover {
     transform: translateY(-2px) !important;
-    box-shadow: 0 16px 30px rgba(11,26,40,0.36), 0 3px 8px rgba(11,26,40,0.2) !important;
-    border-color: rgba(242,129,29,0.75) !important;
+    box-shadow: 0 16px 30px rgba(217,109,15,0.4), 0 3px 8px rgba(217,109,15,0.22) !important;
+    border-color: rgba(255,255,255,0.85) !important;
     color: #fff !important;
 }
 .st-key-hero_entry_buttons button:active {
@@ -2929,12 +2929,12 @@ if st.session_state.portal_role is None:
     with st.container(key="hero_entry_buttons"):
         _entry_cols = st.columns([0.56, 0.22, 0.22])
         with _entry_cols[1]:
-            if st.button("🔍 เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
+            if st.button("🚪 เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
                 st.session_state.portal_role = "visitor"
                 st.session_state.page = "forecast"
                 st.rerun()
         with _entry_cols[2]:
-            if st.button("🔐 เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
+            if st.button("🔑 เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
                 st.session_state.show_research_login = not st.session_state.show_research_login
 
     if st.session_state.show_research_login:
