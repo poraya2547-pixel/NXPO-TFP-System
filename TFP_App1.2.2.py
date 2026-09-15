@@ -239,41 +239,29 @@ header[data-testid="stHeader"] {
     padding-top: 1.5rem !important;
 }
 
-/* ----- ปุ่ม >> ย่อ/ขยาย sidebar (collapsedControl) — เปลี่ยนพื้นหลังเป็นสีส้ม
-   ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit -----
-   หมายเหตุ: ปุ่มนี้อยู่ "ข้างใน" header[data-testid="stHeader"] ที่เราซ่อนไว้
-   ด้านบนด้วย visibility: hidden ซึ่งเป็นคุณสมบัติที่ลูกจะรับค่ามาจากพ่อ (inherit)
-   ถ้าไม่กำหนด visibility: visible ให้ปุ่มนี้ชัดๆ มันจะถูกซ่อนหายไปด้วย
-   (เป็นสาเหตุที่ปุ่มเปิด/ปิดแถบเมนูหายไปทั้งที่ตั้งใจซ่อนแค่แถบหัวเว็บ) -----*/
-[data-testid="collapsedControl"] {
+/* ----- ปุ่มย่อ/ขยาย sidebar (collapsedControl) — ให้ดูเด่นชัดว่าเป็นปุ่มกดได้
+   จริงๆ (พื้นสีส้มของแบรนด์ + เงา + ขอบมน) แทนที่จะเป็นแค่ลูกศร »» ลอยเฉยๆ
+   ใส่ selector ซ้อนหลายแบบ (ทั้งตัว container เองและปุ่ม/ไอคอนข้างใน) เผื่อ
+   โครงสร้าง DOM ต่างกันไปตามเวอร์ชัน Streamlit ที่ใช้งานจริง ----- */
+div[data-testid="collapsedControl"] {
     visibility: visible !important;
     background-color: var(--brand-orange) !important;
-    border-radius: 8px;
+    border-radius: 10px !important;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
+    min-width: 2.4rem;
+    min-height: 2.4rem;
 }
-[data-testid="collapsedControl"] svg {
-    /* ซ่อนไอคอนลูกศร «« เดิมของ Streamlit ออก แล้วใช้ไอคอนขีดสามขีด (hamburger)
-       ที่วาดเองด้วย ::after ด้านล่างแทน */
-    display: none !important;
+div[data-testid="collapsedControl"] button {
+    background-color: transparent !important;
 }
-[data-testid="collapsedControl"] {
-    /* ไม่แตะ position ของปุ่มนี้ เพราะ Streamlit ตั้งไว้เป็น fixed/absolute อยู่แล้ว
-       เพื่อให้ปุ่มลอยอยู่นอกกรอบ header (ที่เราย่อเหลือความสูง 0 ไปแล้วด้านบน)
-       ถ้าไปเซ็ต position: relative ทับ จะทำให้ปุ่มกลายเป็นลูกที่ไหลอยู่ในกรอบ
-       header สูง 0 นั้นแทน แล้วถูกบีบจนมองไม่เห็น/กดไม่ได้ (บั๊กที่เพิ่งเจอ) */
-    min-width: 2.2rem;
-    min-height: 2.2rem;
+div[data-testid="collapsedControl"] svg,
+div[data-testid="collapsedControl"] button svg {
+    color: #FFFFFF !important;
+    fill: #FFFFFF !important;
 }
-[data-testid="collapsedControl"]::after {
-    content: "";
-    position: absolute;
-    top: 50%; left: 50%;
-    width: 18px; height: 2px;
-    background: #FFFFFF;
-    transform: translate(-50%, -50%);
-    box-shadow: 0 -6px 0 #FFFFFF, 0 6px 0 #FFFFFF;
-}
-[data-testid="collapsedControl"]:hover {
+div[data-testid="collapsedControl"]:hover {
     background-color: var(--brand-orange-dark) !important;
+    cursor: pointer;
 }
 
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
@@ -3900,15 +3888,39 @@ elif st.session_state.page == "forecast":
                 # ไว้ล่วงหน้า (3/5/10/15 ปี) ตามที่ขอ พร้อมแสดงช่วงปีจริงในตัวเลือก
                 # เลย (เช่น "2023–2027 (5 ปี)") ให้เห็นภาพทันทีว่าพยากรณ์ถึงปีไหน
                 _last_data_year = int(tfp_series.index.max())
-                horizon = st.selectbox(
-                    "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
-                    options=[3, 5, 10, 15],
-                    index=1,
-                    format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
-                    key="tfp_forecast_horizon",
-                    help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
-                         "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                # ----- ใส่กรอบรอบช่อง selectbox นี้ให้ดูเด่นขึ้นมาจากพื้นหลัง
+                # (เดิมไม่มีกรอบ ลอยอยู่เฉยๆ) พร้อมขยับข้อความป้ายกำกับเข้ามา
+                # ด้านในอีก 2มม. และเพิ่มระยะห่างระหว่างป้ายกำกับกับตัวกล่อง
+                # เลือกอีก 4มม. ตามที่ขอ (ใช้ container ครอบแยกต่างหาก ไม่เปลี่ยน
+                # key ของตัว selectbox เอง เพราะโค้ดจุดอื่นอ่านค่าจาก
+                # st.session_state["tfp_forecast_horizon"] อยู่) -----
+                st.markdown(
+                    """
+                    <style>
+                    .st-key-tfp_forecast_horizon_frame {
+                        border: 1px solid var(--card-border);
+                        border-radius: 12px;
+                        padding: 14px 16px;
+                        background: #FFFFFF;
+                    }
+                    .st-key-tfp_forecast_horizon_frame [data-testid="stWidgetLabel"] {
+                        padding-left: 2mm;
+                        margin-bottom: 4mm;
+                    }
+                    </style>
+                    """,
+                    unsafe_allow_html=True,
                 )
+                with st.container(key="tfp_forecast_horizon_frame"):
+                    horizon = st.selectbox(
+                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
+                        options=[3, 5, 10, 15],
+                        index=1,
+                        format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
+                        key="tfp_forecast_horizon",
+                        help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
+                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                    )
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
@@ -4888,8 +4900,16 @@ elif st.session_state.page == "exec_dashboard":
                 .st-key-exec_dash_wrap .metric-value,
                 .st-key-exec_dash_wrap .section-title-text h3,
                 .st-key-exec_dash_wrap .exec-insight-item { color: var(--brand-navy) !important; }
-                .st-key-exec_dash_wrap .metric-label,
-                .st-key-exec_dash_wrap p { color: var(--brand-navy-soft) !important; }
+                .st-key-exec_dash_wrap .metric-label { color: var(--brand-navy-soft) !important; }
+                /* ข้อความ <p> ทั่วไปที่ "ลอยอยู่นอกกล่องขาว" (เช่น บรรทัดบอกเวลา
+                   ดึงข้อมูลล่าสุด, คำอธิบายใต้กราฟ) พื้นหลังตรงนั้นเป็นกรมท่าเข้ม
+                   ถ้ายังใช้สีกรมท่าอ่อนแบบเดิมจะกลืนไปกับพื้นจนอ่านยาก จึงเปลี่ยน
+                   เป็นสีขาวเป็นค่าเริ่มต้น ส่วน <p> ที่อยู่ "ข้างใน" การ์ดขาว
+                   (.section-card / .metric-card) ให้คงสีกรมท่าเดิมไว้ต่อด้านล่าง
+                   (specificity สูงกว่า เลยชนะกฎสีขาวด้านบนนี้) */
+                .st-key-exec_dash_wrap p { color: #FFFFFF !important; }
+                .st-key-exec_dash_wrap .section-card p,
+                .st-key-exec_dash_wrap .metric-card p { color: var(--brand-navy-soft) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream { background: #EDF0F3 !important;
                     border-color: rgba(255,255,255,0.14) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream th { background-image: none !important; background: #FFFFFF !important; color: var(--brand-navy) !important; }
