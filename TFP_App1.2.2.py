@@ -622,7 +622,7 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
     padding: 3px 10px; font-size: 0.85rem; font-weight: 700;
 }
 .nxpo-summary-card .from-label {
-    font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 4px; position: relative; z-index: 1;
+    font-size: 0.78rem; color: rgba(255,255,255,0.75); margin-top: 4px; position: relative; z-index: 1;
 }
 .nxpo-summary-card .divider { height: 1px; background: rgba(255,255,255,0.12); margin: 18px 0 14px; }
 .nxpo-summary-card .trend-title {
@@ -4199,7 +4199,7 @@ elif st.session_state.page == "forecast":
             f'<div style="font-family:var(--font-elegant);font-weight:600;font-size:1.15rem;'
             f'color:var(--brand-navy);margin-bottom:6px;">ยังไม่มีข้อมูลให้แสดงผล</div>'
             f'<div style="font-size:0.92rem;color:var(--brand-navy-soft);line-height:1.6;max-width:480px;margin:0 auto;">'
-            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล '
+            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล<br>'
             f'และแสดงผลพยากรณ์ TFP ที่นี่</div>'
             '</div>',
             unsafe_allow_html=True,
@@ -5210,7 +5210,7 @@ elif st.session_state.page == "exec_dashboard":
             padding: 16px 18px; gap: 14px; border-radius: 14px;
             border-left: 4px solid var(--exec-accent, var(--brand-orange));
         }
-        .st-key-exec_dash_wrap .metric-icon {
+        .st-key-exec_dash_wrap .metric-card .metric-icon {
             width: 42px; height: 42px; font-size: 1.05rem; box-shadow: none;
             background: var(--exec-accent-tint, rgba(249,115,22,0.14)) !important;
             color: var(--exec-accent, var(--brand-orange)) !important;
@@ -5402,7 +5402,7 @@ elif st.session_state.page == "exec_dashboard":
                 <style>
                 .st-key-exec_dash_wrap { background: linear-gradient(180deg, #0B1A28 0%, #142C42 100%);
                     border-radius: 24px; padding: 18px; }
-                .st-key-exec_dash_wrap .metric-card, .st-key-exec_dash_wrap .section-card {
+                .st-key-exec_dash_wrap .metric-card, .st-key-exec_dash_wrap .section-card, .st-key-exec_dash_wrap .kpi-strip {
                     background: linear-gradient(180deg, #EDF0F3 0%, #E1E5EA 100%) !important;
                     border-color: rgba(255,255,255,0.14) !important;
                     box-shadow: 0 10px 26px rgba(0,0,0,0.3) !important;
@@ -5514,58 +5514,45 @@ elif st.session_state.page == "exec_dashboard":
                 # ให้เข้าธีมเดียวกันทั้งแอป
                 def _exec_kpi(accent, icon_svg, value, label):
                     return (
-                        f'<div class="metric-card" style="--exec-accent:{accent};--exec-accent-tint:{accent}1F;">'
-                        f'<div class="metric-icon">{icon_svg}</div>'
+                        f'<div class="kpi-strip-item"><div class="metric-icon" style="background:{accent};">{icon_svg}</div>'
                         f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
                     )
 
-                kpi_cols = st.columns(4)
-                with kpi_cols[0]:
-                    yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
-                    st.markdown(
-                        _exec_kpi("#F97316", icon("bars", 18, 1.8), f"{last_val:,.2f}",
-                                  f"TFP ล่าสุด (ปี {last_year}) {yoy_text} เทียบปีก่อน"),
-                        unsafe_allow_html=True,
-                    )
-                with kpi_cols[1]:
-                    if _has_forecast:
-                        st.markdown(
-                            _exec_kpi("#16324A", icon("clock", 18, 1.8), f"{fc_final:,.2f}",
-                                      f"ค่าพยากรณ์ TFP (ปี {fc_year})"),
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(_exec_kpi("#16324A", icon("clock", 18, 1.8), "-",
-                                               "ข้อมูลยังไม่พอสำหรับพยากรณ์"), unsafe_allow_html=True)
-                with kpi_cols[2]:
-                    hg_text = f"{hist_avg_growth:+.2f}%" if hist_avg_growth is not None else "-"
-                    st.markdown(
-                        _exec_kpi("#F97316", icon("trend-up", 18, 1.8), hg_text,
-                                  f"อัตราเติบโตเฉลี่ยของข้อมูลจริงย้อนหลัง {_hist_n} ปี (ไม่ใช่ค่าพยากรณ์)"),
-                        unsafe_allow_html=True,
-                    )
-                with kpi_cols[3]:
-                    if not _is_research:
-                        # มุมมองบุคคลทั่วไป: ไม่พูดถึงสมมติฐาน/ตัวแปร — แสดงจำนวนปี
-                        # ข้อมูลย้อนหลังที่ใช้วิเคราะห์แทน (เข้าใจง่าย เป็นกลาง)
-                        st.markdown(
-                            _exec_kpi("#16324A", icon("database", 18, 1.8), f"{len(tfp_series)} ปี",
-                                      f"ข้อมูลย้อนหลังที่ใช้วิเคราะห์ ({tfp_series.index.min()}–{tfp_series.index.max()})"),
-                            unsafe_allow_html=True,
-                        )
-                    elif scenario_pct_effect is not None:
-                        st.markdown(
-                            _exec_kpi("#16324A", icon("bulb", 18, 1.8), f"{scenario_pct_effect:+.2f}%",
-                                      f"สมมติฐาน: {_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
-                                      f"{'%' if scenario_var.startswith('ln_') else ''}"),
-                            unsafe_allow_html=True,
-                        )
-                    else:
-                        st.markdown(
-                            _exec_kpi("#16324A", icon("bulb", 18, 1.8), f"{n_pass}/{n_pass + n_watch + n_fail}",
-                                      "ผ่านเกณฑ์ข้อสมมติฐาน (ยังไม่ได้ตั้งสมมติฐานตัวแปร)"),
-                            unsafe_allow_html=True,
-                        )
+                _exec_orange = "linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark))"
+                _exec_navy = "linear-gradient(155deg, var(--brand-navy), #0E2436)"
+
+                yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
+                _kpi_item_1 = _exec_kpi(_exec_orange, icon("bars", 18, 1.8), f"{last_val:,.2f}",
+                                         f"TFP ล่าสุด (ปี {last_year}) {yoy_text} เทียบปีก่อน")
+
+                if _has_forecast:
+                    _kpi_item_2 = _exec_kpi(_exec_navy, icon("clock", 18, 1.8), f"{fc_final:,.2f}",
+                                             f"ค่าพยากรณ์ TFP (ปี {fc_year})")
+                else:
+                    _kpi_item_2 = _exec_kpi(_exec_navy, icon("clock", 18, 1.8), "-",
+                                             "ข้อมูลยังไม่พอสำหรับพยากรณ์")
+
+                hg_text = f"{hist_avg_growth:+.2f}%" if hist_avg_growth is not None else "-"
+                _kpi_item_3 = _exec_kpi(_exec_orange, icon("trend-up", 18, 1.8), hg_text,
+                                         f"อัตราเติบโตเฉลี่ยของข้อมูลจริงย้อนหลัง {_hist_n} ปี (ไม่ใช่ค่าพยากรณ์)")
+
+                if not _is_research:
+                    # มุมมองบุคคลทั่วไป: ไม่พูดถึงสมมติฐาน/ตัวแปร — แสดงจำนวนปี
+                    # ข้อมูลย้อนหลังที่ใช้วิเคราะห์แทน (เข้าใจง่าย เป็นกลาง)
+                    _kpi_item_4 = _exec_kpi(_exec_navy, icon("database", 18, 1.8), f"{len(tfp_series)} ปี",
+                                             f"ข้อมูลย้อนหลังที่ใช้วิเคราะห์ ({tfp_series.index.min()}–{tfp_series.index.max()})")
+                elif scenario_pct_effect is not None:
+                    _kpi_item_4 = _exec_kpi(_exec_navy, icon("bulb", 18, 1.8), f"{scenario_pct_effect:+.2f}%",
+                                             f"สมมติฐาน: {_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
+                                             f"{'%' if scenario_var.startswith('ln_') else ''}")
+                else:
+                    _kpi_item_4 = _exec_kpi(_exec_navy, icon("bulb", 18, 1.8), f"{n_pass}/{n_pass + n_watch + n_fail}",
+                                             "ผ่านเกณฑ์ข้อสมมติฐาน (ยังไม่ได้ตั้งสมมติฐานตัวแปร)")
+
+                st.markdown(
+                    '<div class="kpi-strip">' + _kpi_item_1 + _kpi_item_2 + _kpi_item_3 + _kpi_item_4 + '</div>',
+                    unsafe_allow_html=True,
+                )
                 st.write("")
 
                 # ================= แถว 2: กราฟหลัก (ซ้าย) + ตารางพยากรณ์ย่อ/สรุป (ขวา) =================
@@ -5601,10 +5588,10 @@ elif st.session_state.page == "exec_dashboard":
                             f'<div class="exec-chart-footnote" style="font-size:0.78rem;color:var(--brand-navy-soft);'
                             f'line-height:1.6;margin-top:10px;padding-top:10px;'
                             f'border-top:1px dashed var(--card-border);">'
-                            f'เส้นสีส้มแสดงค่า TFP ที่สังเกตได้จริงถึงปี {last_year} '
-                            f'(ค่าล่าสุด {last_val:,.2f}) ส่วนเส้นสีน้ำเงินแสดงค่าพยากรณ์จากแบบจำลอง ARIMA '
-                            f'จนถึงปี {fc_year} พร้อมแถบสีแสดงช่วงความเชื่อมั่น 95% '
-                            f'ซึ่งสะท้อนระดับความไม่แน่นอนของค่าพยากรณ์ที่เพิ่มขึ้นตามระยะเวลาการพยากรณ์</div>',
+                            f'เส้นสีส้มแสดงค่า TFP ที่สังเกตได้จริงจนถึงปี {last_year} '
+                            f'({last_val:,.2f}) และเส้นสีน้ำเงินแสดงค่าพยากรณ์จากแบบจำลอง ARIMA '
+                            f'จนถึงปี {fc_year} โดยแถบช่วงความเชื่อมั่น 95% แสดงระดับความไม่แน่นอนของค่าพยากรณ์ '
+                            f'ซึ่งเพิ่มขึ้นตามระยะเวลาการพยากรณ์</div>',
                             unsafe_allow_html=True,
                         )
                     st.markdown('</div>', unsafe_allow_html=True)
