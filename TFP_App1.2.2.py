@@ -249,7 +249,10 @@ header[data-testid="stHeader"] {
     display: none !important;
 }
 [data-testid="collapsedControl"] {
-    position: relative;
+    /* ไม่แตะ position ของปุ่มนี้ เพราะ Streamlit ตั้งไว้เป็น fixed/absolute อยู่แล้ว
+       เพื่อให้ปุ่มลอยอยู่นอกกรอบ header (ที่เราย่อเหลือความสูง 0 ไปแล้วด้านบน)
+       ถ้าไปเซ็ต position: relative ทับ จะทำให้ปุ่มกลายเป็นลูกที่ไหลอยู่ในกรอบ
+       header สูง 0 นั้นแทน แล้วถูกบีบจนมองไม่เห็น/กดไม่ได้ (บั๊กที่เพิ่งเจอ) */
     min-width: 2.2rem;
     min-height: 2.2rem;
 }
