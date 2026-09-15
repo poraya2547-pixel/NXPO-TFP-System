@@ -218,50 +218,17 @@ st.markdown("""
     background-size: auto, auto, 24px 24px, auto;
 }
 
-/* ----- แถบหัวเว็บเริ่มต้นของ Streamlit (เมนู "..."/ปุ่ม Deploy) — เป็นตัวการที่
-   ทำให้เกิดพื้นที่ว่างสีขาวโล่งๆ ด้านบนสุดของหน้าเว็บ (ทั้งฝั่งแถบเมนูซ้ายและ
-   เนื้อหาหลัก) เพราะปกติ Streamlit เผื่อพื้นที่ด้านบนไว้ให้แถบนี้เสมอ แอปนี้มี
-   แถบเมนู/หัวข้อของตัวเองอยู่แล้ว (nxpo-topbar) จึงซ่อนแถบเริ่มต้นนี้ทิ้งไปเลย
-   และลด padding-top ของเนื้อหาหลักที่เผื่อพื้นที่ไว้ให้แถบนี้ลงด้วย ----- */
-header[data-testid="stHeader"] {
-    /* เดิมลองซ่อนด้วย height: 0 + visibility: hidden ไปเลย แต่ทำให้ปุ่มย่อ/ขยาย
-       แถบเมนู (collapsedControl) ที่อยู่ข้างในแถบนี้พังไปด้วย — น่าจะเป็นเพราะ
-       Streamlit ผูก overflow/การคำนวณตำแหน่งของปุ่มนั้นไว้กับกรอบแถบนี้ พอบีบ
-       ความสูงเป็น 0 เลยพลอยถูกบีบจนมองไม่เห็น/กดไม่ได้ไปด้วย
-       จึงเปลี่ยนวิธีเป็น "ทำให้กลืนกับพื้นหลัง" แทนการบีบขนาด/ซ่อนทั้งกรอบ —
-       แถบนี้ยังมีพื้นที่อยู่เท่าเดิมแต่มองไม่เห็นเป็นแถบขาวๆ อีกต่อไป และ
-       ปุ่มย่อ/ขยายแถบเมนูข้างในจะไม่ถูกกระทบเลย */
-    background: transparent !important;
-    box-shadow: none !important;
-    border: none !important;
-}
-[data-testid="stMain"] .block-container {
-    padding-top: 1.5rem !important;
-}
-
-/* ----- ปุ่มย่อ/ขยาย sidebar (collapsedControl) — ให้ดูเด่นชัดว่าเป็นปุ่มกดได้
-   จริงๆ (พื้นสีส้มของแบรนด์ + เงา + ขอบมน) แทนที่จะเป็นแค่ลูกศร »» ลอยเฉยๆ
-   ใส่ selector ซ้อนหลายแบบ (ทั้งตัว container เองและปุ่ม/ไอคอนข้างใน) เผื่อ
-   โครงสร้าง DOM ต่างกันไปตามเวอร์ชัน Streamlit ที่ใช้งานจริง ----- */
-div[data-testid="collapsedControl"] {
-    visibility: visible !important;
+/* ----- ปุ่ม >> ย่อ/ขยาย sidebar (collapsedControl) — เปลี่ยนพื้นหลังเป็นสีส้ม
+   ตามธีมหลักของแอป (--brand-orange) แทนสีเทาเดิมของ Streamlit ----- */
+[data-testid="collapsedControl"] {
     background-color: var(--brand-orange) !important;
-    border-radius: 10px !important;
-    box-shadow: 0 3px 10px rgba(0,0,0,0.25) !important;
-    min-width: 2.4rem;
-    min-height: 2.4rem;
+    border-radius: 8px;
 }
-div[data-testid="collapsedControl"] button {
-    background-color: transparent !important;
-}
-div[data-testid="collapsedControl"] svg,
-div[data-testid="collapsedControl"] button svg {
+[data-testid="collapsedControl"] svg {
     color: #FFFFFF !important;
-    fill: #FFFFFF !important;
 }
-div[data-testid="collapsedControl"]:hover {
+[data-testid="collapsedControl"]:hover {
     background-color: var(--brand-orange-dark) !important;
-    cursor: pointer;
 }
 
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
@@ -269,47 +236,8 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-/* Streamlit เผื่อพื้นที่ด้านบนของแถบเมนู (ชั้นห่อนอก .block-container อีกที)
-   ไว้ให้แถบหัวเว็บเริ่มต้นที่เราซ่อนไปแล้วด้านบน ต้องเคลียร์ตรงนี้ด้วย ไม่งั้น
-   ช่องว่างก้อนใหญ่จะยังเหลืออยู่แม้จะปรับ .block-container ไปแล้วก็ตาม */
-section[data-testid="stSidebar"] > div:first-child,
-section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
-    padding-top: 0 !important;
-}
-section[data-testid="stSidebar"] .block-container {
-    /* เดิม padding-top: 1.2rem; แล้วมีการขอขยับขึ้นสะสมหลายรอบจนไปถึง -105mm
-       ซึ่งน่าจะเป็นสาเหตุร่วมที่ทำให้เนื้อหา/ปุ่มในแถบเมนูเพี้ยนไปด้วย
-       (นอกเหนือจากบั๊กเรื่อง header ที่แก้ไปแล้ว) จึงรีเซ็ตกลับมาที่ 0 ก่อน
-       เพื่อให้เห็นสถานะปกติชัดๆ แล้วค่อยขยับขึ้นทีละนิดจากจุดนี้ใหม่ถ้าจำเป็น */
-    padding-top: 0;
-    margin-top: 0;
-}
+section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
-
-/* ----- มือถือ/จอแคบ: ฟิกแถบเมนูด้านซ้ายให้ค้างอยู่กับที่ ไม่เลื่อนตามเนื้อหา
-   หลัก (เดิมตอนเปิดแถบเมนูบนมือถือแล้วเลื่อนหน้าเว็บ แถบเมนูทั้งก้อน — โลโก้/
-   ปุ่มด้านบน — จะเลื่อนหายไปพร้อมกับเนื้อหา ต้องเลื่อนกลับขึ้นไปดูใหม่ทุกครั้ง
-   จึงล็อกให้แถบเมนูเกาะติดขอบจอตลอดแทน) ไม่แตะต้อง layout บนจอกว้าง/เดสก์ท็อป
-   เพราะฝั่งนั้นเนื้อหาหลักวางเรียงข้างแถบเมนูแบบ flex ปกติอยู่แล้ว ถ้าฟิกด้วย
-   จะทำให้เนื้อหาหลักไปทับแถบเมนูแทน ----- */
-@media (max-width: 768px) {
-    section[data-testid="stSidebar"] {
-        position: fixed !important;
-        top: 0 !important;
-        left: 0 !important;
-        height: 100vh !important;
-        /* เดิมไม่ได้กำหนดความกว้างตรงนี้ แถบเมนูเลยยังใช้ความกว้างแบบเดสก์ท็อป
-           (ที่คำนวณไว้ตอนยังเป็น flex item ปกติ) ทำให้ตอนฟิกแล้วแถบเมนูแคบลง
-           กว่าจอจริง มองเห็นพื้นหลังของเนื้อหาหลักโผล่เป็นแถบว่างด้านขวา
-           จึงบังคับให้กว้างเต็มจอเสมอบนมือถือ/จอแคบ ----- */
-        width: 100vw !important;
-        box-sizing: border-box !important;
-        /* ถ้าเนื้อหาภายในแถบเมนูเองยาวเกินจอ ให้เลื่อนได้เฉพาะภายในแถบนี้แทน
-           (เนื้อหาหลักด้านหลังยังคงเลื่อนตามปกติ ไม่กระทบกัน) */
-        overflow-y: auto !important;
-        z-index: 999991 !important;
-    }
-}
 
 /* ----- การ์ดโลโก้ด้านบนแถบเมนู ----- */
 .sidebar-logo-card {
@@ -3180,6 +3108,106 @@ def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5
     }
     return bt_df, metrics, None
 
+
+def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead: int = 1,
+                           max_windows: int = 40, crisis_years: tuple = None):
+    """ทดสอบย้อนหลังแบบ rolling-origin (expanding window) — ต่อยอดจาก _run_backtest
+    ด้านบนซึ่งซ่อนข้อมูลไว้แค่ช่วงเดียว (holdout ก้อนเดียวท้ายอนุกรม) จุดอ่อนของ
+    วิธีนั้นคือถ้าช่วงที่ซ่อนไว้บังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19 ที่ทำให้
+    เกิด structural break) ผลเปรียบเทียบจะสะท้อนแค่ "ช่วงนั้น" ไม่ใช่ความสามารถ
+    โดยรวมของโมเดล การเลือกโมเดลจากผลของช่วงทดสอบช่วงเดียวจึงเสี่ยงต่อการ overfit
+    ต่อชุดทดสอบนั้นเอง
+
+    วิธีนี้แก้ปัญหาโดยเลื่อนจุดเริ่มทดสอบ (origin) ไปทีละปีทั่วทั้งอนุกรมแทน:
+    origin แรก = ฝึกด้วยข้อมูล min_train ปีแรก แล้วทาย step_ahead ปีถัดไป
+    origin ถัดไป = เพิ่มข้อมูลฝึกอีก 1 ปี แล้วทายปีถัดไปอีก ไปเรื่อยๆ จนหมดข้อมูล
+    จากนั้นรวมผลความคลาดเคลื่อนจากทุก origin เข้าด้วยกัน ทำให้เห็นภาพว่า ARIMA
+    แม่นกว่า Naive โดยเฉลี่ยตลอดทั้งอนุกรมจริงหรือไม่ ไม่ใช่แค่ในช่วงทดสอบช่วงเดียว
+
+    ถ้าระบุ crisis_years=(ปีเริ่ม, ปีสิ้นสุด) จะแยกสรุปผลเพิ่มเป็น 2 ช่วง คือ
+    ช่วงปกติ (นอกช่วงวิกฤต) กับช่วงวิกฤต เพื่อดูว่าโมเดลไหนแม่นกว่าในแต่ละบริบท
+    แยกกันชัดๆ แทนที่จะปนกันเป็นตัวเลขก้อนเดียว
+
+    หมายเหตุ: เพื่อไม่ให้ต้องรัน ARIMA grid search ซ้ำมากเกินไปจนช้า (แต่ละ origin
+    ต้องหา (p,d,q) ที่ดีที่สุดใหม่) จึงจำกัดกริดให้แคบกว่า _auto_arima_forecast
+    เล็กน้อย (max_p=3, max_q=3) และถ้าจำนวนจุดทดสอบที่เป็นไปได้มากกว่า max_windows
+    จะสุ่มเลือกจุดแบบเว้นระยะเท่าๆ กันแทนการทดสอบทุกจุด
+
+    คืนค่า (origins_df, metrics, None) หรือ (None, None, ข้อความเหตุผล) ถ้าทำไม่ได้"""
+    n = len(tfp_series)
+    last_train_size = n - step_ahead
+    if last_train_size < min_train:
+        return None, None, (
+            f"ข้อมูลไม่พอสำหรับ rolling-origin backtest "
+            f"(ต้องมีอย่างน้อย {min_train + step_ahead} ปี)"
+        )
+
+    train_sizes = list(range(min_train, last_train_size + 1))
+    # จำกัดจำนวนจุดทดสอบไม่ให้เกิน max_windows จุด (เว้นระยะเท่าๆ กัน) เพื่อความเร็ว
+    if len(train_sizes) > max_windows:
+        idx = np.linspace(0, len(train_sizes) - 1, max_windows).round().astype(int)
+        train_sizes = sorted(set(train_sizes[i] for i in idx))
+
+    rows = []
+    for t in train_sizes:
+        train = tfp_series.iloc[:t]
+        target_pos = t + step_ahead - 1
+        if target_pos >= n:
+            continue
+        target_year = int(tfp_series.index[target_pos])
+        actual = float(tfp_series.iloc[target_pos])
+        naive_val = float(train.iloc[-1])  # Naive: คงค่าปีฝึกล่าสุดไปเป็นค่าทาย
+        try:
+            fc_df, _ = _auto_arima_forecast(train, step_ahead, max_p=3, max_d=2, max_q=3)
+            arima_pred = float(fc_df.loc[target_year, "mean"]) if target_year in fc_df.index else None
+        except Exception:
+            arima_pred = None
+        if arima_pred is None:
+            continue
+        rows.append({
+            "ปีที่ทาย": target_year,
+            "จำนวนปีที่ฝึก": t,
+            "ค่าจริง": actual,
+            "ARIMA": arima_pred,
+            "Naive": naive_val,
+        })
+
+    if not rows:
+        return None, None, "ทดสอบ rolling-origin ไม่สำเร็จ (ไม่มีจุดทดสอบที่คำนวณได้)"
+
+    origins_df = pd.DataFrame(rows)
+
+    def _mape(actual, pred):
+        return float(np.mean(np.abs((actual - pred) / actual)) * 100)
+
+    def _rmse(actual, pred):
+        return float(np.sqrt(np.mean((actual - pred) ** 2)))
+
+    metrics = {
+        "arima_mape": _mape(origins_df["ค่าจริง"], origins_df["ARIMA"]),
+        "naive_mape": _mape(origins_df["ค่าจริง"], origins_df["Naive"]),
+        "arima_rmse": _rmse(origins_df["ค่าจริง"], origins_df["ARIMA"]),
+        "naive_rmse": _rmse(origins_df["ค่าจริง"], origins_df["Naive"]),
+        "n_windows": len(origins_df),
+    }
+
+    if crisis_years:
+        y0, y1 = crisis_years
+        _in_crisis = origins_df["ปีที่ทาย"].between(y0, y1)
+        for label, mask in (("normal", ~_in_crisis), ("crisis", _in_crisis)):
+            sub = origins_df[mask]
+            if len(sub) > 0:
+                metrics[f"arima_mape_{label}"] = _mape(sub["ค่าจริง"], sub["ARIMA"])
+                metrics[f"naive_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Naive"])
+                metrics[f"n_{label}"] = len(sub)
+            else:
+                metrics[f"arima_mape_{label}"] = None
+                metrics[f"naive_mape_{label}"] = None
+                metrics[f"n_{label}"] = 0
+
+    return origins_df, metrics, None
+
+
 def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataFrame,
                                     color: str = "#F97316", forecast_color: str = "#2F6FED",
                                     height: int = 340, display_from_year: int = None):
@@ -3888,39 +3916,15 @@ elif st.session_state.page == "forecast":
                 # ไว้ล่วงหน้า (3/5/10/15 ปี) ตามที่ขอ พร้อมแสดงช่วงปีจริงในตัวเลือก
                 # เลย (เช่น "2023–2027 (5 ปี)") ให้เห็นภาพทันทีว่าพยากรณ์ถึงปีไหน
                 _last_data_year = int(tfp_series.index.max())
-                # ----- ใส่กรอบรอบช่อง selectbox นี้ให้ดูเด่นขึ้นมาจากพื้นหลัง
-                # (เดิมไม่มีกรอบ ลอยอยู่เฉยๆ) พร้อมขยับข้อความป้ายกำกับเข้ามา
-                # ด้านในอีก 2มม. และเพิ่มระยะห่างระหว่างป้ายกำกับกับตัวกล่อง
-                # เลือกอีก 4มม. ตามที่ขอ (ใช้ container ครอบแยกต่างหาก ไม่เปลี่ยน
-                # key ของตัว selectbox เอง เพราะโค้ดจุดอื่นอ่านค่าจาก
-                # st.session_state["tfp_forecast_horizon"] อยู่) -----
-                st.markdown(
-                    """
-                    <style>
-                    .st-key-tfp_forecast_horizon_frame {
-                        border: 1px solid var(--card-border);
-                        border-radius: 12px;
-                        padding: 14px 16px;
-                        background: #FFFFFF;
-                    }
-                    .st-key-tfp_forecast_horizon_frame [data-testid="stWidgetLabel"] {
-                        padding-left: 2mm;
-                        margin-bottom: 4mm;
-                    }
-                    </style>
-                    """,
-                    unsafe_allow_html=True,
+                horizon = st.selectbox(
+                    "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
+                    options=[3, 5, 10, 15],
+                    index=1,
+                    format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
+                    key="tfp_forecast_horizon",
+                    help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
+                         "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
                 )
-                with st.container(key="tfp_forecast_horizon_frame"):
-                    horizon = st.selectbox(
-                        "จำนวนปีที่ต้องการพยากรณ์ล่วงหน้า",
-                        options=[3, 5, 10, 15],
-                        index=1,
-                        format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
-                        key="tfp_forecast_horizon",
-                        help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
-                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
-                    )
 
                 with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
                     forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
@@ -4153,6 +4157,96 @@ elif st.session_state.page == "forecast":
                                'ในช่วงทดสอบนี้ Naive ทายใกล้เคียงหรือแม่นกว่า ARIMA เล็กน้อย '
                                'ซึ่งเกิดขึ้นได้กับอนุกรมเวลาสั้น ๆ ควรตีความผลด้วยความระมัดระวัง')
                             + '</span></p>',
+                            unsafe_allow_html=True,
+                        )
+
+                # ================= Rolling-origin Backtest (เลื่อนจุดทดสอบหลายจุด) =================
+                # ต่อยอดจาก backtest ด้านบนที่ทดสอบแค่จุดเดียว (5 ปีสุดท้าย) — จุดอ่อนคือ
+                # ถ้าช่วงนั้นบังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19) ผลลัพธ์อาจสะท้อน
+                # แค่ "ช่วงนั้น" ไม่ใช่ความสามารถโดยรวมของโมเดล จึงเพิ่มการทดสอบแบบเลื่อน
+                # จุดเริ่มทดสอบ (rolling-origin) ไปทีละปีทั่วทั้งอนุกรม แล้วรวมผลทุกจุด
+                with st.expander("🔁 ทดสอบย้อนหลังหลายหน้าต่าง (Rolling-origin Backtest)"):
+                    st.markdown(
+                        '<p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
+                        'margin-top:0;">การทดสอบด้านบนซ่อนข้อมูลไว้แค่ช่วงเดียว (5 ปีสุดท้าย) '
+                        'ซึ่งอาจบังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19) ทำให้สรุปว่าโมเดลไหนดีกว่า '
+                        'ได้ไม่ครบถ้วน การทดสอบนี้จะเลื่อนจุดเริ่มทดสอบไปทีละปีทั่วทั้งอนุกรม '
+                        'แล้วรวมผลทุกจุดเข้าด้วยกัน เพื่อดูว่า ARIMA แม่นกว่า Naive โดยเฉลี่ยจริงหรือไม่</p>',
+                        unsafe_allow_html=True,
+                    )
+                    with st.spinner("กำลังทดสอบย้อนหลังหลายหน้าต่าง..."):
+                        roll_df, roll_metrics, roll_err = _run_rolling_backtest(
+                            tfp_series, min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1,
+                            crisis_years=(2020, 2022),
+                        )
+                    if roll_err:
+                        st.info(roll_err)
+                    else:
+                        _roll_better = roll_metrics["arima_mape"] < roll_metrics["naive_mape"]
+                        _roll_cols = st.columns(2)
+                        with _roll_cols[0]:
+                            st.markdown(
+                                _dash_kpi_card(
+                                    "#16324A", icon("check" if _roll_better else "alert", 18, 1.8),
+                                    f'{roll_metrics["arima_mape"]:.2f}%',
+                                    f'ค่าเฉลี่ยความคลาดเคลื่อน ARIMA รวม {roll_metrics["n_windows"]} จุดทดสอบ',
+                                ),
+                                unsafe_allow_html=True,
+                            )
+                        with _roll_cols[1]:
+                            st.markdown(
+                                _dash_kpi_card(
+                                    "#F97316", icon("bars", 18, 1.8),
+                                    f'{roll_metrics["naive_mape"]:.2f}%',
+                                    "ค่าเฉลี่ยความคลาดเคลื่อน Naive (เส้นฐานเทียบ)",
+                                ),
+                                unsafe_allow_html=True,
+                            )
+                        st.write("")
+                        if roll_metrics.get("n_crisis", 0) > 0 and roll_metrics.get("n_normal", 0) > 0:
+                            st.markdown(
+                                f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);">'
+                                f'แยกตามช่วงเวลา — '
+                                f'ช่วงปกติ ({roll_metrics["n_normal"]} จุด): ARIMA MAPE '
+                                f'{roll_metrics["arima_mape_normal"]:.2f}% เทียบ Naive '
+                                f'{roll_metrics["naive_mape_normal"]:.2f}% &nbsp;|&nbsp; '
+                                f'ช่วงโควิด 2563–2565 ({roll_metrics["n_crisis"]} จุด): ARIMA MAPE '
+                                f'{roll_metrics["arima_mape_crisis"]:.2f}% เทียบ Naive '
+                                f'{roll_metrics["naive_mape_crisis"]:.2f}%</p>',
+                                unsafe_allow_html=True,
+                            )
+                        _roll_rows_html = ""
+                        for _, r in roll_df.iterrows():
+                            _arima_diff = abs(r["ARIMA"] - r["ค่าจริง"])
+                            _naive_diff = abs(r["Naive"] - r["ค่าจริง"])
+                            _arima_style = "color:var(--green);font-weight:700;" if _arima_diff <= _naive_diff else ""
+                            _naive_style = "color:var(--green);font-weight:700;" if _naive_diff < _arima_diff else ""
+                            _roll_rows_html += (
+                                f'<tr><td>{int(r["ปีที่ทาย"])}</td><td>{int(r["จำนวนปีที่ฝึก"])}</td>'
+                                f'<td>{r["ค่าจริง"]:,.2f}</td>'
+                                f'<td style="{_arima_style}">{r["ARIMA"]:,.2f}</td>'
+                                f'<td style="{_naive_style}">{r["Naive"]:,.2f}</td></tr>'
+                            )
+                        st.markdown(
+                            f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
+                            f'<thead><tr><th>ปีที่ทาย</th><th>จำนวนปีที่ฝึก</th><th>ค่าจริง</th>'
+                            f'<th>ARIMA ทาย</th><th>Naive ทาย</th></tr></thead>'
+                            f'<tbody>{_roll_rows_html}</tbody></table></div>'
+                            f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
+                            f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
+                            f'= ค่าทายที่ใกล้เคียงค่าจริงกว่าในปีนั้น</p>',
+                            unsafe_allow_html=True,
+                        )
+                        st.markdown(
+                            '<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:10px;">'
+                            + ('ตลอดทั้งอนุกรม ARIMA ทายแม่นกว่า Naive โดยเฉลี่ย ซึ่งสนับสนุนว่าผลที่ '
+                               'Naive แม่นกว่าในช่วงทดสอบ 5 ปีล่าสุดด้านบน เป็นผลเฉพาะช่วงที่มีโควิด-19 '
+                               'แทรก (structural break) ไม่ใช่ภาพรวมความสามารถของโมเดล'
+                               if _roll_better else
+                               'ตลอดทั้งอนุกรม Naive ยังคงแม่นกว่าหรือใกล้เคียง ARIMA โดยเฉลี่ย '
+                               'ซึ่งอาจบ่งชี้ว่าอนุกรมนี้มีความผันผวนสูงจน ARIMA ไม่ได้ให้ความแม่นยำ '
+                               'เพิ่มขึ้นมากนักเมื่อเทียบกับการเดาค่าคงที่')
+                            + '</p>',
                             unsafe_allow_html=True,
                         )
             else:
@@ -4900,16 +4994,8 @@ elif st.session_state.page == "exec_dashboard":
                 .st-key-exec_dash_wrap .metric-value,
                 .st-key-exec_dash_wrap .section-title-text h3,
                 .st-key-exec_dash_wrap .exec-insight-item { color: var(--brand-navy) !important; }
-                .st-key-exec_dash_wrap .metric-label { color: var(--brand-navy-soft) !important; }
-                /* ข้อความ <p> ทั่วไปที่ "ลอยอยู่นอกกล่องขาว" (เช่น บรรทัดบอกเวลา
-                   ดึงข้อมูลล่าสุด, คำอธิบายใต้กราฟ) พื้นหลังตรงนั้นเป็นกรมท่าเข้ม
-                   ถ้ายังใช้สีกรมท่าอ่อนแบบเดิมจะกลืนไปกับพื้นจนอ่านยาก จึงเปลี่ยน
-                   เป็นสีขาวเป็นค่าเริ่มต้น ส่วน <p> ที่อยู่ "ข้างใน" การ์ดขาว
-                   (.section-card / .metric-card) ให้คงสีกรมท่าเดิมไว้ต่อด้านล่าง
-                   (specificity สูงกว่า เลยชนะกฎสีขาวด้านบนนี้) */
-                .st-key-exec_dash_wrap p { color: #FFFFFF !important; }
-                .st-key-exec_dash_wrap .section-card p,
-                .st-key-exec_dash_wrap .metric-card p { color: var(--brand-navy-soft) !important; }
+                .st-key-exec_dash_wrap .metric-label,
+                .st-key-exec_dash_wrap p { color: var(--brand-navy-soft) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream { background: #EDF0F3 !important;
                     border-color: rgba(255,255,255,0.14) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream th { background-image: none !important; background: #FFFFFF !important; color: var(--brand-navy) !important; }
