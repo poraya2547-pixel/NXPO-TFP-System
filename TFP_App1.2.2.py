@@ -271,7 +271,7 @@ section[data-testid="stSidebar"] {
     border-right: 1px solid var(--card-border);
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
-    padding-top: 1.2rem !important;
+    padding-top: 1.4rem !important;
     margin-top: -70px !important;
 }
 section[data-testid="stSidebar"] [data-testid="stSidebarHeader"] {
