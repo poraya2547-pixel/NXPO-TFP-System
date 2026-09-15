@@ -236,7 +236,13 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
-section[data-testid="stSidebar"] .block-container { padding-top: 1.2rem; }
+section[data-testid="stSidebar"] .block-container {
+    /* เดิม padding-top: 1.2rem; ผู้ใช้ขอให้ขยับเนื้อหา (โลโก้/ปุ่ม) ข้างในแถบเมนู
+       ขึ้นอีก 10มม. ให้ชิดขอบบนมากขึ้น เนื่องจาก padding เป็นค่าติดลบไม่ได้
+       จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน (คำนวณ: 1.2rem - 10mm) */
+    padding-top: 0;
+    margin-top: calc(1.2rem - 10mm);
+}
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
 /* ----- มือถือ/จอแคบ: ฟิกแถบเมนูด้านซ้ายให้ค้างอยู่กับที่ ไม่เลื่อนตามเนื้อหา
