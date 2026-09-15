@@ -27,6 +27,7 @@ import re
 import math
 import time
 import warnings
+import unicodedata
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
@@ -1164,6 +1165,28 @@ def img_to_base64(path):
         return base64.b64encode(f.read()).decode()
 
 
+def _resolve_bg_path(directory, filename):
+    """หาไฟล์ภาพพื้นหลังในโฟลเดอร์ที่กำหนด โดยเทียบชื่อไฟล์แบบไม่สนใจว่าตัวอักษร
+    ไทยถูกเก็บเป็น Unicode form ไหน (NFC หรือ NFD) — เครื่อง Mac มักบันทึกชื่อไฟล์
+    ภาษาไทยเป็น NFD (สระ/วรรณยุกต์แยกเป็นคนละอักขระ) ในขณะที่โค้ดฝั่งนี้เขียนชื่อไฟล์
+    เป็น NFC (แบบผสมแล้ว) ทำให้ os.path.exists() เทียบไม่ตรงกัน ทั้งที่ชื่อไฟล์
+    "เหมือนกันทุกตัวอักษร" เมื่อดูด้วยตา (เป็นสาเหตุที่พบบ่อยที่สุดที่ทำให้ภาพพื้นหลัง
+    ภาษาไทยไม่ขึ้นทั้งที่วางไฟล์ถูกโฟลเดอร์และตั้งชื่อ "ถูก" แล้ว)
+    ลองหาแบบตรงตัวก่อน ถ้าไม่เจอค่อยไล่เทียบชื่อไฟล์ทุกไฟล์ในโฟลเดอร์แบบ
+    normalize แล้วเทียบ คืน path เต็มถ้าเจอ หรือ None ถ้าไม่เจอไฟล์ที่ตรงกันเลย"""
+    direct_path = os.path.join(directory, filename)
+    if os.path.exists(direct_path):
+        return direct_path
+    try:
+        target_norm = unicodedata.normalize("NFC", filename)
+        for entry in os.listdir(directory):
+            if unicodedata.normalize("NFC", entry) == target_norm:
+                return os.path.join(directory, entry)
+    except (FileNotFoundError, NotADirectoryError, PermissionError):
+        pass
+    return None
+
+
 # ----- ภาพพื้นหลังตกแต่ง Hero หน้าแรก (ภาพประกอบโทนส้ม-ครีม ฝั่งขวาโปร่งจาง
 # ไปทางซ้ายให้วางข้อความทับได้) — วางไฟล์ "welcome.png" ไว้โฟลเดอร์เดียวกับ
 # app.py นี้ ถ้าไม่มีไฟล์ Hero จะแสดงพื้นหลังไล่สีครีมธรรมดาแทนโดยไม่ error -----
@@ -1181,8 +1204,8 @@ hero_bg_style = (
 # ครีมโปร่งแสงทับด้านบนอีกชั้น (93%) เพื่อให้ตัวหนังสือ/การ์ดสีขาวทึบด้านหน้ายัง
 # อ่านง่ายเหมือนเดิมไม่ว่าภาพต้นฉบับจะสีสันเข้มแค่ไหน — ถ้าไม่เจอไฟล์ จะใช้พื้นหลัง
 # ไล่สี + ลาย dot-grid แบบเดิมที่ตั้งไว้ใน .stApp ต่อไปตามปกติโดยไม่ error */
-sys_bg_path = os.path.join(APP_DIR, "พื้นหลังระบบทั้งหมด.png")
-if os.path.exists(sys_bg_path):
+sys_bg_path = _resolve_bg_path(APP_DIR, "พื้นหลังระบบทั้งหมด.png")
+if sys_bg_path:
     st.markdown(
         f"""
         <style>
@@ -1204,8 +1227,8 @@ if os.path.exists(sys_bg_path):
 # "พื้นหลังตัวแปร.png" ไว้โฟลเดอร์เดียวกับ app.py นี้ (ชื่อไฟล์ต้องตรงกันเป๊ะๆ)
 # ถ้าเจอไฟล์จะซ้อนภาพนี้ไว้หลังการ์ด .var-intro พร้อมเคลือบสีขาวโปร่งแสงทับอีกชั้น
 # ให้ตัวหนังสือ/สถิติด้านหน้ายังอ่านง่าย — ถ้าไม่เจอไฟล์ ใช้พื้นครีมธรรมดาต่อไปได้
-var_intro_bg_path = os.path.join(APP_DIR, "พื้นหลังตัวแปร.png")
-if os.path.exists(var_intro_bg_path):
+var_intro_bg_path = _resolve_bg_path(APP_DIR, "พื้นหลังตัวแปร.png")
+if var_intro_bg_path:
     st.markdown(
         f"""
         <style>
