@@ -898,6 +898,9 @@ div[data-testid="stVerticalBlockBorderWrapper"].st-key-tfp_horizon_frame {
 .st-key-hero_entry_buttons button:active {
     transform: translateY(0) !important;
 }
+.st-key-hero_entry_buttons button [data-testid="stIconMaterial"] {
+    color: #fff !important;
+}
 
 /* ----- การ์ด CTA สร้างสรุป AI (ธีม "Exclusive") -----
    ปรับจากแบนเนอร์สีส้มสดเดิม เป็นพื้นกรมท่าเข้ม (โทนเดียวกับ sidebar card มืด
@@ -2958,7 +2961,7 @@ if st.session_state.portal_role is None:
     with st.container(key="hero_entry_buttons"):
         _entry_cols = st.columns([0.56, 0.22, 0.22])
         with _entry_cols[1]:
-            if st.button("🚪 เข้าใช้งาน (ผู้เยี่ยมชม)", use_container_width=True, key="pick_role_visitor"):
+            if st.button("เข้าใช้งาน (ผู้เยี่ยมชม)", icon=":material/monitoring:", use_container_width=True, key="pick_role_visitor"):
                 st.session_state.portal_role = "visitor"
                 st.session_state.page = "forecast"
                 st.rerun()
@@ -2969,7 +2972,7 @@ if st.session_state.portal_role is None:
             # (ก่อนกรอกรหัสผ่านจริงด้วยซ้ำ) เพื่อให้ผ่านเงื่อนไข role picker ด้านบน
             # ไปแสดง sidebar ได้ — research_authenticated ยังเป็น False อยู่ ผู้ใช้
             # จึงยังต้องกรอกรหัสผ่านให้ถูกในหน้า "home" ก่อนถึงจะเห็นเนื้อหาจริง
-            if st.button("🔑 เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
+            if st.button("เข้าสู่ระบบ (คณะวิจัย)", icon=":material/lock:", use_container_width=True, key="toggle_research_login"):
                 st.session_state.portal_role = "research"
                 st.session_state.page = "home"
                 st.rerun()
