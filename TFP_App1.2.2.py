@@ -250,6 +250,13 @@ section[data-testid="stSidebar"] {
     background: #FFFFFF;
     border-right: 1px solid var(--card-border);
 }
+/* Streamlit เผื่อพื้นที่ด้านบนของแถบเมนู (ชั้นห่อนอก .block-container อีกที)
+   ไว้ให้แถบหัวเว็บเริ่มต้นที่เราซ่อนไปแล้วด้านบน ต้องเคลียร์ตรงนี้ด้วย ไม่งั้น
+   ช่องว่างก้อนใหญ่จะยังเหลืออยู่แม้จะปรับ .block-container ไปแล้วก็ตาม */
+section[data-testid="stSidebar"] > div:first-child,
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    padding-top: 0 !important;
+}
 section[data-testid="stSidebar"] .block-container {
     /* เดิม padding-top: 1.2rem; ผู้ใช้ขอให้ขยับเนื้อหา (โลโก้/ปุ่ม) ข้างในแถบเมนู
        ขึ้นอีก 10มม. ให้ชิดขอบบนมากขึ้น เนื่องจาก padding เป็นค่าติดลบไม่ได้
