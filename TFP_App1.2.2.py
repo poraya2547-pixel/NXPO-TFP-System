@@ -232,14 +232,6 @@ st.markdown("""
     background-color: var(--brand-orange-dark) !important;
 }
 
-/* ----- ลดพื้นที่ว่างด้านบนสุดของเนื้อหาหลัก (เดิม Streamlit เว้น padding-top
-   ไว้เยอะเกินไป ดูเหมือนมีช่องว่างลอยอยู่เหนือ hero banner) — ลดลงประมาณ 1 นิ้ว
-   (~96px) ให้เนื้อหาเริ่มต้นชิดขึ้นกว่าเดิม ใช้ selector กว้าง ๆ ของพื้นที่หลัก
-   (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว) -----
-[data-testid="stAppViewContainer"] > .main .block-container {
-    padding-top: 1.5rem !important;
-}
-
 /* ----- sidebar: พื้นขาวตามปกติ ไฮไลต์ส้มเฉพาะเมนูที่กำลังเลือกอยู่ ----- */
 section[data-testid="stSidebar"] {
     background: #FFFFFF;
@@ -2930,6 +2922,9 @@ if st.session_state.portal_role is None:
     # ครอบด้วย st.container(key="hero_entry_buttons") เพื่อให้ CSS ที่ชื่อ
     # ".st-key-hero_entry_buttons" ด้านบน (ค้นหาคำว่า hero_entry_buttons) จับกลุ่ม
     # ปุ่มทั้งสองได้โดยไม่กระทบปุ่มอื่นในหน้าเว็บ -----
+    if "show_research_login" not in st.session_state:
+        st.session_state.show_research_login = False
+
     st.write("")
     with st.container(key="hero_entry_buttons"):
         _entry_cols = st.columns([0.56, 0.22, 0.22])
@@ -2939,16 +2934,38 @@ if st.session_state.portal_role is None:
                 st.session_state.page = "forecast"
                 st.rerun()
         with _entry_cols[2]:
-            # เดิมปุ่มนี้แค่กางฟอร์มล็อกอินไว้ในหน้า landing เดียวกัน (ไม่มี sidebar)
-            # ตอนนี้เปลี่ยนกลับให้พาไปหน้า "สำหรับคณะวิจัยเท่านั้น" แบบเดิม (มี sidebar
-            # + การ์ดล็อกอินกลางจอ) โดยตั้ง portal_role เป็น "research" ทันทีที่กด
-            # (ก่อนกรอกรหัสผ่านจริงด้วยซ้ำ) เพื่อให้ผ่านเงื่อนไข role picker ด้านบน
-            # ไปแสดง sidebar ได้ — research_authenticated ยังเป็น False อยู่ ผู้ใช้
-            # จึงยังต้องกรอกรหัสผ่านให้ถูกในหน้า "home" ก่อนถึงจะเห็นเนื้อหาจริง
             if st.button("🔑 เข้าสู่ระบบ (คณะวิจัย)", use_container_width=True, key="toggle_research_login"):
-                st.session_state.portal_role = "research"
-                st.session_state.page = "home"
-                st.rerun()
+                st.session_state.show_research_login = not st.session_state.show_research_login
+
+    if st.session_state.show_research_login:
+        if _research_login_config_error:
+            st.error(_research_login_config_error)
+        else:
+            _portal_login_col = st.columns([1, 1.4, 1])[1]
+            with _portal_login_col:
+                with st.form("portal_research_login_form", clear_on_submit=False):
+                    _portal_login_user = st.text_input("ชื่อผู้ใช้ (Username)", key="portal_login_user")
+                    _portal_login_pass = st.text_input(
+                        "รหัสผ่าน (Password)", type="password", key="portal_login_pass"
+                    )
+                    _portal_login_submitted = st.form_submit_button("เข้าสู่ระบบคณะวิจัย", use_container_width=True)
+                if _portal_login_submitted:
+                    # ใช้ hmac.compare_digest แทน == ธรรมดา เพื่อลดความเสี่ยงจาก
+                    # timing attack (เดารหัสผ่านจากเวลาที่ใช้เทียบสตริง) — ตรรกะ
+                    # เดียวกับหน้า "สำหรับคณะวิจัยเท่านั้น" เดิม
+                    _portal_user_ok = hmac.compare_digest(
+                        _portal_login_user.encode("utf-8"), RESEARCH_USERNAME.encode("utf-8")
+                    )
+                    _portal_pass_ok = hmac.compare_digest(
+                        _portal_login_pass.encode("utf-8"), RESEARCH_PASSWORD.encode("utf-8")
+                    )
+                    if _portal_user_ok and _portal_pass_ok:
+                        st.session_state.research_authenticated = True
+                        st.session_state.portal_role = "research"
+                        st.session_state.page = "forecast"
+                        st.rerun()
+                    else:
+                        st.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
 
     # ----- การ์ด 3 ขั้นตอนแนะนำการใช้งาน — ของเดิมที่เคยอยู่ในหน้า "forecast"
     # ตอนยังไม่ดึงข้อมูล ย้าย/คัดลอกมาไว้ที่หน้า landing นี้ด้วยตามที่ขอ -----
