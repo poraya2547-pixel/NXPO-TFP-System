@@ -364,6 +364,36 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
 /* ----- แถบสถานะ (แทน st.success/st.error/st.info ค่าเริ่มต้นของ Streamlit ที่เป็น
    กล่องสีเขียว/แดงสดแบบ default ซึ่งหลุดโทนสีส้ม-ขาว-กรมท่าของแอป) — ใช้ไอคอนเส้น
    ชุดเดียวกับที่อื่นในแอปแทนอิโมจิ/ไอคอนของ Streamlit เอง ----- */
+/* ----- ศัพท์ที่ควรรู้ (Glossary) ดีไซน์ใหม่ — จากเดิมเป็นรายการยาวเรียงต่อกันเรื่อยๆ
+   ในกล่องเดียว ไม่มีการจัดหมวดหมู่ อ่านยากเมื่อคำศัพท์เยอะขึ้น เปลี่ยนเป็นตาราง
+   การ์ด 2 คอลัมน์ แบ่งเป็นหมวดหมู่ชัดเจน (ตัวชี้วัดหลัก / แบบจำลอง / สถิติ /
+   การทดสอบความแม่นยำ) แต่ละคำมีไอคอนวงกลมเล็กด้านหน้าให้ดูเป็นระเบียบและหรูขึ้น ----- */
+.glossary-group { margin-bottom: 24px; }
+.glossary-group:last-child { margin-bottom: 0; }
+.glossary-group-label {
+    display: flex; align-items: center; gap: 8px; font-size: 0.76rem; font-weight: 700;
+    color: var(--brand-orange-dark); text-transform: uppercase; letter-spacing: 0.05em;
+    margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);
+}
+.glossary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+@media (max-width: 800px) { .glossary-grid { grid-template-columns: 1fr; } }
+.glossary-term-card {
+    background: linear-gradient(180deg, #FFFFFF 0%, #FFFDFA 100%);
+    border: 1px solid var(--card-border); border-radius: 14px; padding: 14px 16px;
+    transition: box-shadow .15s ease, border-color .15s ease;
+}
+.glossary-term-card:hover { box-shadow: var(--shadow-soft); border-color: #E3D8C4; }
+.glossary-term-head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.glossary-term-icon {
+    width: 30px; height: 30px; border-radius: 9px; flex-shrink: 0; color: #fff;
+    background-image: linear-gradient(155deg, var(--brand-orange), var(--brand-orange-dark));
+    display: flex; align-items: center; justify-content: center;
+}
+.glossary-term-name {
+    font-family: var(--font-elegant); font-weight: 600; font-size: 0.98rem; color: var(--brand-navy);
+}
+.glossary-term-def { font-size: 0.86rem; color: var(--brand-navy-soft); line-height: 1.6; margin: 0; }
+
 .status-banner {
     display: flex; align-items: center; gap: 8px; border-radius: 10px;
     padding: 9px 13px; font-size: 0.85rem; font-weight: 600; margin: 6px 0 4px;
@@ -5389,6 +5419,16 @@ elif st.session_state.page == "exec_dashboard":
                 .st-key-exec_dash_wrap .tfp-table-cream td:first-child { color: var(--brand-navy) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream tr:nth-child(even) td { background: rgba(0,0,0,0.03) !important; }
                 .st-key-exec_dash_wrap .tfp-table-cream tr:hover td { background: rgba(0,0,0,0.06) !important; }
+                /* ----- ข้อความ 2 จุดที่วางอยู่บนพื้นกรมท่าเข้มโดยตรง (ไม่ได้อยู่ในการ์ด
+                   สีอ่อนเหมือนจุดอื่น) — st.caption บรรทัดบนสุด (ข้อมูลล่าสุด/ปีข้อมูล)
+                   และหมายเหตุใต้กราฟ (.exec-chart-footnote) เดิมใช้สี var(--brand-navy-soft)
+                   ซึ่งเป็นสีเข้มออกแบบมาสำหรับพื้นอ่อน พอมาอยู่บนพื้นกรมท่าเข้มจึงกลืน
+                   จนแทบมองไม่เห็น เปลี่ยนเป็นสีขาวโปร่งแสงให้อ่านออกชัดเจน ----- */
+                .st-key-exec_dash_wrap [data-testid="stCaptionContainer"],
+                .st-key-exec_dash_wrap [data-testid="stCaptionContainer"] p,
+                .st-key-exec_dash_wrap .exec-chart-footnote {
+                    color: rgba(255,255,255,0.75) !important;
+                }
                 /* กราฟ/แถวข้อมูลจริงยังใช้พื้นสว่างของตัวเองต่อไปโดยตั้งใจ (เหมือน
                    แผงกระจกสว่างวางอยู่บนพื้นเข้ม) เพราะการพลิกสีกราฟ Altair ทั้งชุด
                    (เส้น/แกน/legend) มีความเสี่ยงสูงที่จะอ่านยากลงแทน จึงเว้นไว้ */
@@ -5551,7 +5591,7 @@ elif st.session_state.page == "exec_dashboard":
                         st.info(f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
                     if _has_forecast:
                         st.markdown(
-                            f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);'
+                            f'<div class="exec-chart-footnote" style="font-size:0.78rem;color:var(--brand-navy-soft);'
                             f'line-height:1.6;margin-top:10px;padding-top:10px;'
                             f'border-top:1px dashed var(--card-border);">'
                             f'เส้นสีส้มแสดงค่า TFP ที่สังเกตได้จริงถึงปี {last_year} '
@@ -6048,7 +6088,6 @@ elif st.session_state.page == "data_vars":
         st.markdown(
             f'<div class="var-group" id="{_group_slug[_group]}">'
             f'<div class="var-group-head">'
-            f'<div class="var-group-head-icon-bg">{icon(_group_icon.get(_group, "bars"), 64, 1.6)}</div>'
             f'<div class="var-group-icon">{icon(_group_icon.get(_group, "bars"), 20, 2)}</div>'
             f'<div class="var-group-title-wrap"><h3>{_group}</h3><p>{_group_desc[_group]}</p></div>'
             f'{_split_html}'
@@ -6068,7 +6107,7 @@ elif st.session_state.page == "data_vars":
         'font-size:0.82rem;color:var(--brand-navy-soft);line-height:1.5;">'
         'แหล่งข้อมูล: นิยาม แหล่งที่มา และผลการศึกษาของตัวแปรทั้งหมดในหน้านี้ อ้างอิงจากรายงาน '
         '<i>"โครงการจัดทำแบบจำลองทางเศรษฐมิติสำหรับติดตามและประเมินผลนโยบายสำคัญ '
-        'นำร่องอุตสาหกรรมเป้าหมายในแผนด้านวิทยาศาสตร์ วิจัย และนวัตกรรมของประเทศ พ.ศ. 2566–2570"'
+        '<span style="white-space:nowrap;">นำร่องอุตสาหกรรม</span>เป้าหมายในแผนด้านวิทยาศาสตร์ วิจัย และนวัตกรรมของประเทศ พ.ศ. 2566–2570"'
         '</i><br>จัดทำภายใต้แผนด้านวิทยาศาสตร์ วิจัย และนวัตกรรมของประเทศ '
         'โดยสำนักงานสภานโยบายการอุดมศึกษา วิทยาศาสตร์ วิจัย และนวัตกรรมแห่งชาติ (สอวช.)'
         '</div>',
@@ -6115,34 +6154,69 @@ elif st.session_state.page == "manual":
         f'คำศัพท์เชิงเทคนิคที่ปรากฏในระบบ อธิบายแบบเข้าใจง่าย</p></div></div>',
         unsafe_allow_html=True,
     )
-    _glossary = [
-        ("TFP (Total Factor Productivity)",
-         "ผลิตภาพการผลิตรวม — วัดว่าเศรษฐกิจผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนจำนวนเท่าเดิม "
-         "ส่วนที่เพิ่มขึ้นเกินกว่านั้นมักสะท้อนถึงเทคโนโลยีและนวัตกรรมที่ดีขึ้น"),
-        ("ARIMA",
-         "แบบจำลองพยากรณ์อนุกรมเวลา ที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต "
-         "เหมาะกับข้อมูลที่มีแนวโน้ม/รูปแบบต่อเนื่องจากอดีต เช่น TFP รายปี"),
-        ("พจน์ปรับตัวของสมการ (ECM)",
-         "ส่วนที่บอกว่า เมื่อค่าจริงเบี่ยงเบนไปจาก \"จุดสมดุลระยะยาว\" แล้ว จะปรับตัวกลับเข้าสู่จุดสมดุลนั้นเร็วแค่ไหน"),
-        ("AIC (Akaike Information Criterion)",
-         "ตัวเลขที่ใช้เทียบว่าโมเดลแบบไหน \"พอดี\" กับข้อมูลที่สุดโดยไม่ซับซ้อนเกินความจำเป็น ยิ่งค่าต่ำยิ่งดี"),
-        ("p-value",
-         "ความน่าจะเป็นที่ผลลัพธ์ที่เห็นเกิดจากความบังเอิญล้วนๆ โดยทั่วไปถ้าต่ำกว่า 0.05 "
-         "จะถือว่าผลนั้น \"มีนัยสำคัญทางสถิติ\" คือไม่น่าจะเกิดจากความบังเอิญ"),
-        ("R² / Adjusted R²",
-         "สัดส่วนความผันแปรของ TFP ที่แบบจำลองอธิบายได้ ค่ายิ่งใกล้ 1 (หรือ 100%) ยิ่งอธิบายข้อมูลได้ดี"),
-        ("ช่วงความเชื่อมั่น 95%",
-         "ช่วงตัวเลขที่คาดว่าค่าจริงในอนาคตจะตกอยู่ในช่วงนี้ด้วยความมั่นใจ 95% "
-         "ยิ่งพยากรณ์ไกลออกไปในอนาคต ช่วงนี้จะยิ่งกว้างขึ้น สะท้อนความไม่แน่นอนที่เพิ่มขึ้น"),
-        ("สัมประสิทธิ์มาตรฐาน (Standardized coefficient)",
-         "ค่าสัมประสิทธิ์ที่ปรับหน่วยของตัวแปรให้เทียบกันได้ ใช้บอกว่าตัวแปรไหน \"มีอิทธิพล\" "
-         "ต่อ TFP มากกว่ากันในสมการเดียวกัน"),
+    _glossary_groups = [
+        ("trend-up", "ตัวชี้วัดหลัก", [
+            ("TFP (Total Factor Productivity)",
+             "ผลิตภาพการผลิตรวม — วัดว่าเศรษฐกิจผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนจำนวนเท่าเดิม "
+             "ส่วนที่เพิ่มขึ้นเกินกว่านั้นมักสะท้อนถึงเทคโนโลยีและนวัตกรรมที่ดีขึ้น"),
+        ]),
+        ("settings", "แบบจำลองและสมการ", [
+            ("ARIMA",
+             "แบบจำลองพยากรณ์อนุกรมเวลา ที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต "
+             "เหมาะกับข้อมูลที่มีแนวโน้ม/รูปแบบต่อเนื่องจากอดีต เช่น TFP รายปี"),
+            ("พจน์ปรับตัวของสมการ (ECM)",
+             "ส่วนที่บอกว่า เมื่อค่าจริงเบี่ยงเบนไปจาก \"จุดสมดุลระยะยาว\" แล้ว จะปรับตัวกลับเข้าสู่จุดสมดุลนั้นเร็วแค่ไหน"),
+            ("ระยะสั้น / ระยะยาว (Short-run / Long-run)",
+             "ความสัมพันธ์ระยะยาวคือจุดสมดุลที่ตัวแปรต่างๆ จะเข้าหาในที่สุด ส่วนความสัมพันธ์ระยะสั้น "
+             "คือการปรับตัวปีต่อปีระหว่างทางก่อนถึงจุดสมดุลนั้น"),
+            ("การทดสอบเสถียรภาพของอนุกรม (Unit Root / ADF Test)",
+             "ตรวจสอบว่าข้อมูลอนุกรมเวลามีแนวโน้มเปลี่ยนแปลงไม่มีที่สิ้นสุด (ไม่นิ่ง) หรือแกว่งอยู่รอบค่าเฉลี่ยคงที่ (นิ่ง) "
+             "ซึ่งมีผลต่อการเลือกใช้แบบจำลองที่ถูกต้อง"),
+            ("AIC (Akaike Information Criterion)",
+             "ตัวเลขที่ใช้เทียบว่าโมเดลแบบไหน \"พอดี\" กับข้อมูลที่สุดโดยไม่ซับซ้อนเกินความจำเป็น ยิ่งค่าต่ำยิ่งดี"),
+        ]),
+        ("bars", "สถิติที่ควรรู้", [
+            ("p-value",
+             "ความน่าจะเป็นที่ผลลัพธ์ที่เห็นเกิดจากความบังเอิญล้วนๆ โดยทั่วไปถ้าต่ำกว่า 0.05 "
+             "จะถือว่าผลนั้น \"มีนัยสำคัญทางสถิติ\" คือไม่น่าจะเกิดจากความบังเอิญ"),
+            ("R² / Adjusted R²",
+             "สัดส่วนความผันแปรของ TFP ที่แบบจำลองอธิบายได้ ค่ายิ่งใกล้ 1 (หรือ 100%) ยิ่งอธิบายข้อมูลได้ดี"),
+            ("ช่วงความเชื่อมั่น 95%",
+             "ช่วงตัวเลขที่คาดว่าค่าจริงในอนาคตจะตกอยู่ในช่วงนี้ด้วยความมั่นใจ 95% "
+             "ยิ่งพยากรณ์ไกลออกไปในอนาคต ช่วงนี้จะยิ่งกว้างขึ้น สะท้อนความไม่แน่นอนที่เพิ่มขึ้น"),
+            ("สัมประสิทธิ์มาตรฐาน (Standardized coefficient)",
+             "ค่าสัมประสิทธิ์ที่ปรับหน่วยของตัวแปรให้เทียบกันได้ ใช้บอกว่าตัวแปรไหน \"มีอิทธิพล\" "
+             "ต่อ TFP มากกว่ากันในสมการเดียวกัน"),
+            ("ความยืดหยุ่น (Elasticity)",
+             "ตัวเลขที่บอกว่า ถ้าตัวแปรต้นเปลี่ยนไป 1% ตัวแปรที่สนใจ (เช่น TFP) จะเปลี่ยนไปโดยประมาณกี่ %"),
+        ]),
+        ("check", "การทดสอบความแม่นยำ", [
+            ("Backtesting (ทดสอบย้อนหลัง)",
+             "การทดสอบความแม่นยำของแบบจำลอง โดยซ่อนข้อมูลปีล่าสุดไว้ชั่วคราว แล้วให้แบบจำลองทายค่าที่ซ่อนไว้ "
+             "จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว"),
+            ("MAPE (Mean Absolute Percentage Error)",
+             "ค่าเฉลี่ยความคลาดเคลื่อนของการพยากรณ์ในหน่วยเปอร์เซ็นต์ ยิ่งค่าต่ำยิ่งพยากรณ์แม่นยำ"),
+            ("Naive Forecast",
+             "วิธีพยากรณ์อย่างง่ายที่สุด โดยใช้ค่าปีล่าสุดเป็นค่าพยากรณ์ของทุกปีถัดไป ใช้เป็นเส้นฐานเทียบว่า "
+             "แบบจำลองที่ซับซ้อนกว่าให้ผลดีขึ้นจริงหรือไม่"),
+        ]),
     ]
     _glossary_html = "".join(
-        f'<div class="var-item-row" style="margin-bottom:14px;">'
-        f'<b style="display:block;color:var(--brand-navy);font-family:var(--font-elegant);'
-        f'font-size:0.98rem;margin-bottom:3px;">{term}</b>{definition}</div>'
-        for term, definition in _glossary
+        f'<div class="glossary-group">'
+        f'<div class="glossary-group-label">{icon(group_icon, 14, 2)} {group_name}</div>'
+        f'<div class="glossary-grid">'
+        + "".join(
+            f'<div class="glossary-term-card">'
+            f'<div class="glossary-term-head">'
+            f'<div class="glossary-term-icon">{icon("book", 14, 2)}</div>'
+            f'<span class="glossary-term-name">{term}</span>'
+            f'</div>'
+            f'<p class="glossary-term-def">{definition}</p>'
+            f'</div>'
+            for term, definition in terms
+        )
+        + '</div></div>'
+        for group_icon, group_name, terms in _glossary_groups
     )
     st.markdown(
         f'<div class="section-card" style="padding-top:6px;">{_glossary_html}</div>',
