@@ -2858,6 +2858,107 @@ except (KeyError, FileNotFoundError):
 if "research_authenticated" not in st.session_state:
     st.session_state.research_authenticated = False
 
+# ------------------------------------------------------------------------------
+# หน้าเลือกบทบาท (Role picker) — ก่อนหน้านี้ sidebar โชว์เมนู "สำหรับคณะวิจัยเท่านั้น"
+# ให้ผู้เยี่ยมชมเห็นตลอด ทั้งที่กดเข้าไปก็เจอแค่หน้า login ทำให้ดูรกและงงว่าเมนูนี้
+# มีไว้ทำไม จึงเปลี่ยนมาให้เลือกบทบาทก่อนตั้งแต่หน้าแรกสุด (ยังไม่โชว์ sidebar เลย)
+# แล้วค่อยตัดสินใจว่าจะโชว์เมนูชุดไหนตามบทบาทที่เลือก:
+#   - "ผู้เยี่ยมชม": เห็นแค่ NAV_ITEMS (3 เมนูหลัก)
+#   - "คณะวิจัย": ต้องกรอกรหัสผ่านให้ถูกก่อน (ใช้ตรรกะเดิมจากหน้า "สำหรับคณะวิจัย
+#     เท่านั้น" ทุกอย่าง แค่ย้ายมาไว้ตรงนี้) ถึงจะเห็นเมนูครบ (NAV_ITEMS +
+#     NAV_ITEMS_SECONDARY) — หมายเหตุ: นี่คือการปรับปรุงด้าน UX ให้ดูเป็นระเบียบ
+#     ขึ้นเท่านั้น ไม่ได้ทำให้ระบบปลอดภัยขึ้นกว่าเดิม เพราะยังเป็นการเช็ครหัสผ่าน
+#     แบบเดิมในฝั่งหน้าเว็บ ไม่ใช่ระบบยืนยันตัวตนฝั่ง backend จริงจัง
+if "portal_role" not in st.session_state:
+    st.session_state.portal_role = None
+
+if st.session_state.portal_role is None:
+    st.markdown(
+        f'<div class="nxpo-hero" style="{hero_bg_style}"><div class="nxpo-hero-flex">'
+        '<div class="nxpo-hero-left" style="flex:1 1 58%;max-width:58%;">'
+        '<span class="nxpo-hero-badge-eyebrow">NXPO Data Center • Econometric Analytics</span>'
+        '<h1>ระบบวิเคราะห์และพยากรณ์<br>ผลิตภาพปัจจัยการผลิตรวม (TFP)</h1>'
+        '<p class="desc">วิเคราะห์แนวโน้มผลิตภาพของประเทศไทยด้วยแบบจำลองเศรษฐมิติ<br>'
+        'พร้อมระบบพยากรณ์และสรุปผลอัตโนมัติ</p>'
+        '<div class="nxpo-hero-chips">'
+        f'<span class="nxpo-hero-chip">{icon("search", 14, 2)} วิเคราะห์ข้อมูล</span>'
+        f'<span class="nxpo-hero-chip">{icon("trend-up", 14, 2)} พยากรณ์ TFP</span>'
+        f'<span class="nxpo-hero-chip">{icon("check", 14, 2)} ตรวจสอบแบบจำลอง</span>'
+        f'<span class="nxpo-hero-chip">{icon("sparkle", 14, 2)} สรุปผลอัตโนมัติ</span>'
+        '</div>'
+        '</div>'
+        '</div></div>',
+        unsafe_allow_html=True,
+    )
+    st.write("")
+    st.markdown(
+        '<p style="text-align:center;color:var(--brand-navy-soft);font-size:0.95rem;'
+        'margin-bottom:14px;">กรุณาเลือกว่าคุณเข้าใช้งานในฐานะใด</p>',
+        unsafe_allow_html=True,
+    )
+    _role_cols = st.columns(2)
+    with _role_cols[0]:
+        with st.container(key="role_card_visitor", border=True):
+            st.markdown(
+                f'<div style="text-align:center;">'
+                f'<div style="width:48px;height:48px;border-radius:14px;margin:0 auto 12px;'
+                f'background-image:linear-gradient(155deg,var(--brand-orange),var(--brand-orange-dark));'
+                f'color:#fff;display:flex;align-items:center;justify-content:center;'
+                f'box-shadow:0 5px 12px rgba(217,109,15,0.3);">{icon("search", 22, 2)}</div>'
+                f'<div style="font-family:var(--font-elegant);font-weight:700;font-size:1.1rem;'
+                f'color:var(--brand-navy);margin-bottom:4px;">ผู้เยี่ยมชม</div>'
+                f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.6;'
+                f'margin-bottom:16px;">ดู Dashboard พยากรณ์ TFP ทำความรู้จักตัวแปร '
+                f'และคู่มือการใช้งาน</div></div>',
+                unsafe_allow_html=True,
+            )
+            if st.button("เข้าใช้งานในฐานะผู้เยี่ยมชม", use_container_width=True, key="pick_role_visitor"):
+                st.session_state.portal_role = "visitor"
+                st.session_state.page = "forecast"
+                st.rerun()
+    with _role_cols[1]:
+        with st.container(key="role_card_research", border=True):
+            st.markdown(
+                f'<div style="text-align:center;">'
+                f'<div style="width:48px;height:48px;border-radius:14px;margin:0 auto 12px;'
+                f'background-image:linear-gradient(155deg,var(--brand-navy),#0E2436);'
+                f'color:#fff;display:flex;align-items:center;justify-content:center;'
+                f'box-shadow:0 5px 12px rgba(11,26,40,0.3);">{icon("lock", 22, 2)}</div>'
+                f'<div style="font-family:var(--font-elegant);font-weight:700;font-size:1.1rem;'
+                f'color:var(--brand-navy);margin-bottom:4px;">คณะวิจัย</div>'
+                f'<div style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.6;'
+                f'margin-bottom:16px;">จัดการข้อมูลอัตโนมัติ ตั้งค่าระบบ '
+                f'และเข้าถึงทุกเมนูของผู้เยี่ยมชมได้ด้วย (ต้องเข้าสู่ระบบก่อน)</div></div>',
+                unsafe_allow_html=True,
+            )
+            if _research_login_config_error:
+                st.error(_research_login_config_error)
+            else:
+                with st.form("portal_research_login_form", clear_on_submit=False):
+                    _portal_login_user = st.text_input("ชื่อผู้ใช้ (Username)", key="portal_login_user")
+                    _portal_login_pass = st.text_input(
+                        "รหัสผ่าน (Password)", type="password", key="portal_login_pass"
+                    )
+                    _portal_login_submitted = st.form_submit_button("เข้าสู่ระบบคณะวิจัย", use_container_width=True)
+                if _portal_login_submitted:
+                    # ใช้ hmac.compare_digest แทน == ธรรมดา เพื่อลดความเสี่ยงจาก
+                    # timing attack (เดารหัสผ่านจากเวลาที่ใช้เทียบสตริง) — ตรรกะ
+                    # เดียวกับหน้า "สำหรับคณะวิจัยเท่านั้น" เดิม
+                    _portal_user_ok = hmac.compare_digest(
+                        _portal_login_user.encode("utf-8"), RESEARCH_USERNAME.encode("utf-8")
+                    )
+                    _portal_pass_ok = hmac.compare_digest(
+                        _portal_login_pass.encode("utf-8"), RESEARCH_PASSWORD.encode("utf-8")
+                    )
+                    if _portal_user_ok and _portal_pass_ok:
+                        st.session_state.research_authenticated = True
+                        st.session_state.portal_role = "research"
+                        st.session_state.page = "forecast"
+                        st.rerun()
+                    else:
+                        st.error("ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง")
+    st.stop()
+
 with st.sidebar:
     _logo_divider_height = max(_LOGO1_SIZE, _LOGO2_SIZE) - 12
     st.markdown(
@@ -2912,28 +3013,41 @@ with st.sidebar:
             st.session_state.page = page_key
             st.rerun()
 
-    # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าหน้า "สำหรับคณะวิจัยเท่านั้น" อยู่แล้ว
+    # ปุ่มออกจากระบบ — โชว์เฉพาะตอนล็อกอินเข้าระบบคณะวิจัยอยู่แล้ว กดแล้วรีเซ็ต
+    # portal_role กลับไปเป็น None ด้วย เพื่อกลับไปที่หน้าเลือกบทบาทอีกครั้ง
+    # (ไม่ใช่แค่ล็อกเอาต์แล้วค้างอยู่ใน sidebar เดิม)
     if st.session_state.research_authenticated:
-        if st.button("ออกจากระบบ (คณะวิจัย)", use_container_width=True, key="nav_logout"):
+        if st.button("ออกจากระบบคณะวิจัย", use_container_width=True, key="nav_logout"):
             st.session_state.research_authenticated = False
+            st.session_state.portal_role = None
             st.session_state.page = "forecast"
             st.rerun()
-
-    st.markdown("---")
-    st.markdown(
-        f'<div class="sidebar-section-label">{icon("lock", 14, 1.6)}<span>สำหรับคณะวิจัย</span></div>',
-        unsafe_allow_html=True,
-    )
-    for i, (label, page_key) in enumerate(NAV_ITEMS_SECONDARY):
-        is_active = st.session_state.page == page_key
-        if st.button(
-            label,
-            key=f"nav_sec_{i}_{page_key}",
-            use_container_width=True,
-            type="primary" if is_active else "secondary",
-        ):
-            st.session_state.page = page_key
+    elif st.session_state.portal_role == "visitor":
+        # ผู้เยี่ยมชมที่อยากสลับไปเข้าสู่ระบบคณะวิจัย — กลับไปหน้าเลือกบทบาทแทนที่
+        # จะฝังฟอร์มล็อกอินซ้ำอีกจุดในนี้ ให้ใช้ฟอร์มเดียวกับตอนเลือกบทบาทตอนแรก
+        if st.button("เข้าสู่ระบบคณะวิจัย", use_container_width=True, key="nav_switch_to_research"):
+            st.session_state.portal_role = None
             st.rerun()
+
+    # เมนูกลุ่ม "สำหรับคณะวิจัย" — โชว์เฉพาะตอนเลือกบทบาทเป็นคณะวิจัยแล้วเท่านั้น
+    # (ผู้เยี่ยมชมจะไม่เห็นเมนูกลุ่มนี้เลย ต่างจากเดิมที่โชว์ให้ทุกคนเห็นแต่กดเข้าไป
+    # แล้วเจอแค่หน้า login)
+    if st.session_state.portal_role == "research":
+        st.markdown("---")
+        st.markdown(
+            f'<div class="sidebar-section-label">{icon("lock", 14, 1.6)}<span>สำหรับคณะวิจัย</span></div>',
+            unsafe_allow_html=True,
+        )
+        for i, (label, page_key) in enumerate(NAV_ITEMS_SECONDARY):
+            is_active = st.session_state.page == page_key
+            if st.button(
+                label,
+                key=f"nav_sec_{i}_{page_key}",
+                use_container_width=True,
+                type="primary" if is_active else "secondary",
+            ):
+                st.session_state.page = page_key
+                st.rerun()
 
     # ป้ายข้อมูลผู้จัดทำ + โลโก้มหาวิทยาลัย/ภาควิชา + เวอร์ชันแอป — วางไว้ท้าย
     # แถบเมนูด้านซ้าย (เล็ก ๆ ไม่เกะกะ) แทนที่จะลอยทับเนื้อหาแบบเดิม
@@ -5738,8 +5852,7 @@ elif st.session_state.page == "data_vars":
         '<p>แบบจำลองนี้วิเคราะห์ผลกระทบของปัจจัยด้านวิทยาศาสตร์ วิจัย และนวัตกรรม (ววน.) '
         'ต่อผลิตภาพการผลิตรวมของประเทศไทย (Total Factor Productivity: TFP) โดยแบ่งตัวแปรอิสระ '
         'ออกเป็น 3 กลุ่มตามบทบาท ได้แก่ กลุ่มปัจจัยนำเข้า กลุ่มผลผลิต และกลุ่มปัจจัยแวดล้อมทางเศรษฐกิจ '
-        'ตามรายละเอียดด้านล่างนี้ (หน้านี้ไม่แสดงตัวเลขข้อมูลดิบรายปี เนื่องจากถือเป็นข้อมูลที่มีความอ่อนไหว '
-        'ต้องการดูค่าสัมประสิทธิ์และผลการประมาณการปัจจุบันของแบบจำลอง ดูได้ที่หน้า "ผลการวิเคราะห์")</p>'
+        'ตามรายละเอียดด้านล่างนี้</p>'
         f'<div class="var-stats">'
         f'<div class="var-stat"><b>{_n_indep}</b><span>ตัวแปรอิสระ</span></div>'
         f'<div class="var-stat"><b>{_n_groups}</b><span>กลุ่มปัจจัย</span></div>'
