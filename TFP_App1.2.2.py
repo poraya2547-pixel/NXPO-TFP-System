@@ -366,7 +366,7 @@ section[data-testid="stSidebar"] div[data-testid="stButton"] button[kind="primar
    เดิมช่องไฟระหว่างบล็อกของ Streamlit (gap 1rem) + เส้นคั่น <hr> + margin ของ
    การ์ดโลโก้/caption รวมกันแล้วดันเนื้อหายาวเกินความสูงจอโน้ตบุ๊กทั่วไป ----- */
 section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]
-    div[data-testid="stVerticalBlock"] { gap: 0.3rem !important; }
+    div[data-testid="stVerticalBlock"] { gap: 0.5rem !important; }
 section[data-testid="stSidebar"] .sidebar-logo-card { margin-bottom: 8px; gap: 16px; }
 section[data-testid="stSidebar"] .sidebar-logo-card img { max-height: 76px !important; }
 section[data-testid="stSidebar"] .sidebar-section-label { margin: 2px 0 4px 6px; }
@@ -381,8 +381,32 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
     margin: 2px 0 0 0 !important; font-size: 0.75rem !important; line-height: 1.35 !important;
 }
 section[data-testid="stSidebar"] .status-banner { margin: 4px 0 0 !important; padding: 6px 10px; }
-section[data-testid="stSidebar"] .corner-badge { margin-top: 10px; padding-top: 8px; gap: 4px; }
+section[data-testid="stSidebar"] .corner-badge { margin-top: 0; padding-top: 8px; gap: 4px; }
 section[data-testid="stSidebar"] .corner-badge-logos img { max-height: 24px !important; }
+
+/* ----- กระจายเนื้อหาให้เต็มความสูงของแถบเมนู (ไม่ต้องเลื่อนขึ้นลง) — เดิมทุก
+   บล็อก (โลโก้ / ปุ่มดึงข้อมูล / เมนูหลัก / ป้ายผู้จัดทำ) ถูกบีบให้ชิดกันแล้ว
+   "ลอย" อยู่แค่ช่วงบนของแถบเมนู เหลือพื้นที่ว่างเปล่ายาวด้านล่างสุด (ใต้ป้าย
+   เวอร์ชันแอป) ดูไม่สมดุล จึงเปลี่ยนให้กล่องเนื้อหาทั้งหมดเป็น flex column สูง
+   เท่าแถบเมนูจริง แล้วดันบล็อกสุดท้าย (ป้ายผู้จัดทำ/โลโก้มหาวิทยาลัย/เวอร์ชัน)
+   ลงไปชิดขอบล่างสุดด้วย margin-top: auto — ช่องว่างที่เคยกองอยู่ล่างสุดจึงถูก
+   ย้ายไปแทรกอยู่ "ระหว่าง" กลุ่มเมนูกับป้ายท้ายแทน ทำให้เนื้อหากระจายเต็มพอดี
+   โดยไม่ต้องบีบระยะห่างระหว่างปุ่มเมนูให้แน่นจนดูซ้อนทับกัน -----*/
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100% !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] > div[data-testid="stVerticalBlock"] {
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 1 auto !important;
+}
+section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]
+    > div[data-testid="stVerticalBlock"] > div:last-child {
+    margin-top: auto !important;
+    padding-top: 10px;
+}
 
 /* ----- กล่องพื้นขาวสำหรับข้อความคำอธิบาย (เช่นในส่วน Backtesting) — เดิมข้อความ
    ลอยอยู่บนพื้นหลังลายจุด (dot-grid) ของ .stApp โดยตรง ทำให้กลืนกับพื้นหลังจนอ่านยาก
