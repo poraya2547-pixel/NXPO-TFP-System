@@ -224,9 +224,16 @@ st.markdown("""
    แถบเมนู/หัวข้อของตัวเองอยู่แล้ว (nxpo-topbar) จึงซ่อนแถบเริ่มต้นนี้ทิ้งไปเลย
    และลด padding-top ของเนื้อหาหลักที่เผื่อพื้นที่ไว้ให้แถบนี้ลงด้วย ----- */
 header[data-testid="stHeader"] {
-    height: 0rem !important;
-    min-height: 0rem !important;
-    visibility: hidden;
+    /* เดิมลองซ่อนด้วย height: 0 + visibility: hidden ไปเลย แต่ทำให้ปุ่มย่อ/ขยาย
+       แถบเมนู (collapsedControl) ที่อยู่ข้างในแถบนี้พังไปด้วย — น่าจะเป็นเพราะ
+       Streamlit ผูก overflow/การคำนวณตำแหน่งของปุ่มนั้นไว้กับกรอบแถบนี้ พอบีบ
+       ความสูงเป็น 0 เลยพลอยถูกบีบจนมองไม่เห็น/กดไม่ได้ไปด้วย
+       จึงเปลี่ยนวิธีเป็น "ทำให้กลืนกับพื้นหลัง" แทนการบีบขนาด/ซ่อนทั้งกรอบ —
+       แถบนี้ยังมีพื้นที่อยู่เท่าเดิมแต่มองไม่เห็นเป็นแถบขาวๆ อีกต่อไป และ
+       ปุ่มย่อ/ขยายแถบเมนูข้างในจะไม่ถูกกระทบเลย */
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
 }
 [data-testid="stMain"] .block-container {
     padding-top: 1.5rem !important;
@@ -282,11 +289,12 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"] {
     padding-top: 0 !important;
 }
 section[data-testid="stSidebar"] .block-container {
-    /* เดิม padding-top: 1.2rem; ผู้ใช้ขอให้ขยับเนื้อหา (โลโก้/ปุ่ม) ข้างในแถบเมนู
-       ขึ้นทีละนิดหลายรอบ (รวมแล้วขึ้น 10+10+15+20+20+30 = 105มม.) เนื่องจาก
-       padding เป็นค่าติดลบไม่ได้ จึงตัด padding-top ออกแล้วใช้ margin-top ติดลบแทน */
+    /* เดิม padding-top: 1.2rem; แล้วมีการขอขยับขึ้นสะสมหลายรอบจนไปถึง -105mm
+       ซึ่งน่าจะเป็นสาเหตุร่วมที่ทำให้เนื้อหา/ปุ่มในแถบเมนูเพี้ยนไปด้วย
+       (นอกเหนือจากบั๊กเรื่อง header ที่แก้ไปแล้ว) จึงรีเซ็ตกลับมาที่ 0 ก่อน
+       เพื่อให้เห็นสถานะปกติชัดๆ แล้วค่อยขยับขึ้นทีละนิดจากจุดนี้ใหม่ถ้าจำเป็น */
     padding-top: 0;
-    margin-top: calc(1.2rem - 105mm);
+    margin-top: 0;
 }
 section[data-testid="stSidebar"] [data-testid="stAlert"] * { color: inherit !important; }
 
