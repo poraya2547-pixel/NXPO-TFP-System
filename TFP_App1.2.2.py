@@ -1228,7 +1228,8 @@ if sys_bg_path:
 # ถ้าเจอไฟล์จะซ้อนภาพนี้ไว้หลังการ์ด .var-intro พร้อมเคลือบสีขาวโปร่งแสงทับอีกชั้น
 # ให้ตัวหนังสือ/สถิติด้านหน้ายังอ่านง่าย — ถ้าไม่เจอไฟล์ ใช้พื้นครีมธรรมดาต่อไปได้
 var_intro_bg_path = _resolve_bg_path(APP_DIR, "พื้นหลังตัวแปร.png")
-if var_intro_bg_path:
+var_intro_bg_found = var_intro_bg_path is not None
+if var_intro_bg_found:
     st.markdown(
         f"""
         <style>
@@ -5738,6 +5739,23 @@ elif st.session_state.page == "data_vars":
         f'</div></div>',
         unsafe_allow_html=True,
     )
+
+    # ----- ข้อความ debug ชั่วคราว — โชว์เฉพาะตอนยังหาไฟล์ "พื้นหลังตัวแปร.png" ไม่เจอ
+    # เพื่อบอกให้ชัดว่าโค้ดกำลังมองหาไฟล์ที่โฟลเดอร์ไหน และเจอไฟล์รูปอะไรบ้างในนั้น
+    # (ถ้าใส่ไฟล์ถูกที่/ถูกชื่อแล้ว var_intro_bg_found จะเป็น True และข้อความนี้จะ
+    # หายไปเองโดยอัตโนมัติ ไม่ต้องลบโค้ดส่วนนี้ทิ้งทีหลัง) -----
+    if not var_intro_bg_found:
+        try:
+            _dir_images = [f for f in os.listdir(APP_DIR) if f.lower().endswith((".png", ".jpg", ".jpeg", ".webp"))]
+        except (FileNotFoundError, NotADirectoryError, PermissionError):
+            _dir_images = None
+        st.caption(
+            f"🔧 Debug: ยังไม่พบไฟล์ \"พื้นหลังตัวแปร.png\" ในโฟลเดอร์ `{APP_DIR}` — "
+            + (f"ไฟล์รูปที่เจอในโฟลเดอร์นี้ตอนนี้: {', '.join(_dir_images)}"
+               if _dir_images else
+               "ไม่พบไฟล์รูปใด ๆ เลยในโฟลเดอร์นี้ (ตรวจสอบว่าวางไฟล์ถูกโฟลเดอร์หรือยัง)")
+        )
+
 
     # ----- (ไอเดียที่ 2) ปุ่ม jump-to ไปหาแต่ละกลุ่ม -----
     _group_slug = {
