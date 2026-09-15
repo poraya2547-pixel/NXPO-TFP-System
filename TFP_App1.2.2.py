@@ -1243,7 +1243,7 @@ if var_intro_bg_found:
         <style>
         .var-intro {{
             background-image:
-                linear-gradient(120deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.95) 45%, rgba(255,255,255,0.6) 100%),
+                linear-gradient(120deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.98) 55%, rgba(255,255,255,0.2) 100%),
                 url(data:image/png;base64,{img_to_base64(var_intro_bg_path)}) !important;
             background-size: cover !important;
             background-position: center !important;
