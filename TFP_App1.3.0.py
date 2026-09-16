@@ -249,8 +249,8 @@ header[data-testid="stHeader"] {
    ไว้เยอะเกินไป ดูเหมือนมีช่องว่างลอยอยู่เหนือ hero banner) — ลดลงประมาณ 1 นิ้ว
    (~96px) ให้เนื้อหาเริ่มต้นชิดขึ้นกว่าเดิม ใช้ selector กว้าง ๆ ของพื้นที่หลัก
    (ไม่ใช่ sidebar ซึ่งมี padding-top ของตัวเองกำหนดแยกไว้ด้านล่างอยู่แล้ว)
-   จากนั้นดึงการ์ด hero ขึ้นไปอีก 2 ซม. (~75.6px) ด้วย margin-top ติดลบ
-   ตามที่ขอเพิ่มเติม (ปรับตัวเลข -75.6px นี้เพิ่ม/ลดได้ถ้าต้องการชิดกว่านี้อีก) -----*/
+   จากนั้นดึงการ์ด hero ขึ้นไปอีกด้วย margin-top ติดลบ ตามที่ขอเพิ่มเติม
+   (ปรับตัวเลข margin-top นี้เพิ่ม/ลดได้ถ้าต้องการชิดกว่านี้อีก) -----*/
 [data-testid="stAppViewContainer"] > .main .block-container,
 section[data-testid="stMain"] .block-container,
 section[data-testid="stMain"] > div,
