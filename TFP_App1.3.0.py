@@ -3158,8 +3158,6 @@ with st.sidebar:
             status_banner("success", f"ดึงข้อมูลล่าสุดเมื่อ {st.session_state.gsheet_loaded_at.strftime('%H:%M:%S')}"),
             unsafe_allow_html=True,
         )
-    st.caption("ดึงข้อมูล → รันโมเดล → สรุปผลอัตโนมัติ")
-    st.markdown("---")
 
     for i, (label, page_key) in enumerate(NAV_ITEMS):
         is_active = st.session_state.page == page_key
