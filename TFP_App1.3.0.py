@@ -3159,6 +3159,8 @@ with st.sidebar:
             unsafe_allow_html=True,
         )
 
+    st.markdown("---")
+
     for i, (label, page_key) in enumerate(NAV_ITEMS):
         is_active = st.session_state.page == page_key
         if st.button(
