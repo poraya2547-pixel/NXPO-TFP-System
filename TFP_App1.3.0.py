@@ -380,7 +380,7 @@ section[data-testid="stSidebar"] [data-testid="stCaptionContainer"],
 section[data-testid="stSidebar"] [data-testid="stCaptionContainer"] p {
     margin: 2px 0 0 0 !important; font-size: 0.75rem !important; line-height: 1.35 !important;
 }
-section[data-testid="stSidebar"] .status-banner { margin: 4px 0 0 !important; padding: 6px 10px; }
+section[data-testid="stSidebar"] .status-banner { margin: -14px 0 0 !important; padding: 6px 10px; }
 section[data-testid="stSidebar"] .corner-badge { margin-top: 0; padding-top: 8px; gap: 4px; }
 section[data-testid="stSidebar"] .corner-badge-logos img { max-height: 24px !important; }
 
@@ -858,6 +858,13 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
     margin: 0; color: var(--brand-navy); font-size: 1.22rem; font-weight: 600; letter-spacing: -0.01em;
     line-height: 1.3; overflow-wrap: break-word; word-break: normal;
 }
+
+/* ----- section-card-compact — เวอร์ชันย่อขนาดลง ~10% จากการ์ดปกติ ใช้เฉพาะ
+   การ์ด "แนวโน้ม TFP และพยากรณ์" และ "พยากรณ์ TFP รายปี" ในหน้า forecast ตามที่ขอ ----- */
+.section-card.section-card-compact { padding: 14px 20px; margin-bottom: 13px; border-radius: 16px; }
+.section-card.section-card-compact .section-num { width: 40px; height: 40px; font-size: 1.08rem; }
+.section-card.section-card-compact .section-title { gap: 13px; }
+.section-card.section-card-compact .section-title h3 { font-size: 1.1rem; }
 
 
 /* ----- badge pill ----- */
@@ -5638,7 +5645,7 @@ elif st.session_state.page == "exec_dashboard":
                 col_main, col_side = st.columns([1.7, 1], gap="medium")
                 with col_main:
                     st.markdown(
-                        f'<div class="section-card"><div class="section-title">'
+                        f'<div class="section-card section-card-compact"><div class="section-title">'
                         f'<div class="section-num">{icon("trend-up", 16, 2)}</div>'
                         f'<div class="section-title-text"><h3>แนวโน้ม TFP และพยากรณ์ {horizon} ปีข้างหน้า</h3>'
                         f'</div></div>',
@@ -5678,7 +5685,7 @@ elif st.session_state.page == "exec_dashboard":
                 with col_side:
                     if _has_forecast:
                         st.markdown(
-                            f'<div class="section-card"><div class="section-title">'
+                            f'<div class="section-card section-card-compact"><div class="section-title">'
                             f'<div class="section-num">{icon("calendar", 16, 2)}</div>'
                             f'<div class="section-title-text"><h3>พยากรณ์ TFP รายปี</h3></div></div>',
                             unsafe_allow_html=True,
