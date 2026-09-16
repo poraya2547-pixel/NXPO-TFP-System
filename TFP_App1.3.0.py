@@ -5816,19 +5816,30 @@ elif st.session_state.page == "exec_dashboard":
                     _insight_card_title = (
                         "สรุปภาพรวม" if st.session_state.exec_presentation_mode else "ประเด็นสำคัญ"
                     )
-                    st.markdown(
-                        f'<div class="{_insight_card_class}" style="{"margin-top:-10px;" if st.session_state.exec_presentation_mode else ""}">'
-                        f'<div class="section-title" style="margin-bottom:6px;">'
-                        f'<div class="section-num">{icon("bulb", 16, 1.8)}</div>'
-                        f'<div class="section-title-text"><h3>{_insight_card_title}</h3></div></div>'
-                        + "".join(
-                            f'<div class="exec-insight-item"><div class="exec-insight-num">{i+1}</div>'
-                            f'<div>{line}</div></div>'
-                            for i, line in enumerate(_insight_lines)
+                    if st.session_state.exec_presentation_mode:
+                        # โหมดนำเสนอ: ตัดเลขลำดับ "1" ออก แล้วต่อเนื้อหาสรุปให้อยู่บรรทัด
+                        # เดียวกับหัวข้อเลย (ไม่ขึ้นบรรทัดใหม่แบบลิสต์ปกติ)
+                        st.markdown(
+                            f'<div class="{_insight_card_class}"><div class="section-title" style="margin-bottom:0;">'
+                            f'<div class="section-num">{icon("bulb", 16, 1.8)}</div>'
+                            f'<div class="section-title-text"><h3>{_insight_card_title}: '
+                            f'<span style="font-weight:500;">{_insight_lines[0]}</span></h3></div></div></div>',
+                            unsafe_allow_html=True,
                         )
-                        + '</div>',
-                        unsafe_allow_html=True,
-                    )
+                    else:
+                        st.markdown(
+                            f'<div class="{_insight_card_class}">'
+                            f'<div class="section-title" style="margin-bottom:6px;">'
+                            f'<div class="section-num">{icon("bulb", 16, 1.8)}</div>'
+                            f'<div class="section-title-text"><h3>{_insight_card_title}</h3></div></div>'
+                            + "".join(
+                                f'<div class="exec-insight-item"><div class="exec-insight-num">{i+1}</div>'
+                                f'<div>{line}</div></div>'
+                                for i, line in enumerate(_insight_lines)
+                            )
+                            + '</div>',
+                            unsafe_allow_html=True,
+                        )
 
 # ------------------------------------------------------------------------------
 # หน้า "ทำความรู้จักตัวแปร" — ตารางข้อมูลที่ใช้จริงในโมเดล + คำอธิบายตัวแปรแต่ละตัว
