@@ -257,7 +257,7 @@ section[data-testid="stMain"] > div,
 div[data-testid="stMainBlockContainer"],
 div[data-testid="block-container"] {
     padding-top: 1.5rem !important;
-    margin-top: -40px !important;
+    margin-top: -55px !important;
 }
 /* เผื่อ Streamlit เวอร์ชันที่ใช้จริงใส่ padding-top ไว้ที่ตัว "section" หลักเอง
    (คนละจุดกับ .block-container ด้านใน) — เคลียร์ไว้ด้วยกันพลาด */
