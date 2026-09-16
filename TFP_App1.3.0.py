@@ -5639,9 +5639,8 @@ elif st.session_state.page == "exec_dashboard":
                     '<div class="kpi-strip">' + _kpi_item_1 + _kpi_item_2 + _kpi_item_3 + _kpi_item_4 + '</div>',
                     unsafe_allow_html=True,
                 )
-                st.write("")
-
-                # ================= แถว 2: กราฟหลัก (ซ้าย) + ตารางพยากรณ์ย่อ/สรุป (ขวา) =================
+                if not st.session_state.exec_presentation_mode:
+                    st.write("")
                 col_main, col_side = st.columns([1.7, 1], gap="medium")
                 with col_main:
                     st.markdown(
@@ -5724,9 +5723,8 @@ elif st.session_state.page == "exec_dashboard":
                             unsafe_allow_html=True,
                         )
 
-                st.write("")
-
-                # ================= แถว 3: สัดส่วนอิทธิพลตัวแปร (ซ้าย) + คุณภาพแบบจำลอง/ข้อสรุป (ขวา) =================
+                if not st.session_state.exec_presentation_mode:
+                    st.write("")
                 # เฉพาะคณะวิจัยที่ล็อกอินแล้วเท่านั้นที่เห็นกราฟสัดส่วนอิทธิพลของตัวแปร
                 # (เป็นข้อมูลเชิงวิชาการ) — บุคคลทั่วไปจะเห็นเฉพาะ "ประเด็นสำคัญ" แบบ
                 # เข้าใจง่าย ไม่พูดถึงตัวแปร/สมมติฐาน โดยขยายเต็มความกว้างแทน
@@ -5774,32 +5772,55 @@ elif st.session_state.page == "exec_dashboard":
                     _n_total = n_pass + n_watch + n_fail
                     _top_var_label = infl_df.iloc[0]["label"] if infl_df is not None and not infl_df.empty else None
                     _insight_lines = []
-                    if _has_forecast:
-                        _insight_lines.append(
-                            f"TFP มีแนวโน้ม{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}ต่อเนื่องถึงปี {fc_year}"
-                        )
-                    # เส้นข้อมูลเชิงวิชาการ (ตัวแปร/สมมติฐาน) แสดงเฉพาะคณะวิจัยที่ล็อกอินแล้ว
-                    if _is_research:
-                        if _top_var_label:
-                            _insight_lines.append(f"'{_top_var_label}' เป็นตัวแปรที่มีอิทธิพลต่อ TFP มากที่สุดในสมการปัจจุบัน")
-                        _insight_lines.append(
-                            f"แบบจำลองผ่านเกณฑ์ข้อสมมติฐาน {n_pass} จาก {_n_total} รายการ"
-                            + (" — ควรตีความผลด้วยความระมัดระวัง" if n_fail > 0 else "")
-                        )
-                        if scenario_pct_effect is not None:
+                    if st.session_state.exec_presentation_mode:
+                        # ----- โหมดนำเสนอ: ย่อ "ประเด็นสำคัญ" ให้เหลือบรรทัดเดียว สรุปจาก
+                        # ตัวเลขแนวโน้ม/พยากรณ์จริงของแบบจำลอง (แทนลิสต์หลายบรรทัดแบบปกติ)
+                        # เพื่อให้เนื้อหาทั้งหน้าพอดีจอเดียว ไม่ต้องเลื่อน -----
+                        if _has_forecast:
                             _insight_lines.append(
-                                f"สมมติฐานที่ตั้งไว้ ({_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
-                                f"{'%' if scenario_var.startswith('ln_') else ''}) "
-                                f"อาจส่งผลต่อ TFP ประมาณ {scenario_pct_effect:+.2f}%"
+                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) มีแนวโน้ม"
+                                f"{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}เฉลี่ย {cagr:+.1f}% ต่อปี "
+                                f"คาดแตะ {fc_final:,.2f} ในปี {fc_year} ({growth_total:+.1f}% ในช่วง {horizon} ปี)"
+                            )
+                        else:
+                            _insight_lines.append(
+                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) — ข้อมูลยังไม่พอสำหรับพยากรณ์ด้วย ARIMA"
                             )
                     else:
-                        _insight_lines.append(
-                            "ระบบวิเคราะห์ด้วยแบบจำลองเศรษฐมิติ ARIMA จากข้อมูลผลิตภาพย้อนหลังของประเทศไทย"
-                        )
+                        if _has_forecast:
+                            _insight_lines.append(
+                                f"TFP มีแนวโน้ม{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}ต่อเนื่องถึงปี {fc_year}"
+                            )
+                        # เส้นข้อมูลเชิงวิชาการ (ตัวแปร/สมมติฐาน) แสดงเฉพาะคณะวิจัยที่ล็อกอินแล้ว
+                        if _is_research:
+                            if _top_var_label:
+                                _insight_lines.append(f"'{_top_var_label}' เป็นตัวแปรที่มีอิทธิพลต่อ TFP มากที่สุดในสมการปัจจุบัน")
+                            _insight_lines.append(
+                                f"แบบจำลองผ่านเกณฑ์ข้อสมมติฐาน {n_pass} จาก {_n_total} รายการ"
+                                + (" — ควรตีความผลด้วยความระมัดระวัง" if n_fail > 0 else "")
+                            )
+                            if scenario_pct_effect is not None:
+                                _insight_lines.append(
+                                    f"สมมติฐานที่ตั้งไว้ ({_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
+                                    f"{'%' if scenario_var.startswith('ln_') else ''}) "
+                                    f"อาจส่งผลต่อ TFP ประมาณ {scenario_pct_effect:+.2f}%"
+                                )
+                        else:
+                            _insight_lines.append(
+                                "ระบบวิเคราะห์ด้วยแบบจำลองเศรษฐมิติ ARIMA จากข้อมูลผลิตภาพย้อนหลังของประเทศไทย"
+                            )
+                    _insight_card_class = (
+                        "section-card section-card-compact" if st.session_state.exec_presentation_mode
+                        else "section-card"
+                    )
+                    _insight_card_title = (
+                        "สรุปภาพรวม" if st.session_state.exec_presentation_mode else "ประเด็นสำคัญ"
+                    )
                     st.markdown(
-                        f'<div class="section-card"><div class="section-title" style="margin-bottom:6px;">'
+                        f'<div class="{_insight_card_class}" style="{"margin-top:-10px;" if st.session_state.exec_presentation_mode else ""}">'
+                        f'<div class="section-title" style="margin-bottom:6px;">'
                         f'<div class="section-num">{icon("bulb", 16, 1.8)}</div>'
-                        f'<div class="section-title-text"><h3>ประเด็นสำคัญ</h3></div></div>'
+                        f'<div class="section-title-text"><h3>{_insight_card_title}</h3></div></div>'
                         + "".join(
                             f'<div class="exec-insight-item"><div class="exec-insight-num">{i+1}</div>'
                             f'<div>{line}</div></div>'
