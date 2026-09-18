@@ -695,6 +695,13 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
    .section-title ทั่วไป จึงต้องยกเลิก margin-top ที่ .section-num ได้ไว้เผื่อกรณี
    flex-start ทิ้งไป มิฉะนั้นวงกลมจะเลื่อนลงต่ำกว่าหัวข้อในกล่องนี้โดยเฉพาะ */
 .nxpo-var-card-head .title-group .section-num { margin-top: 0; }
+/* บังคับให้หัวข้อ "ตัวแปรในสมการ (ระยะสั้น/ระยะยาว)" อยู่บรรทัดเดียวกันเสมอ
+   ไม่ตกบรรทัดไปแยกกับคำในวงเล็บ (ลดขนาดฟอนต์ลงเล็กน้อยเพื่อให้พอดีกับพื้นที่
+   การ์ดที่แคบลงจากการแบ่ง 2 คอลัมน์ + badge มุมขวา) */
+.nxpo-var-card-head .section-title-text h3 {
+    white-space: nowrap;
+    font-size: 1.05rem;
+}
 .nxpo-run-badge {
     flex-shrink: 0; font-size: 0.72rem; font-weight: 700; padding: 4px 12px; border-radius: 999px;
     background: var(--gold-tint); color: var(--brand-orange-dark); border: 1px solid #F0DCB0;
@@ -3885,7 +3892,7 @@ if st.session_state.page == "home":
             st.markdown(
                 f'<div class="section-card"><div class="nxpo-var-card-head">'
                 f'<div class="title-group"><div class="section-num">{accent_num}</div>'
-                f'<div class="section-title-text"><h3>ตัวแปรในสมการ <span style="white-space:nowrap;">({title_th})</span></h3></div></div>'
+                f'<div class="section-title-text"><h3>ตัวแปรในสมการ ({title_th})</h3></div></div>'
                 f'<span class="nxpo-run-badge">{badge_text}</span></div>'
                 f'<table class="nxpo-var-table"><thead><tr>'
                 f'<th>ตัวแปร</th><th>ค่าสัมประสิทธิ์</th><th>p-value</th><th>ทิศทาง</th>'
