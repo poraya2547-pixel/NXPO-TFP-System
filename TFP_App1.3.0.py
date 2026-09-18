@@ -4314,12 +4314,20 @@ elif st.session_state.page == "forecast":
                     f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
                 )
 
-            def _dash_kpi_card(bg, icon_svg, value, label):
+            def _dash_kpi_card(bg, icon_svg, value, label, sub_label=None):
                 # ยังใช้แบบกล่องเดี่ยว (มีขอบ/เงาของตัวเอง) สำหรับจุดอื่นที่ไม่ได้
                 # อยู่ใน .kpi-strip เช่นการ์ดเทียบผลใน Backtesting ด้านล่าง
+                # sub_label (ใหม่) : ข้อความเสริมบรรทัดเล็กใต้ label หลัก เช่นใช้โชว์
+                # ค่า RMSE คู่กับ MAPE ในการ์ดเปรียบเทียบ ARIMA vs Naive โดยไม่ต้อง
+                # เปลี่ยนตัวชี้วัดหลักที่ใช้ตัดสิน (ยังอิง MAPE เหมือนเดิมทุกจุด)
+                _sub_html = (
+                    f'<div class="metric-sub" style="font-size:0.72rem;color:var(--brand-navy-soft);'
+                    f'opacity:0.85;margin-top:2px;">{sub_label}</div>'
+                    if sub_label else ''
+                )
                 return (
                     f'<div class="metric-card"><div class="metric-icon" style="background:{bg};">{icon_svg}</div>'
-                    f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div></div></div>'
+                    f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div>{_sub_html}</div></div>'
                 )
 
             _arima_forecast_available = False
@@ -4499,6 +4507,7 @@ elif st.session_state.page == "forecast":
                                     "#16324A", icon("check" if _bt_better else "alert", 18, 1.8),
                                     f'{bt_metrics["arima_mape"]:.2f}%',
                                     f'ค่าเฉลี่ยความคลาดเคลื่อน ARIMA (MAPE, ทดสอบ {bt_metrics["test_years"]} ปีล่าสุด)',
+                                    sub_label=f'RMSE: {bt_metrics["arima_rmse"]:.3f}',
                                 )
                                 + '</div>',
                                 unsafe_allow_html=True,
@@ -4515,6 +4524,7 @@ elif st.session_state.page == "forecast":
                                     "#F97316", icon("bars", 18, 1.8),
                                     f'{bt_metrics["naive_mape"]:.2f}%',
                                     "ค่าเฉลี่ยความคลาดเคลื่อน Naive (เส้นฐานเทียบ)",
+                                    sub_label=f'RMSE: {bt_metrics["naive_rmse"]:.3f}',
                                 )
                                 + '</div>',
                                 unsafe_allow_html=True,
@@ -4610,6 +4620,7 @@ elif st.session_state.page == "forecast":
                                     "#16324A", icon("check" if _roll_better else "alert", 18, 1.8),
                                     f'{roll_metrics["arima_mape"]:.2f}%',
                                     f'ค่าเฉลี่ยความคลาดเคลื่อน ARIMA รวม {roll_metrics["n_windows"]} จุดทดสอบ',
+                                    sub_label=f'RMSE: {roll_metrics["arima_rmse"]:.3f}',
                                 ),
                                 unsafe_allow_html=True,
                             )
@@ -4619,6 +4630,7 @@ elif st.session_state.page == "forecast":
                                     "#F97316", icon("bars", 18, 1.8),
                                     f'{roll_metrics["naive_mape"]:.2f}%',
                                     "ค่าเฉลี่ยความคลาดเคลื่อน Naive (เส้นฐานเทียบ)",
+                                    sub_label=f'RMSE: {roll_metrics["naive_rmse"]:.3f}',
                                 ),
                                 unsafe_allow_html=True,
                             )
