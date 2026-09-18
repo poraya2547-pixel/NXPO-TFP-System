@@ -450,9 +450,9 @@ section[data-testid="stSidebar"] [data-testid="stSidebarUserContent"]
 .glossary-term-def { font-size: 0.86rem; color: var(--brand-navy-soft); line-height: 1.6; margin: 0; text-wrap: pretty; }
 
 .status-banner {
-    display: flex; align-items: center; gap: 8px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; gap: 8px; border-radius: 10px;
     padding: 9px 13px; font-size: 0.85rem; font-weight: 600; margin: 6px 0 4px;
-    line-height: 1.4;
+    line-height: 1.4; text-align: center;
 }
 .status-banner svg { flex-shrink: 0; }
 .status-banner.success { background: #E9F9EE; color: #15803D; border: 1px solid #BBEBC9; }
