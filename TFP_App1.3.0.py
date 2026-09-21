@@ -708,13 +708,13 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 }
 .nxpo-var-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 12px; }
 .nxpo-var-table th {
-    text-align: left; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
+    text-align: center; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
     padding: 0 8px 8px 0; border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.03em;
 }
-.nxpo-var-table th:not(:first-child), .nxpo-var-table td:not(:first-child) { text-align: center; }
+.nxpo-var-table td:not(:first-child) { text-align: center; }
 .nxpo-var-table td { padding: 9px 8px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy); vertical-align: middle; }
 .nxpo-var-table tr:last-child td { border-bottom: none; }
-.nxpo-var-table td:first-child { font-weight: 500; overflow-wrap: break-word; max-width: 210px; }
+.nxpo-var-table td:first-child { font-weight: 500; overflow-wrap: normal; word-break: keep-all; max-width: 210px; }
 .nxpo-var-dir { display: inline-flex; align-items: center; justify-content: center; }
 .nxpo-var-dir.up { color: var(--green); }
 .nxpo-var-dir.down { color: var(--red); }
@@ -3869,6 +3869,15 @@ if st.session_state.page == "home":
 
         # ================= การ์ดตัวแปรในสมการ (ระยะสั้น / ระยะยาว) แบบย่อ — ย้ายมา
         # จากหน้า Dashboard เดิม มาไว้เป็นภาพรวมสั้น ๆ ก่อนตารางละเอียดในหมวด 1 ด้านล่าง =================
+        def _no_orphan_last_word(s: str) -> str:
+            """แทนที่ช่องว่างตัวสุดท้ายในข้อความด้วย non-breaking space เพื่อกันไม่ให้
+            คำสุดท้าย (เช่น 'GDP') ตกไปอยู่บรรทัดใหม่เดียวโดดๆ ตอนตัดคำในคอลัมน์แคบ
+            ('...ต่อ GDP' จะตัดบรรทัดก่อน 'ต่อ GDP' แทน ไม่ใช่ตัดกลาง 'ต่อ' กับ 'GDP')"""
+            idx = s.rfind(" ")
+            if idx == -1:
+                return s
+            return s[:idx] + "\u00A0" + s[idx + 1:]
+
         def _mini_var_table_card(raw_map: dict, title_th: str, badge_text: str, accent_num: str):
             rows = [(base, info) for base, info in raw_map.items() if base != "const"]
             # เรียงตามลำดับมาตรฐานของตัวแปร (VARIABLE_ORDER) เท่าที่มีอยู่จริงในสมการนี้
@@ -3879,6 +3888,7 @@ if st.session_state.page == "home":
                 coef = info.get("coef")
                 p_val = info.get("p")
                 label = _var_full_name(base) if base in VARIABLE_LABELS else base
+                label = _no_orphan_last_word(label)
                 coef_text = f"{coef:.3f}" if coef is not None else "-"
                 p_text = f"{p_val:.3f}" if p_val is not None else "-"
                 is_up = (coef or 0) >= 0
