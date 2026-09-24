@@ -122,7 +122,7 @@ import os
 import re
 import numpy as np
 import pandas as pd
-from statsmodels.tsa.stattools import adfuller
+from statsmodels.tsa.stattools import adfuller, coint
 from statsmodels.regression.linear_model import OLS
 from statsmodels.tools import add_constant
 from statsmodels.stats.outliers_influence import variance_inflation_factor
@@ -272,18 +272,30 @@ def run_long_run(df: pd.DataFrame, dep: str, long_run_vars: list):
     print(res.summary())
     print(f"\nAdj. R^2 (ระยะยาว) = {summary_adj_r2(res):.4f}")
 
-    # Engle-Granger cointegration test: ADF บน residual (ต้อง reject unit root
-    # ถึงจะสรุปว่า cointegrate กันจริง - ค่าวิกฤตของ EG ต่างจาก ADF ปกติเล็กน้อย
-    # แต่ใช้ ADF ธรรมดาเป็น first-pass check ได้)
     resid = res.resid
-    adf_stat, adf_p, *_ = adfuller(resid, autolag="AIC")
-    print(f"\nEngle-Granger residual ADF test: stat={adf_stat:.4f}, p={adf_p:.4f}")
-    if adf_p < 0.10:
-        print("-> residual น่าจะ stationary (มี cointegration) แม้ p อาจไม่ต่ำมาก "
-              "เพราะค่าวิกฤต EG ต่างจาก ADF ปกติ (โดยทั่วไปเข้มกว่า)")
+
+    # Engle-Granger cointegration test แบบถูกต้อง: ใช้ statsmodels.tsa.stattools.coint()
+    # ซึ่งคำนวณค่าวิกฤต/p-value เฉพาะสำหรับ residual-based cointegration test (MacKinnon
+    # 1994/2010 asymptotic approximation) ไม่ใช่ค่าวิกฤตของ ADF ทั่วไปที่ adfuller() คืนมา
+    # (ค่าวิกฤต EG เข้มกว่า ADF ธรรมดาเล็กน้อย ตามที่อธิบายไว้ในเอกสารทฤษฎี หัวข้อ 1.3)
+    # หมายเหตุ: coint() รันสมการ cointegrating regression ของตัวเองภายในฟังก์ชัน (จึงต้องป้อน
+    # dep กับ long_run_vars แบบ "ดิบ" ไม่ใส่ constant เอง - coint() ใส่ trend ให้แล้วผ่าน trend="c")
+    # ผลลัพธ์ (coint_t, p, crit) จึงอาจต่างจาก res.resid ที่ประมาณด้วย OLS ตรงๆ เล็กน้อยถ้า
+    # lag/trend ที่ coint() เลือกอัตโนมัติไม่ตรงกับที่ statsmodels.OLS ใช้ แต่ค่าสัมประสิทธิ์
+    # สมการระยะยาว (res.params) ยังคงใช้จาก OLS ตรงๆ เหมือนเดิมทุกประการ ไม่กระทบ
+    eg_stat, eg_p, eg_crit = coint(sub[dep], sub[long_run_vars].values, trend="c", autolag="AIC")
+    res.eg_stat, res.eg_pvalue, res.eg_crit = eg_stat, eg_p, eg_crit
+
+    print(f"\nEngle-Granger cointegration test (coint(), MacKinnon critical values):")
+    print(f"  stat={eg_stat:.4f}, p={eg_p:.4f}")
+    print(f"  critical values -> 1%: {eg_crit[0]:.4f}, 5%: {eg_crit[1]:.4f}, 10%: {eg_crit[2]:.4f}")
+    if eg_p < 0.05:
+        print("-> ปฏิเสธ H0 ที่ระดับ 5% -> สรุปว่าตัวแปรมี cointegration (residual นิ่ง)")
+    elif eg_p < 0.10:
+        print("-> ปฏิเสธ H0 ได้เฉพาะที่ระดับ 10% (ก้ำกึ่ง) -> ควรตรวจสอบเพิ่มเติม")
     else:
-        print("-> residual ยัง non-stationary ตาม ADF ธรรมดา - ควรระวัง อาจไม่ cointegrate จริง "
-              "(ลองปรับตัวแปรใน LONG_RUN_VARS หรือใช้ EG critical value ตาราง MacKinnon)")
+        print("-> ไม่สามารถปฏิเสธ H0 ได้ -> residual ไม่นิ่ง อาจไม่ cointegrate จริง "
+              "(ลองทบทวนตัวแปรใน LONG_RUN_VARS)")
 
     return res, resid
 
@@ -436,10 +448,27 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
     return rows
 
 
-def _cointegration_row(resid: pd.Series) -> dict:
-    """Engle-Granger residual test: ADF บน residual ของสมการระยะยาว ต้อง reject
-    unit root (p ต่ำ) ถึงจะสรุปว่ามี cointegration จริง — หมายเหตุ: ค่าวิกฤตที่ถูกต้อง
-    ของ EG ต่างจาก ADF ปกติเล็กน้อย (เข้มกว่า) นี่เป็นการเช็คแบบ first-pass เท่านั้น"""
+def _cointegration_row(lr_res, resid: pd.Series) -> dict:
+    """Engle-Granger cointegration test — ใช้ p-value/ค่าวิกฤตจาก statsmodels.tsa.
+    stattools.coint() (เก็บไว้ที่ lr_res.eg_stat/eg_pvalue/eg_crit โดย run_long_run())
+    ซึ่งคำนวณด้วยค่าวิกฤต MacKinnon เฉพาะสำหรับ residual-based cointegration test
+    (เข้มกว่าค่าวิกฤต ADF ทั่วไป) ถ้า lr_res ไม่มี attribute เหล่านี้ (เช่น เรียกจากที่อื่น
+    ที่ยังไม่ได้อัปเดต) จะ fallback ไปใช้ ADF ธรรมดาบน residual แบบเดิมเป็น first-pass check"""
+    if hasattr(lr_res, "eg_pvalue"):
+        eg_p, eg_crit = lr_res.eg_pvalue, lr_res.eg_crit
+        result = f"p={eg_p:.3f}"
+        if eg_p < 0.05:
+            status, note = _STATUS_PASS, ""
+        elif eg_p < 0.10:
+            status = _STATUS_BORDERLINE
+            note = "ผ่านที่ระดับ 10% แต่ไม่ผ่านที่ 5% (ค่าวิกฤต MacKinnon จริง)"
+        else:
+            status = _STATUS_FAIL
+            note = (f"residual ยัง non-stationary ตามค่าวิกฤต MacKinnon "
+                    f"(1%={eg_crit[0]:.3f}, 5%={eg_crit[1]:.3f}, 10%={eg_crit[2]:.3f})")
+        return _diag_row("Cointegration", "Engle-Granger (coint, MacKinnon)", result, status, note)
+
+    # fallback: ADF ธรรมดาบน residual (ไม่ใช่ค่าวิกฤต EG ที่ถูกต้อง — first-pass เท่านั้น)
     adf_stat, adf_p, *_ = adfuller(resid.dropna(), autolag="AIC")
     if adf_p < 0.05:
         status, note = _STATUS_PASS, ""
@@ -449,7 +478,7 @@ def _cointegration_row(resid: pd.Series) -> dict:
     else:
         status = _STATUS_FAIL
         note = "residual ยัง non-stationary ตาม ADF ธรรมดา (ค่าวิกฤต EG จริงเข้มกว่านี้ ควรตรวจซ้ำ)"
-    return _diag_row("Cointegration", "Engle-Granger residual", f"p={adf_p:.3f}", status, note)
+    return _diag_row("Cointegration", "Engle-Granger residual (ADF fallback)", f"p={adf_p:.3f}", status, note)
 
 
 def _multicollinearity_rows(df: pd.DataFrame, variables: list) -> list:
@@ -532,7 +561,7 @@ def run_diagnostics(model_df: pd.DataFrame, dep_ln: str, long_run_vars: list,
     rows += _stationarity_rows(model_df, [dep_ln] + list(long_run_vars))
     if short_run_spec:
         rows += _stationarity_short_run_rows(model_df, short_run_spec)
-    rows.append(_cointegration_row(lr_resid))
+    rows.append(_cointegration_row(lr_res, lr_resid))
     rows += _multicollinearity_rows(model_df, long_run_vars)
     rows.append(_heteroskedasticity_row(lr_res, "สมการระยะยาว"))
     rows.append(_autocorrelation_row(lr_res, "สมการระยะยาว"))
