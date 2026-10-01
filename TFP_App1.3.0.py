@@ -708,13 +708,13 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 }
 .nxpo-var-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 12px; }
 .nxpo-var-table th {
-    text-align: center; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
+    text-align: left; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
     padding: 0 8px 8px 0; border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.03em;
 }
-.nxpo-var-table td:not(:first-child) { text-align: center; }
+.nxpo-var-table th:not(:first-child), .nxpo-var-table td:not(:first-child) { text-align: center; }
 .nxpo-var-table td { padding: 9px 8px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy); vertical-align: middle; }
 .nxpo-var-table tr:last-child td { border-bottom: none; }
-.nxpo-var-table td:first-child { font-weight: 500; overflow-wrap: normal; word-break: keep-all; max-width: 210px; }
+.nxpo-var-table td:first-child { font-weight: 500; overflow-wrap: break-word; max-width: 210px; }
 .nxpo-var-dir { display: inline-flex; align-items: center; justify-content: center; }
 .nxpo-var-dir.up { color: var(--green); }
 .nxpo-var-dir.down { color: var(--red); }
@@ -1723,6 +1723,14 @@ SYSTEM_PROMPT = """คุณคือนักเศรษฐศาสตร์�
    นโยบาย/ธุรกิจ พร้อมข้อเสนอแนะเชิงปฏิบัติ 2-3 ข้อ โดยอ้างอิงตัวแปรที่มีนัยสำคัญทางสถิติ
    เป็นหลัก
 
+ข้อควรระวังในการตีความ (สำคัญ):
+- ผลทดสอบความสัมพันธ์ระยะยาว (Engle-Granger) จะแนบมาในข้อมูลด้วย ถ้าผลระบุว่า
+  "ยังไม่มีหลักฐานทางสถิติเพียงพอ" ห้ามเขียนว่าตัวแปรมีความสัมพันธ์ระยะยาวกับ TFP แบบยืนยัน
+  ให้ใช้ถ้อยคำเชิงระมัดระวัง เช่น "ผลการวิเคราะห์ชี้ทิศทางว่า..." หรือ "มีแนวโน้มว่า..."
+  และระบุสั้น ๆ หนึ่งประโยคว่าผลมีข้อจำกัดจากจำนวนข้อมูลที่มีไม่มาก
+- ค่าสัมประสิทธิ์สะท้อนความสัมพันธ์ทางสถิติ ไม่ใช่ผลกระทบเชิงเหตุและผลที่พิสูจน์แล้ว
+  หลีกเลี่ยงการเขียนว่า "ถ้าเพิ่ม X แล้ว TFP จะเพิ่มแน่นอน"
+
 ความยาวไม่เกิน 2 หน้า A4 ใช้หัวข้อย่อยชัดเจน ห้ามพิมพ์ตาราง markdown (บรรทัดที่ขึ้นต้น
 ด้วย |) หรือคัดลอกตัวเลขจากตารางมาเรียงเป็นตารางซ้ำโดยเด็ดขาด ให้เขียนเป็นความเรียง/
 bullet point อ้างอิงตัวเลขในเนื้อหาแทน"""
@@ -1785,6 +1793,20 @@ def _web_summary_text(summary_text: str) -> str:
     return "\n".join(lines).strip()
 
 
+def _eg_text(lr_res) -> str:
+    """สรุปผล Engle-Granger เป็นข้อความสั้น ๆ ส่งให้ Gemini ใช้ระวังการตีความ"""
+    p = getattr(lr_res, "eg_pvalue", None)
+    if p is None:
+        return "ไม่มีผลทดสอบ"
+    if p < 0.05:
+        verdict = "พบหลักฐานความสัมพันธ์ระยะยาวที่ระดับนัยสำคัญ 5%"
+    elif p < 0.10:
+        verdict = "พบหลักฐานความสัมพันธ์ระยะยาวเฉพาะที่ระดับนัยสำคัญ 10% (ก้ำกึ่ง)"
+    else:
+        verdict = "ยังไม่มีหลักฐานทางสถิติเพียงพอว่ามีความสัมพันธ์ระยะยาว (อาจเป็นผลจากข้อมูลมีจำนวนปีน้อย)"
+    return f"tau = {lr_res.eg_stat:.4f}, p-value = {p:.4f} -> {verdict}"
+
+
 def generate_summary_gemini(lr_res, sr_res, model_df: pd.DataFrame, dep_ln: str) -> str:
     lr_table, sr_table = build_coefficient_tables(lr_res, sr_res)
     yoy_text = build_tfpi_yoy_summary(model_df, dep_ln)
@@ -1799,6 +1821,9 @@ Adj. R^2 = {summary_adj_r2(lr_res):.4f}
 --- สมการระยะสั้น (Short-run ECM) ---
 Adj. R^2 = {summary_adj_r2(sr_res):.4f}
 {sr_table.to_string(index=False)}
+
+--- ผลทดสอบความสัมพันธ์ระยะยาว (Engle-Granger cointegration test) ---
+{_eg_text(lr_res)}
 
 --- การเปลี่ยนแปลงของผลิตภาพ (TFPI) ปีล่าสุดเทียบปีก่อนหน้า ---
 {yoy_text}
@@ -1969,8 +1994,8 @@ VARIABLE_EXPLANATIONS = {
         "meaning": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาครัฐต่อ GDP",
         "group": "ปัจจัยนำเข้า (Input)",
         "source": "UNESCO",
-        "role": "ตัวแปรในสมการระยะยาว",
-        "effect": "ระยะยาว: มีความสัมพันธ์เชิงลบเมื่อพิจารณาร่วมกับตัวแปรอื่น โดยมีขนาดผลกระทบค่อนข้างน้อย • ระยะสั้น: ส่งผลบวกอย่างมีนัยสำคัญ แต่ต้องใช้เวลาประมาณ 2 ปีจึงเห็นผล",
+        "role": "ตัวแปรเพิ่มเติมในสมการระยะสั้น",
+        "effect": "ระยะสั้น: ส่งผลบวกอย่างมีนัยสำคัญ แต่ต้องใช้เวลาประมาณ 2 ปีจึงเห็นผล • ถูกตัดออกจากสมการระยะยาว เพราะในแบบจำลองเริ่มต้นมีเครื่องหมายไม่สอดคล้องกับทฤษฎี (สวค., 2568)",
     },
     "RDP_GDP": {
         "meaning": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาคเอกชนต่อ GDP",
@@ -1990,8 +2015,8 @@ VARIABLE_EXPLANATIONS = {
         "meaning": "จำนวนสนธิสัญญาความร่วมมือด้านสิทธิบัตร (PCT) ต่อ GDP",
         "group": "ผลผลิต (Output)",
         "source": "WIPO",
-        "role": "ตัวแปรในสมการระยะยาว",
-        "effect": "ระยะยาว: มีความสัมพันธ์เชิงลบเมื่อพิจารณาร่วมกับตัวแปรอื่น โดยมีขนาดผลกระทบค่อนข้างน้อย • ระยะสั้น: ไม่มีนัยสำคัญทางสถิติในช่วงที่ศึกษา",
+        "role": "ถูกตัดออกจากแบบจำลองสุดท้าย",
+        "effect": "ในแบบจำลองเริ่มต้นมีเครื่องหมายไม่สอดคล้องกับทฤษฎี จึงถูกตัดออกจากสมการระยะยาว และไม่มีนัยสำคัญทางสถิติในสมการระยะสั้น (สวค., 2568)",
     },
     "ln_PATENT_GDP": {
         "meaning": "สัดส่วนจำนวนสิทธิบัตรต่อ GDP",
@@ -2018,8 +2043,8 @@ VARIABLE_EXPLANATIONS = {
         "meaning": "อัตราการเปิดกว้างทางการค้า",
         "group": "ปัจจัยแวดล้อมทางเศรษฐกิจ",
         "source": "World Bank Group",
-        "role": "ตัวแปรในสมการระยะยาว",
-        "effect": "ระยะยาว: มีความสัมพันธ์เชิงลบเมื่อพิจารณาร่วมกับตัวแปรอื่น โดยมีขนาดผลกระทบค่อนข้างน้อย • ระยะสั้น: ส่งผลบวกอย่างมีนัยสำคัญ ใช้เวลาประมาณ 2 ปีจึงเห็นผล",
+        "role": "ตัวแปรเพิ่มเติมในสมการระยะสั้น",
+        "effect": "ระยะสั้น: ส่งผลบวกอย่างมีนัยสำคัญ ใช้เวลาประมาณ 2 ปีจึงเห็นผล • ถูกตัดออกจากสมการระยะยาว เพราะในแบบจำลองเริ่มต้นมีเครื่องหมายไม่สอดคล้องกับทฤษฎี (สวค., 2568)",
     },
     "MKTCOM": {
         "meaning": "ดัชนีความซับซ้อนทางเศรษฐกิจด้านการค้า",
@@ -2033,7 +2058,7 @@ VARIABLE_EXPLANATIONS = {
         "group": "พจน์ปรับตัวของสมการ",
         "source": "คำนวณจากผลลัพธ์สมการระยะยาวของโครงการ",
         "role": "ใช้เฉพาะในสมการระยะสั้น (ECM)",
-        "effect": "มีเครื่องหมายลบและมีนัยสำคัญทางสถิติ ซึ่งยืนยันว่าเมื่อ TFP เบี่ยงเบนไปจากดุลยภาพระยะยาว ระบบเศรษฐกิจจะปรับตัวกลับเข้าสู่ดุลยภาพได้จริง โดยใช้เวลาประมาณ 2.5 ปี",
+        "effect": "มีเครื่องหมายลบตามทฤษฎี (−0.396) สะท้อนว่าเมื่อ TFP เบี่ยงเบนจากดุลยภาพระยะยาว มีแนวโน้มปรับตัวกลับประมาณร้อยละ 40 ต่อปี ทั้งนี้ผลทดสอบความสัมพันธ์ระยะยาวยังมีข้อจำกัดจากจำนวนข้อมูลที่มีไม่มาก จึงควรตีความอย่างระมัดระวัง",
     },
 }
 
@@ -3869,15 +3894,6 @@ if st.session_state.page == "home":
 
         # ================= การ์ดตัวแปรในสมการ (ระยะสั้น / ระยะยาว) แบบย่อ — ย้ายมา
         # จากหน้า Dashboard เดิม มาไว้เป็นภาพรวมสั้น ๆ ก่อนตารางละเอียดในหมวด 1 ด้านล่าง =================
-        def _no_orphan_last_word(s: str) -> str:
-            """แทนที่ช่องว่างตัวสุดท้ายในข้อความด้วย non-breaking space เพื่อกันไม่ให้
-            คำสุดท้าย (เช่น 'GDP') ตกไปอยู่บรรทัดใหม่เดียวโดดๆ ตอนตัดคำในคอลัมน์แคบ
-            ('...ต่อ GDP' จะตัดบรรทัดก่อน 'ต่อ GDP' แทน ไม่ใช่ตัดกลาง 'ต่อ' กับ 'GDP')"""
-            idx = s.rfind(" ")
-            if idx == -1:
-                return s
-            return s[:idx] + "\u00A0" + s[idx + 1:]
-
         def _mini_var_table_card(raw_map: dict, title_th: str, badge_text: str, accent_num: str):
             rows = [(base, info) for base, info in raw_map.items() if base != "const"]
             # เรียงตามลำดับมาตรฐานของตัวแปร (VARIABLE_ORDER) เท่าที่มีอยู่จริงในสมการนี้
@@ -3888,7 +3904,6 @@ if st.session_state.page == "home":
                 coef = info.get("coef")
                 p_val = info.get("p")
                 label = _var_full_name(base) if base in VARIABLE_LABELS else base
-                label = _no_orphan_last_word(label)
                 coef_text = f"{coef:.3f}" if coef is not None else "-"
                 p_text = f"{p_val:.3f}" if p_val is not None else "-"
                 is_up = (coef or 0) >= 0
