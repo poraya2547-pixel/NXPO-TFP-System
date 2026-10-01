@@ -239,12 +239,43 @@ def build_model_frame(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# --- ตั้งค่า ADF ให้ตรงกับ EViews ของ สวค. (ยืนยันจากตาราง UR1_* ใน workfile) ---
+# Exogenous ของการทดสอบที่ผลต่างอันดับ 1: 'c' = Constant, 'n' = None
+# (สวค. เลือกแยกรายตัวแปร) ตัวแปรที่ไม่อยู่ใน dict จะใช้ 'c'
+ADF_DIFF_TREND = {
+    "ln_TFPI": "c", "FDI_GDP": "n", "FEE_GDP": "n",
+    "ln_HDI": "c", "ln_JOUR_GDP": "c", "MKTCOM": "n",
+}
+ADF_LEVEL_TREND = "c"   # ทดสอบที่ level ใช้ Constant (สวค. ไม่ได้บันทึกผล level ไว้)
+EG_MAXLAG = 4           # maxlag ของ Engle-Granger ตามที่ EViews ใช้กับ n=23
+
+
+def eviews_maxlag(T: int) -> int:
+    """สูตร maxlag อัตโนมัติของ EViews: int(min(T/3, 12) * (T/100)^(1/4))"""
+    return int(min(T / 3, 12) * (T / 100) ** 0.25)
+
+
+def adf_eviews(x: pd.Series, trend: str = "c") -> tuple:
+    """ADF แบบเดียวกับ EViews: เลือก lag ด้วย SIC (BIC) และ maxlag ตามสูตร EViews
+    คืนค่า (t-stat, p-value, lag ที่เลือก, nobs)"""
+    x = x.dropna()
+    stat, p, lag, nobs, *_ = adfuller(x, regression=trend, autolag="BIC",
+                                      maxlag=eviews_maxlag(len(x)))
+    return stat, p, lag, nobs
+
+
 def adf_report(series: pd.Series, name: str) -> dict:
-    level_stat, level_p, *_ = adfuller(series.dropna(), autolag="AIC")
-    diff_stat, diff_p, *_ = adfuller(series.diff().dropna(), autolag="AIC")
+    """ใช้ช่วงปีของตัวแปรนั้นเอง (dropna เฉพาะตัวแปร) แบบเดียวกับ EViews
+    หมายเหตุ: ทดสอบในรูปที่ใช้จริงในสมการ (เช่น ln_TFPI) ซึ่ง สวค. ทดสอบในรูปปกติ"""
+    level_stat, level_p, level_lag, _ = adf_eviews(series, ADF_LEVEL_TREND)
+    diff_stat, diff_p, diff_lag, diff_n = adf_eviews(series.diff(),
+                                                     ADF_DIFF_TREND.get(name, "c"))
     order = "I(0)" if level_p < 0.05 else ("I(1)" if diff_p < 0.05 else "I(2)?")
-    return {"variable": name, "adf_level_p": round(level_p, 4),
-            "adf_diff_p": round(diff_p, 4), "order_of_integration": order}
+    return {"variable": name,
+            "adf_level_t": round(level_stat, 4), "adf_level_p": round(level_p, 4),
+            "adf_diff_t": round(diff_stat, 4), "adf_diff_p": round(diff_p, 4),
+            "diff_lag": diff_lag, "diff_nobs": diff_n,
+            "order_of_integration": order}
 
 
 def summary_adj_r2(res) -> float:
@@ -277,13 +308,16 @@ def run_long_run(df: pd.DataFrame, dep: str, long_run_vars: list):
     # Engle-Granger cointegration test แบบถูกต้อง: ใช้ statsmodels.tsa.stattools.coint()
     # ซึ่งคำนวณค่าวิกฤต/p-value เฉพาะสำหรับ residual-based cointegration test (MacKinnon
     # 1994/2010 asymptotic approximation) ไม่ใช่ค่าวิกฤตของ ADF ทั่วไปที่ adfuller() คืนมา
-    # (ค่าวิกฤต EG เข้มกว่า ADF ธรรมดาเล็กน้อย ตามที่อธิบายไว้ในเอกสารทฤษฎี หัวข้อ 1.3)
+    # (ค่าวิกฤต EG ติดลบมากกว่า ADF ธรรมดา และยิ่งเข้มขึ้นเมื่อจำนวนตัวแปรเพิ่ม)
+    # ตั้ง autolag=SIC, maxlag=4 ให้ตรงกับ EViews -> tau ควรได้ -3.3536
+    # p-value อาจต่างจาก EViews เล็กน้อย (statsmodels ใช้ MacKinnon 2010, EViews ใช้ 1996)
     # หมายเหตุ: coint() รันสมการ cointegrating regression ของตัวเองภายในฟังก์ชัน (จึงต้องป้อน
     # dep กับ long_run_vars แบบ "ดิบ" ไม่ใส่ constant เอง - coint() ใส่ trend ให้แล้วผ่าน trend="c")
     # ผลลัพธ์ (coint_t, p, crit) จึงอาจต่างจาก res.resid ที่ประมาณด้วย OLS ตรงๆ เล็กน้อยถ้า
     # lag/trend ที่ coint() เลือกอัตโนมัติไม่ตรงกับที่ statsmodels.OLS ใช้ แต่ค่าสัมประสิทธิ์
     # สมการระยะยาว (res.params) ยังคงใช้จาก OLS ตรงๆ เหมือนเดิมทุกประการ ไม่กระทบ
-    eg_stat, eg_p, eg_crit = coint(sub[dep], sub[long_run_vars].values, trend="c", autolag="AIC")
+    eg_stat, eg_p, eg_crit = coint(sub[dep], sub[long_run_vars].values, trend="c",
+                                     autolag="bic", maxlag=EG_MAXLAG)
     res.eg_stat, res.eg_pvalue, res.eg_crit = eg_stat, eg_p, eg_crit
 
     print(f"\nEngle-Granger cointegration test (coint(), MacKinnon critical values):")
@@ -342,7 +376,9 @@ def run_short_run(df: pd.DataFrame, dep: str, short_run_spec: list,
     ecm_p = res.pvalues.get("ECM_lag1", np.nan)
     print(f"\nสัมประสิทธิ์ ECM(-1) = {ecm_coef:.4f} (p={ecm_p:.4f})")
     if ecm_coef < 0 and ecm_p < 0.05:
-        print("-> ECM(-1) ติดลบและ significant: สอดคล้องกับทฤษฎี ECM (ปรับเข้าสู่ดุลยภาพระยะยาว)")
+        print("-> ECM(-1) ติดลบและ significant (ตาม t ปกติ): สอดคล้องกับทฤษฎี ECM "
+              "แต่ถ้าใช้เป็นการทดสอบ cointegration ต้องเทียบค่าวิกฤตของ ECM test "
+              "(Banerjee, Dolado & Mestre, 1998) ซึ่งเข้มกว่า")
     else:
         print("-> ECM(-1) ไม่ติดลบ หรือไม่ significant: ผิดจากที่ทฤษฎี ECM คาดไว้ ต้องทบทวนสเปก")
 
@@ -432,7 +468,7 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
             transformed = build_diff_regressor(df[col], diff_order, lag).dropna()
             if len(transformed) < 4:
                 raise ValueError("ข้อมูลไม่พอสำหรับทดสอบ ADF (n<4 หลัง transform+lag)")
-            _, p_t, *_ = adfuller(transformed, autolag="AIC")
+            _, p_t, *_ = adf_eviews(transformed, "c")
             if p_t < 0.05:
                 status_t, note_t = _STATUS_PASS, ""
             elif p_t < 0.10:
