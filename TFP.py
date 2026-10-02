@@ -255,26 +255,37 @@ def eviews_maxlag(T: int) -> int:
     return int(min(T / 3, 12) * (T / 100) ** 0.25)
 
 
-def adf_eviews(x: pd.Series, trend: str = "c") -> tuple:
-    """ADF แบบเดียวกับ EViews: เลือก lag ด้วย SIC (BIC) และ maxlag ตามสูตร EViews
-    คืนค่า (t-stat, p-value, lag ที่เลือก, nobs)"""
+def adf_eviews(x: pd.Series, trend: str = "c", T: int = None,
+               return_crit: bool = False) -> tuple:
+    """ADF แบบเดียวกับ EViews: เลือก lag ด้วย SIC (BIC)
+    T = จำนวน obs ของ series ตั้งต้น (ก่อน difference) — EViews ใช้ T นี้คิด maxlag
+    คืนค่า (t-stat, p-value, lag ที่เลือก, nobs) หรือเพิ่ม crit (dict ค่าวิกฤต) ถ้า return_crit=True"""
     x = x.dropna()
-    stat, p, lag, nobs, *_ = adfuller(x, regression=trend, autolag="BIC",
-                                      maxlag=eviews_maxlag(len(x)))
+    stat, p, lag, nobs, crit, _ = adfuller(
+        x, regression=trend, autolag="BIC",
+        maxlag=eviews_maxlag(T or len(x)))
+    if return_crit:
+        return stat, p, lag, nobs, crit
     return stat, p, lag, nobs
 
 
 def adf_report(series: pd.Series, name: str) -> dict:
     """ใช้ช่วงปีของตัวแปรนั้นเอง (dropna เฉพาะตัวแปร) แบบเดียวกับ EViews
+    ตัดสินด้วยการเทียบ t-stat กับค่าวิกฤต 5% (ตรงกับ EViews) แทน p-value
+    maxlag คิดจากจำนวน obs ของ series ตั้งต้น ทั้งที่ level และ difference
     หมายเหตุ: ทดสอบในรูปที่ใช้จริงในสมการ (เช่น ln_TFPI) ซึ่ง สวค. ทดสอบในรูปปกติ"""
-    level_stat, level_p, level_lag, _ = adf_eviews(series, ADF_LEVEL_TREND)
-    diff_stat, diff_p, diff_lag, diff_n = adf_eviews(series.diff(),
-                                                     ADF_DIFF_TREND.get(name, "c"))
-    order = "I(0)" if level_p < 0.05 else ("I(1)" if diff_p < 0.05 else "I(2)?")
+    T = len(series.dropna())
+    ls, lp, ll, _, lc = adf_eviews(series, ADF_LEVEL_TREND, T, True)
+    ds, dp, dl, dn, dc = adf_eviews(
+        series.diff(), ADF_DIFF_TREND.get(name, "c"), T, True)
+    order = ("I(0)" if ls < lc["5%"] else
+             "I(1)" if ds < dc["5%"] else "I(2)?")
     return {"variable": name,
-            "adf_level_t": round(level_stat, 4), "adf_level_p": round(level_p, 4),
-            "adf_diff_t": round(diff_stat, 4), "adf_diff_p": round(diff_p, 4),
-            "diff_lag": diff_lag, "diff_nobs": diff_n,
+            "adf_level_t": round(ls, 4), "adf_level_p": round(lp, 4),
+            "adf_level_crit5": round(lc["5%"], 4),
+            "adf_diff_t": round(ds, 4), "adf_diff_p": round(dp, 4),
+            "adf_diff_crit5": round(dc["5%"], 4),
+            "diff_lag": dl, "diff_nobs": dn,
             "order_of_integration": order}
 
 
@@ -468,10 +479,10 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
             transformed = build_diff_regressor(df[col], diff_order, lag).dropna()
             if len(transformed) < 4:
                 raise ValueError("ข้อมูลไม่พอสำหรับทดสอบ ADF (n<4 หลัง transform+lag)")
-            _, p_t, *_ = adf_eviews(transformed, "c")
-            if p_t < 0.05:
+            t_t, p_t, _, _, c_t = adf_eviews(transformed, "c", return_crit=True)
+            if t_t < c_t["5%"]:
                 status_t, note_t = _STATUS_PASS, ""
-            elif p_t < 0.10:
+            elif t_t < c_t["10%"]:
                 status_t = _STATUS_BORDERLINE
                 note_t = "นิ่งที่ระดับ 10% แต่ไม่นิ่งที่ 5%"
             else:
@@ -491,17 +502,20 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
     (เข้มกว่าค่าวิกฤต ADF ทั่วไป) ถ้า lr_res ไม่มี attribute เหล่านี้ (เช่น เรียกจากที่อื่น
     ที่ยังไม่ได้อัปเดต) จะ fallback ไปใช้ ADF ธรรมดาบน residual แบบเดิมเป็น first-pass check"""
     if hasattr(lr_res, "eg_pvalue"):
-        eg_p, eg_crit = lr_res.eg_pvalue, lr_res.eg_crit
-        result = f"p={eg_p:.3f}"
-        if eg_p < 0.05:
+        eg_t, eg_p, eg_crit = lr_res.eg_stat, lr_res.eg_pvalue, lr_res.eg_crit
+        # ตัดสินด้วย tau เทียบค่าวิกฤต (แสดง tau/ค่าวิกฤตเป็นหลัก) ส่วน p มาจาก
+        # MacKinnon (2010) ของ statsmodels ซึ่งต่างจาก EViews ที่ใช้รุ่น 1996
+        result = f"tau={eg_t:.4f} (5%={eg_crit[1]:.3f}), p={eg_p:.3f}*"
+        if eg_t < eg_crit[1]:
             status, note = _STATUS_PASS, ""
-        elif eg_p < 0.10:
+        elif eg_t < eg_crit[2]:
             status = _STATUS_BORDERLINE
-            note = "ผ่านที่ระดับ 10% แต่ไม่ผ่านที่ 5% (ค่าวิกฤต MacKinnon จริง)"
+            note = "ผ่านที่ระดับ 10% แต่ไม่ผ่านที่ 5% (เทียบ tau กับค่าวิกฤต MacKinnon)"
         else:
             status = _STATUS_FAIL
-            note = (f"residual ยัง non-stationary ตามค่าวิกฤต MacKinnon "
+            note = (f"tau ไม่ถึงค่าวิกฤต -> ปฏิเสธ H0 ไม่ได้ ไม่ยืนยัน cointegration "
                     f"(1%={eg_crit[0]:.3f}, 5%={eg_crit[1]:.3f}, 10%={eg_crit[2]:.3f})")
+        note = (note + " " if note else "") + "*p จาก MacKinnon (2010); EViews ใช้ MacKinnon (1996) จึงต่างกันได้"
         return _diag_row("Cointegration", "Engle-Granger (coint, MacKinnon)", result, status, note)
 
     # fallback: ADF ธรรมดาบน residual (ไม่ใช่ค่าวิกฤต EG ที่ถูกต้อง — first-pass เท่านั้น)
@@ -651,7 +665,7 @@ ROW_ORDER = [
     ("FDI_GDP", "การลงทุนโดยตรงจากต่างประเทศ : FDI/GDP", "△"),
     ("FEE_GDP", "สัดส่วนค่าธรรมเนียมในการใช้ทรัพย์สินทางปัญญาต่อ GDP : FEE/GDP", "△"),
     ("ln_HDI", "การพัฒนามนุษย์ : ln(HDI)", "△"),
-    ("ln_RDH_GDP", "บุคลากรด้าน R&D : ln(RDH/GDP)", "△²"),
+    ("ln_RDH_GDP", "จำนวนนักวิจัยต่อประชากรล้านคน : ln(RDH)", "△²"),
     ("RDG_GDP", "การลงทุน R&D ของรัฐ : RDG/GDP", "△²"),
     ("RDP_GDP", "การลงทุน R&D ของเอกชน : RDP/GDP", "△²"),
     ("ln_JOUR_GDP", "สิ่งพิมพ์ทางวิทยาศาสตร์ฯ : ln(JOUR/GDP)", "△"),
