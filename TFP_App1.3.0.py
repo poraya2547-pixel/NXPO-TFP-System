@@ -1796,15 +1796,19 @@ def _web_summary_text(summary_text: str) -> str:
 def _eg_text(lr_res) -> str:
     """สรุปผล Engle-Granger เป็นข้อความสั้น ๆ ส่งให้ Gemini ใช้ระวังการตีความ"""
     p = getattr(lr_res, "eg_pvalue", None)
-    if p is None:
+    crit = getattr(lr_res, "eg_crit", None)
+    if p is None or crit is None:
         return "ไม่มีผลทดสอบ"
-    if p < 0.05:
+    tau = lr_res.eg_stat
+    # ตัดสินด้วย tau เทียบค่าวิกฤต MacKinnon ให้ตรงกับตาราง Diagnostics (TFP._cointegration_row)
+    if tau < crit[1]:
         verdict = "พบหลักฐานความสัมพันธ์ระยะยาวที่ระดับนัยสำคัญ 5%"
-    elif p < 0.10:
+    elif tau < crit[2]:
         verdict = "พบหลักฐานความสัมพันธ์ระยะยาวเฉพาะที่ระดับนัยสำคัญ 10% (ก้ำกึ่ง)"
     else:
         verdict = "ยังไม่มีหลักฐานทางสถิติเพียงพอว่ามีความสัมพันธ์ระยะยาว (อาจเป็นผลจากข้อมูลมีจำนวนปีน้อย)"
-    return f"tau = {lr_res.eg_stat:.4f}, p-value = {p:.4f} -> {verdict}"
+    return (f"tau = {tau:.4f} (ค่าวิกฤต 5% = {crit[1]:.4f}, 10% = {crit[2]:.4f}), "
+            f"p-value = {p:.4f} -> {verdict}")
 
 
 def generate_summary_gemini(lr_res, sr_res, model_df: pd.DataFrame, dep_ln: str) -> str:
@@ -1940,7 +1944,7 @@ VARIABLE_LABELS = {
     "FDI_GDP": "สัดส่วนการลงทุนโดยตรงจากต่างประเทศต่อ GDP : FDI/GDP",
     "FEE_GDP": "ค่าธรรมเนียมในการใช้ทรัพย์สินทางปัญญาต่อ GDP : FEE/GDP",
     "ln_HDI": "ดัชนีการพัฒนามนุษย์ : ln(HDI)",
-    "ln_RDH_GDP": "สัดส่วนบุคลากรด้าน R&D ต่อประชากรล้านคน : ln(RDH/GDP)",
+    "ln_RDH_GDP": "จำนวนนักวิจัยต่อประชากรล้านคน : ln(RDH)",
     "RDG_GDP": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาครัฐต่อ GDP : RDG/GDP",
     "RDP_GDP": "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาคเอกชนต่อ GDP : RDP/GDP",
     "ln_JOUR_GDP": "สัดส่วนจำนวนสิ่งพิมพ์ทางวิทยาศาสตร์และเทคนิคต่อ GDP : ln(JOUR/GDP)",
@@ -1984,7 +1988,7 @@ VARIABLE_EXPLANATIONS = {
         "effect": "ระยะยาว: ส่งผลบวกและมีขนาดผลกระทบสูงในกลุ่มปัจจัยนำเข้า • ระยะสั้น: ส่งผลบวกอย่างมีนัยสำคัญในปีเดียวกัน",
     },
     "ln_RDH_GDP": {
-        "meaning": "สัดส่วนบุคลากรด้านการวิจัยและพัฒนาต่อประชากรล้านคน",
+        "meaning": "จำนวนนักวิจัยด้านการวิจัยและพัฒนา (FTE) ต่อประชากรล้านคน",
         "group": "ปัจจัยนำเข้า (Input)",
         "source": "UNESCO",
         "role": "ตัวแปรเพิ่มเติมในสมการระยะสั้น",
@@ -2152,6 +2156,18 @@ def _format_coefficient_cell(coef_value, p_value, diff: int, lag: int, show_sign
     elif diff == 2:
         parts.append("Δ²")
     return " ".join(parts)
+
+
+def _unrounded_coefficient_table(res) -> pd.DataFrame:
+    """ตารางสัมประสิทธิ์แบบไม่ปัดเศษ (โครงคอลัมน์เดียวกับ build_coefficient_tables)
+    ใช้ป้อน _extract_raw_coefficients() เพื่อกันการปัดเศษซ้อน: เดิมดึงจากตารางที่ปัด
+    4 ตำแหน่งแล้วไปปัด 3 ตำแหน่งอีกรอบตอนแสดงผล ทำให้ 0.111498 -> 0.1115 -> 0.112
+    (ที่ถูกคือ 0.111) และทำให้ค่าที่ใช้คำนวณต่อ (standardized beta, scenario) คลาดเล็กน้อย"""
+    return pd.DataFrame({
+        "ตัวแปร": res.params.index,
+        "ค่าสัมประสิทธิ์": res.params.values,
+        "p-value": res.pvalues.values,
+    })
 
 
 def _extract_raw_coefficients(df: pd.DataFrame) -> dict:
@@ -3281,8 +3297,9 @@ if "gsheet_raw_df" in st.session_state:
     else:
         lr_table, sr_table = build_coefficient_tables(lr_res, sr_res)
         combined_table = _merge_coefficient_tables(lr_table, sr_table)
-        lr_raw_map = _extract_raw_coefficients(lr_table)
-        sr_raw_map = _extract_raw_coefficients(sr_table)
+        # ใช้ค่าดิบที่ยังไม่ปัด (กันการปัดเศษซ้อนบนการ์ดหน้าเว็บ — ประเด็น S5)
+        lr_raw_map = _extract_raw_coefficients(_unrounded_coefficient_table(lr_res))
+        sr_raw_map = _extract_raw_coefficients(_unrounded_coefficient_table(sr_res))
         adj_r2_lr = summary_adj_r2(lr_res)
         adj_r2_sr = summary_adj_r2(sr_res)
         vars_customized = (active_lr_vars != list(LONG_RUN_VARS) or active_sr_bases != default_sr_bases)
