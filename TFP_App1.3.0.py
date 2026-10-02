@@ -2109,6 +2109,33 @@ def _var_full_name(code: str) -> str:
     return label
 
 
+# จุดขึ้นบรรทัดใหม่ของป้ายยาวในตาราง Diagnostics (ใช้ตอนแสดงผล HTML เท่านั้น ไม่กระทบ CSV)
+# เบราว์เซอร์ตัดคำไทยตามความกว้างคอลัมน์ ทำให้ขึ้นบรรทัดกลางวลี เช่น "ต่าง / ประเทศ"
+# จึงกำหนดจุดตัดเอง: ข้อความก่อน "|" คือบรรทัดแรก หลัง "|" คือบรรทัดที่สอง
+_LABEL_LINE_BREAKS = {
+    "สัดส่วนการลงทุนโดยตรงจากต่างประเทศต่อ GDP": "สัดส่วนการลงทุนโดยตรงจาก|ต่างประเทศต่อ GDP",
+    "ค่าธรรมเนียมในการใช้ทรัพย์สินทางปัญญาต่อ GDP": "ค่าธรรมเนียมในการใช้ทรัพย์สิน|ทางปัญญาต่อ GDP",
+    "ดัชนีความซับซ้อนทางเศรษฐกิจด้านการค้า": "ดัชนีความซับซ้อนทางเศรษฐกิจ|ด้านการค้า",
+    "จำนวนนักวิจัยต่อประชากรล้านคน": "จำนวนนักวิจัยต่อ|ประชากรล้านคน",
+    "Engle-Granger (coint, MacKinnon)": "Engle-Granger|(coint, MacKinnon)",
+    "Breusch-Godfrey (": "Breusch-Godfrey|(",
+}
+
+
+def _label_line_breaks(text) -> str:
+    """แทรก <br> ตามจุดที่กำหนดใน _LABEL_LINE_BREAKS แล้วห่อแต่ละบรรทัดด้วย nowrap
+    กันเบราว์เซอร์ตัดคำซ้ำกลางบรรทัด ถ้าไม่ตรงกฎใดเลยจะคืนข้อความเดิม"""
+    s = str(text)
+    hit = False
+    for src, dst in _LABEL_LINE_BREAKS.items():
+        if src in s:
+            s = s.replace(src, dst)
+            hit = True
+    if not hit:
+        return s
+    return "<br>".join(f'<span style="white-space:nowrap;">{part.strip()}</span>' for part in s.split("|"))
+
+
 # แกะรหัสตัวแปรดิบ เช่น "d1_FDI_GDP_lag0" -> (base="FDI_GDP", diff=1, lag=0)
 # "ECM_lag1" -> (base="ECM", diff=0, lag=1) | "ln_HDI" -> (base="ln_HDI", diff=0, lag=0)
 _VAR_CODE_RE = re.compile(r"^(?:d(?P<diff>[12])_)?(?P<base>.+?)(?:_lag(?P<lag>\d+))?$")
@@ -4047,7 +4074,7 @@ if st.session_state.page == "home":
 
             rows_html = "".join(
                 "<tr>" + "".join(
-                    f"<td>{_status_badge(v) if col == 'สถานะ' else _wrap_short_long_run(v)}</td>"
+                    f"<td>{_status_badge(v) if col == 'สถานะ' else (_label_line_breaks(v) if col == 'รายการ' else _wrap_short_long_run(v))}</td>"
                     for col, v in zip(diag_table_display.columns, row)
                 ) + "</tr>"
                 for row in diag_table_display.values.tolist()
