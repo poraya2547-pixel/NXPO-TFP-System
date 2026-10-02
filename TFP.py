@@ -430,7 +430,7 @@ def _stationarity_rows(df: pd.DataFrame, variables: list) -> list:
         order = r["order_of_integration"]
         if order == "I(2)?":
             status = _STATUS_WATCH
-            note = "ลำดับความนิ่งไม่ชัดเจน (p ทั้งที่ระดับและที่ผลต่างยังสูงกว่า 0.05)"
+            note = "ลำดับความนิ่งไม่ชัดเจน (t ทั้งที่ระดับและที่ผลต่างยังไม่ถึงค่าวิกฤต 5%)"
         elif order != majority:
             status = _STATUS_WATCH
             note = f"ตัวแปรอื่นในสมการส่วนใหญ่เป็น {majority} ไม่สอดคล้องกัน"
@@ -488,7 +488,7 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
             else:
                 status_t = _STATUS_FAIL
                 note_t = f"หลังแปลงด้วย {diff_symbol} แล้วยัง non-stationary ตาม ADF — diff_order ในสเปกอาจไม่พอ"
-            result_t = f"p={p_t:.3f}"
+            result_t = f"t={t_t:.3f} (5%={c_t['5%']:.3f}), p={p_t:.3f}"
         except Exception as e:
             status_t, note_t, result_t = _STATUS_WATCH, f"คำนวณไม่ได้: {e}", "n/a"
         rows.append(_diag_row("Stationarity (Short-run)", item_label, result_t, status_t, note_t))
@@ -579,8 +579,9 @@ def _autocorrelation_row(res, label: str, nlags: int = 1) -> dict:
     else:
         status = _STATUS_FAIL
         note = "มีแนวโน้ม autocorrelation หลงเหลือในค่าคลาดเคลื่อน"
+    # แสดง 4 ตำแหน่ง: ค่าอย่าง 0.0995 ถ้าปัดเป็น 0.100 จะดูขัดกับสถานะ "ก้ำกึ่ง (p < 0.10)"
     return _diag_row("Autocorrelation", f"Breusch-Godfrey ({label}, lag={nlags})",
-                      f"p={bg_p:.3f}", status, note)
+                      f"p={bg_p:.4f}", status, note)
 
 
 def _normality_row(res, label: str) -> dict:
