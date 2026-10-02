@@ -3956,7 +3956,7 @@ if st.session_state.page == "home":
                     else f'<span class="nxpo-var-dir down">{icon("trend-down", 15, 2)}</span>'
                 )
                 body_html += (
-                    f"<tr><td>{label}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
+                    f"<tr><td>{_label_line_breaks(label)}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
                 )
             st.markdown(
                 f'<div class="section-card"><div class="nxpo-var-card-head">'
