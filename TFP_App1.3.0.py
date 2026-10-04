@@ -3486,6 +3486,56 @@ def _auto_arima_forecast(series: pd.Series, periods: int,
     return forecast_df, best_order
 
 
+def _drift_forecast(train: pd.Series, h: int) -> float:
+    """Random walk with drift: ค่าพยากรณ์ล่วงหน้า h ปี = ค่าปีล่าสุด + h × การเปลี่ยนแปลง
+    เฉลี่ยต่อปีของข้อมูลฝึก (Hyndman & Athanasopoulos, 2021) — ง่ายพอ ๆ กับ Naive แต่
+    มีแนวโน้ม ใช้เป็นเส้นฐานเทียบตัวที่ 2 สำหรับอนุกรมที่โตต่อเนื่องอย่างดัชนี TFP"""
+    y = train.astype(float).values
+    if len(y) < 2:
+        return float(y[-1])
+    return float(y[-1] + h * (y[-1] - y[0]) / (len(y) - 1))
+
+
+def _diebold_mariano(actual, pred1, pred2, h: int = 1):
+    """ทดสอบ Diebold–Mariano (1995) ว่าวิธีพยากรณ์ 1 กับ 2 แม่นต่างกันอย่างมีนัยสำคัญไหม
+    ใช้ฟังก์ชันความสูญเสียแบบกำลังสอง d_t = e1_t^2 − e2_t^2 และปรับสำหรับตัวอย่างเล็ก
+    ตาม Harvey, Leybourne & Newbold (1997) แล้วเทียบกับการแจกแจง t (m−1) แบบสองทาง
+    H0: แม่นเท่ากัน · mean_d < 0 แปลว่าวิธีที่ 1 คลาดเคลื่อนน้อยกว่า
+    คืนค่า dict(stat, pvalue, m, mean_d) หรือ None ถ้าจุดทดสอบน้อยเกินไป/ความแปรปรวนเป็นศูนย์"""
+    from scipy import stats as _sps
+    a = np.asarray(actual, dtype=float)
+    d = (a - np.asarray(pred1, dtype=float)) ** 2 - (a - np.asarray(pred2, dtype=float)) ** 2
+    d = d[np.isfinite(d)]
+    m = len(d)
+    if m < 3:
+        return None
+    dbar = float(d.mean())
+    dc = d - dbar
+    var = float(np.mean(dc * dc))
+    for k in range(1, h):
+        var += 2 * float(np.mean(dc[k:] * dc[:-k]))
+    if not np.isfinite(var) or var <= 0:
+        return None
+    dm = dbar / math.sqrt(var / m)
+    stat = dm * math.sqrt((m + 1 - 2 * h + h * (h - 1) / m) / m)
+    pvalue = float(2 * (1 - _sps.t.cdf(abs(stat), df=m - 1)))
+    return {"stat": float(stat), "pvalue": pvalue, "m": m, "mean_d": dbar}
+
+
+def _dm_verdict(dm: dict, name1: str, name2: str, alpha: float = 0.05) -> str:
+    """แปลผล DM เป็นข้อความสั้น ๆ สำหรับแสดงบนหน้าเว็บ"""
+    if not dm:
+        return "จุดทดสอบไม่พอสำหรับทดสอบ"
+    if dm["pvalue"] >= alpha:
+        return f"แม่นไม่ต่างกันอย่างมีนัยสำคัญที่ระดับ {alpha:.0%}"
+    better = name1 if dm["mean_d"] < 0 else name2
+    return f"{better} แม่นกว่าอย่างมีนัยสำคัญที่ระดับ {alpha:.0%}"
+
+
+_MODEL_COLORS = {"ARIMA": "#16324A", "Naive": "#F97316", "Drift": "#16A34A"}
+_MODEL_LABELS = {"ARIMA": "ARIMA", "Naive": "Naive", "Drift": "Random walk with drift"}
+
+
 def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5):
     """ทดสอบความแม่นยำของแบบจำลองย้อนหลัง (holdout backtest) — ไม่ใช้ทฤษฎีใหม่
     เพิ่มเติมจากที่มีอยู่แล้วเลย แค่เรียก _auto_arima_forecast ตัวเดิมซ้ำ โดย:
@@ -3509,9 +3559,10 @@ def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5
 
     naive_val = float(train.iloc[-1])  # Naive forecast: คงค่าปีสุดท้ายก่อนซ่อนข้อมูลไว้ทุกปีถัดไป
     rows = []
-    for yr, actual in test.items():
+    for h, (yr, actual) in enumerate(test.items(), start=1):
         arima_pred = float(bt_forecast_df.loc[int(yr), "mean"]) if int(yr) in bt_forecast_df.index else None
-        rows.append({"ปี": int(yr), "ค่าจริง": float(actual), "ARIMA": arima_pred, "Naive": naive_val})
+        rows.append({"ปี": int(yr), "ค่าจริง": float(actual), "ARIMA": arima_pred, "Naive": naive_val,
+                     "Drift": _drift_forecast(train, h)})
     bt_df = pd.DataFrame(rows).set_index("ปี")
 
     def _mape(actual, pred):
@@ -3525,6 +3576,8 @@ def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5
         "arima_rmse": _rmse(bt_df["ค่าจริง"], bt_df["ARIMA"]),
         "naive_mape": _mape(bt_df["ค่าจริง"], bt_df["Naive"]),
         "naive_rmse": _rmse(bt_df["ค่าจริง"], bt_df["Naive"]),
+        "drift_mape": _mape(bt_df["ค่าจริง"], bt_df["Drift"]),
+        "drift_rmse": _rmse(bt_df["ค่าจริง"], bt_df["Drift"]),
         "order": bt_order,
         "test_years": test_years,
         "train_years": len(train),
@@ -3593,6 +3646,7 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
             "ค่าจริง": actual,
             "ARIMA": arima_pred,
             "Naive": naive_val,
+            "Drift": _drift_forecast(train, step_ahead),
         })
 
     if not rows:
@@ -3611,8 +3665,16 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
         "naive_mape": _mape(origins_df["ค่าจริง"], origins_df["Naive"]),
         "arima_rmse": _rmse(origins_df["ค่าจริง"], origins_df["ARIMA"]),
         "naive_rmse": _rmse(origins_df["ค่าจริง"], origins_df["Naive"]),
+        "drift_mape": _mape(origins_df["ค่าจริง"], origins_df["Drift"]),
+        "drift_rmse": _rmse(origins_df["ค่าจริง"], origins_df["Drift"]),
         "n_windows": len(origins_df),
+        # Diebold–Mariano: ทดสอบว่าความต่างของความแม่นยำมีนัยสำคัญทางสถิติจริงไหม
+        "dm_arima_naive": _diebold_mariano(origins_df["ค่าจริง"], origins_df["ARIMA"], origins_df["Naive"], h=step_ahead),
+        "dm_drift_naive": _diebold_mariano(origins_df["ค่าจริง"], origins_df["Drift"], origins_df["Naive"], h=step_ahead),
     }
+    # วิธีที่แม่นที่สุดจาก rolling backtest (MAPE ต่ำสุด) — ใช้แสดงเป็นป้ายแนะนำเท่านั้น
+    # ไม่ได้เปลี่ยนกราฟพยากรณ์หลัก (ซึ่งยังเป็น ARIMA ตามเดิม)
+    metrics["best_model"] = min(("ARIMA", "Naive", "Drift"), key=lambda k: metrics[f"{k.lower()}_mape"])
 
     if crisis_years:
         y0, y1 = crisis_years
@@ -3622,10 +3684,12 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
             if len(sub) > 0:
                 metrics[f"arima_mape_{label}"] = _mape(sub["ค่าจริง"], sub["ARIMA"])
                 metrics[f"naive_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Naive"])
+                metrics[f"drift_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Drift"])
                 metrics[f"n_{label}"] = len(sub)
             else:
                 metrics[f"arima_mape_{label}"] = None
                 metrics[f"naive_mape_{label}"] = None
+                metrics[f"drift_mape_{label}"] = None
                 metrics[f"n_{label}"] = 0
 
     return origins_df, metrics, None
@@ -3653,11 +3717,14 @@ def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
                      "จำนวนจุด": int(len(sub))})
         rows.append({"เกณฑ์": int(t), "โมเดล": "Naive", "MAPE": _mape(sub["ค่าจริง"], sub["Naive"]),
                      "จำนวนจุด": int(len(sub))})
+        if "Drift" in sub.columns:
+            rows.append({"เกณฑ์": int(t), "โมเดล": "Drift", "MAPE": _mape(sub["ค่าจริง"], sub["Drift"]),
+                         "จำนวนจุด": int(len(sub))})
     if not rows:
         return None
     chart_df = pd.DataFrame(rows)
 
-    color_scale = alt.Scale(domain=["ARIMA", "Naive"], range=["#16324A", "#F97316"])
+    color_scale = alt.Scale(domain=["ARIMA", "Naive", "Drift"], range=["#16324A", "#F97316", "#16A34A"])
     base = alt.Chart(chart_df).encode(
         x=alt.X(
             "เกณฑ์:Q", title="ตัดจุดที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก",
@@ -4599,7 +4666,7 @@ elif st.session_state.page == "forecast":
                                 unsafe_allow_html=True,
                             )
                         # แถบเทียบขนาดความคลาดเคลื่อนแบบภาพ (เห็นสัดส่วนได้ไวกว่าตัวเลขล้วน)
-                        _mape_max = max(bt_metrics["arima_mape"], bt_metrics["naive_mape"], 0.01)
+                        _mape_max = max(bt_metrics["arima_mape"], bt_metrics["naive_mape"], bt_metrics["drift_mape"], 0.01)
                         st.markdown(
                             '<div style="margin:14px 2px 4px;">'
                             + f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
@@ -4616,6 +4683,13 @@ elif st.session_state.page == "forecast":
                               f'background:linear-gradient(90deg,var(--brand-orange),var(--brand-orange-dark));border-radius:999px;"></div></div>'
                               f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
                               f'{bt_metrics["naive_mape"]:.2f}%</span></div>'
+                            + f'<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">Drift</span>'
+                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
+                              f'<div style="width:{bt_metrics["drift_mape"] / _mape_max * 100:.0f}%;height:100%;'
+                              f'background:linear-gradient(90deg,#16A34A,#0F7A38);border-radius:999px;"></div></div>'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
+                              f'{bt_metrics["drift_mape"]:.2f}%</span></div>'
                             + '</div>',
                             unsafe_allow_html=True,
                         )
@@ -4625,22 +4699,22 @@ elif st.session_state.page == "forecast":
                         for _, r in _bt_reset.iterrows():
                             # ไฮไลต์ค่าที่ทายใกล้เคียงค่าจริงกว่าในแต่ละปีด้วยสีเขียว+ตัวหนา
                             # ให้เห็นเป็นภาพว่าปีไหน ARIMA ชนะ ปีไหน Naive ชนะ ไม่ต้องนั่งลบเลขเอง
-                            _arima_diff = abs(r["ARIMA"] - r["ค่าจริง"])
-                            _naive_diff = abs(r["Naive"] - r["ค่าจริง"])
-                            _arima_style = "color:var(--green);font-weight:700;" if _arima_diff <= _naive_diff else ""
-                            _naive_style = "color:var(--green);font-weight:700;" if _naive_diff < _arima_diff else ""
+                            _diffs = {k: abs(r[k] - r["ค่าจริง"]) for k in ("ARIMA", "Naive", "Drift")}
+                            _win = min(_diffs, key=_diffs.get)
+                            _sty = {k: ("color:var(--green);font-weight:700;" if k == _win else "") for k in _diffs}
                             _bt_rows_html += (
                                 f'<tr><td>{int(r["ปี"])}</td><td>{r["ค่าจริง"]:,.2f}</td>'
-                                f'<td style="{_arima_style}">{r["ARIMA"]:,.2f}</td>'
-                                f'<td style="{_naive_style}">{r["Naive"]:,.2f}</td></tr>'
+                                f'<td style="{_sty["ARIMA"]}">{r["ARIMA"]:,.2f}</td>'
+                                f'<td style="{_sty["Naive"]}">{r["Naive"]:,.2f}</td>'
+                                f'<td style="{_sty["Drift"]}">{r["Drift"]:,.2f}</td></tr>'
                             )
                         st.markdown(
                             f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
-                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA ทาย</th><th>Naive ทาย</th></tr></thead>'
+                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
                             f'<tbody>{_bt_rows_html}</tbody></table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
                             f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงกว่าในปีนั้น</p>',
+                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น</p>',
                             unsafe_allow_html=True,
                         )
                         st.markdown(
@@ -4648,7 +4722,9 @@ elif st.session_state.page == "forecast":
                             f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:0;">'
                             f'แบ่งข้อมูลเป็น {bt_metrics["train_years"]} ปีสำหรับฝึกแบบจำลอง และ '
                             f'{bt_metrics["test_years"]} ปีล่าสุดสำหรับทดสอบการพยากรณ์ '
-                            f'โดยเลือก ARIMA{bt_metrics["order"]} ด้วยเกณฑ์ AIC</p>'
+                            f'โดยเลือก ARIMA{bt_metrics["order"]} ด้วยเกณฑ์ AIC · '
+                            f'Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี) ได้ MAPE '
+                            f'{bt_metrics["drift_mape"]:.2f}% (RMSE {bt_metrics["drift_rmse"]:.3f})</p>'
                             f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;margin-bottom:0;">'
                             + ('ผลการทดสอบพบว่า ARIMA พยากรณ์ได้แม่นยำกว่า Naive Forecast ในช่วงทดสอบ'
                                if _bt_better else
@@ -4717,6 +4793,31 @@ elif st.session_state.page == "forecast":
                                 unsafe_allow_html=True,
                             )
 
+                        # ----- เทียบ 3 วิธี + Diebold–Mariano test + วิธีที่แม่นที่สุด -----
+                        _best = roll_metrics["best_model"]
+                        _dm_an = roll_metrics.get("dm_arima_naive")
+                        _dm_dn = roll_metrics.get("dm_drift_naive")
+
+                        def _dm_txt(dm):
+                            return (f'DM* = {dm["stat"]:.3f}, p = {dm["pvalue"]:.4f}' if dm else "—")
+
+                        st.markdown(
+                            f'<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
+                            f'<b>Random walk with drift</b> (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี): MAPE '
+                            f'{roll_metrics["drift_mape"]:.2f}% (RMSE {roll_metrics["drift_rmse"]:.3f})</p>'
+                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:6px 0 0;">'
+                            f'<b>Diebold–Mariano test</b> (H0: แม่นเท่ากัน, ปรับตัวอย่างเล็กแบบ Harvey et al.) — '
+                            f'ARIMA เทียบ Naive: {_dm_txt(_dm_an)} → {_dm_verdict(_dm_an, "ARIMA", "Naive")} &nbsp;|&nbsp; '
+                            f'Drift เทียบ Naive: {_dm_txt(_dm_dn)} → {_dm_verdict(_dm_dn, "Drift", "Naive")}</p>'
+                            f'<p style="font-size:0.82rem;margin:6px 0 0;">'
+                            f'<span style="background:{_MODEL_COLORS[_best]};color:#fff;font-weight:700;padding:2px 10px;'
+                            f'border-radius:999px;">{icon("check", 10, 2.5)} วิธีที่แม่นที่สุดจาก rolling backtest: '
+                            f'{_MODEL_LABELS[_best]} (MAPE {roll_metrics[_best.lower() + "_mape"]:.2f}%)</span>'
+                            f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักยังใช้ ARIMA '
+                            f'เพื่อแสดงแนวโน้มและช่วงความเชื่อมั่น</span></p></div>',
+                            unsafe_allow_html=True,
+                        )
+
                         # ----- กราฟแนวโน้ม MAPE เทียบทุกเกณฑ์ตัดจุดพร้อมกัน -----
                         # ดีกว่าดูทีละจุดจากสไลเดอร์ เพราะเห็นทั้งเส้นแนวโน้มรวดเดียวว่า
                         # ARIMA ดีขึ้นแบบค่อยเป็นค่อยไปจริงหรือเป็นความบังเอิญของจุดปลาย
@@ -4759,11 +4860,15 @@ elif st.session_state.page == "forecast":
                             if len(_mature_df) >= 3:
                                 _arima_mape_mat = _mape_local(_mature_df["ค่าจริง"], _mature_df["ARIMA"])
                                 _naive_mape_mat = _mape_local(_mature_df["ค่าจริง"], _mature_df["Naive"])
+                                _drift_mape_mat = _mape_local(_mature_df["ค่าจริง"], _mature_df["Drift"])
+                                _dm_mat = _diebold_mariano(_mature_df["ค่าจริง"], _mature_df["ARIMA"], _mature_df["Naive"])
                                 _mat_better = _arima_mape_mat < _naive_mape_mat
                                 st.markdown(
                                     f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;">'
                                     f'เฉพาะจุดที่ฝึกด้วยข้อมูล ≥ {mature_threshold} ปี ({len(_mature_df)} จุด): '
-                                    f'ARIMA MAPE {_arima_mape_mat:.2f}% เทียบ Naive {_naive_mape_mat:.2f}%'
+                                    f'ARIMA MAPE {_arima_mape_mat:.2f}% เทียบ Naive {_naive_mape_mat:.2f}% '
+                                    f'และ Drift {_drift_mape_mat:.2f}% · DM (ARIMA เทียบ Naive): '
+                                    + (f'p = {_dm_mat["pvalue"]:.4f} → {_dm_verdict(_dm_mat, "ARIMA", "Naive")}' if _dm_mat else 'จุดไม่พอ')
                                     + (' — <b style="color:var(--green);">ARIMA แม่นกว่าเมื่อมีข้อมูลฝึกเพียงพอ</b> '
                                        '(สนับสนุนว่าที่ ARIMA แพ้ในภาพรวมส่วนหนึ่งมาจากจุดทดสอบช่วงต้นที่ข้อมูลฝึกน้อยเกินไป)'
                                        if _mat_better else
@@ -4780,26 +4885,26 @@ elif st.session_state.page == "forecast":
 
                         _roll_rows_html = ""
                         for _, r in roll_df.iterrows():
-                            _arima_diff = abs(r["ARIMA"] - r["ค่าจริง"])
-                            _naive_diff = abs(r["Naive"] - r["ค่าจริง"])
-                            _arima_style = "color:var(--green);font-weight:700;" if _arima_diff <= _naive_diff else ""
-                            _naive_style = "color:var(--green);font-weight:700;" if _naive_diff < _arima_diff else ""
+                            _diffs = {k: abs(r[k] - r["ค่าจริง"]) for k in ("ARIMA", "Naive", "Drift")}
+                            _win = min(_diffs, key=_diffs.get)
+                            _sty = {k: ("color:var(--green);font-weight:700;" if k == _win else "") for k in _diffs}
                             _roll_rows_html += (
                                 f'<tr><td>{int(r["ปีที่ทาย"])}</td><td>{int(r["จำนวนปีที่ฝึก"])}</td>'
                                 f'<td>{r["ค่าจริง"]:,.2f}</td>'
-                                f'<td style="{_arima_style}">{r["ARIMA"]:,.2f}</td>'
-                                f'<td style="{_naive_style}">{r["Naive"]:,.2f}</td></tr>'
+                                f'<td style="{_sty["ARIMA"]}">{r["ARIMA"]:,.2f}</td>'
+                                f'<td style="{_sty["Naive"]}">{r["Naive"]:,.2f}</td>'
+                                f'<td style="{_sty["Drift"]}">{r["Drift"]:,.2f}</td></tr>'
                             )
                         st.markdown(
                             f'<div class="backtest-table backtest-table-scroll" '
                             f'style="overflow-x:auto;overflow-y:auto;max-height:420px;">'
                             f'<table class="tfp-table-cream">'
                             f'<thead><tr><th>ปีที่ทาย</th><th>จำนวนปีที่ฝึก</th><th>ค่าจริง</th>'
-                            f'<th>ARIMA ทาย</th><th>Naive ทาย</th></tr></thead>'
+                            f'<th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
                             f'<tbody>{_roll_rows_html}</tbody></table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
                             f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงกว่าในปีนั้น &nbsp;|&nbsp; เลื่อนขึ้น-ลงในตารางเพื่อดูทุกจุดทดสอบ</p>',
+                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น &nbsp;|&nbsp; เลื่อนขึ้น-ลงในตารางเพื่อดูทุกจุดทดสอบ</p>',
                             unsafe_allow_html=True,
                         )
                         st.markdown(
