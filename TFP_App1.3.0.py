@@ -3533,6 +3533,10 @@ def _dm_verdict(dm: dict, name1: str, name2: str, alpha: float = 0.05) -> str:
 
 
 _MODEL_COLORS = {"ARIMA": "#16324A", "Naive": "#F97316", "Drift": "#16A34A"}
+
+# ตัวแปรร้อยละต่อ GDP ที่ TFP.load_data() หาร 100 แล้ว (ต้องตรงกับ TFP.PERCENT_VARS)
+# ใช้แปลงค่าที่ผู้ใช้กรอกเป็น "จุดร้อยละ" ในหน้าจำลองผลกระทบ ให้ตรงหน่วยในสมการ
+_PCT_SCALED_VARS = {"FDI_GDP", "FEE_GDP", "RDG_GDP", "RDP_GDP", "TRADE_GDP"}
 _MODEL_LABELS = {"ARIMA": "ARIMA", "Naive": "Naive", "Drift": "Random walk with drift"}
 
 
@@ -5151,10 +5155,26 @@ elif st.session_state.page == "forecast":
                                 f'<div>ค่าความยืดหยุ่น (elasticity) จากสมการระยะยาว = {coef:.4f}</div>'
                                 f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ {coef:.4f} × {shock:g}%</div>'
                             )
+                        elif chosen_var in _PCT_SCALED_VARS:
+                            # ตัวแปรร้อยละต่อ GDP ถูกหาร 100 ตอนโหลดข้อมูล (เป็นสัดส่วน 0–1)
+                            # จึงให้ผู้ใช้กรอกเป็น "จุดร้อยละ" แล้วหาร 100 ก่อนคูณสัมประสิทธิ์
+                            # (กรอก 1 = สัดส่วนต่อ GDP เพิ่ม 1 จุดร้อยละ เช่น 2% → 3%)
+                            shock = st.number_input(
+                                f"สมมติ {full_name} เปลี่ยนแปลง (จุดร้อยละของ GDP)",
+                                min_value=-20.0, max_value=20.0, value=1.0, step=0.5,
+                                key=f"impact_shock_{chosen_var}",
+                            )
+                            pct_effect = (math.exp(coef * shock / 100) - 1) * 100
+                            formula_text = (
+                                f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
+                                f'(ตัวแปรนี้ไม่ได้อยู่ในรูป log จึงตีความเป็น semi-elasticity)</div>'
+                                f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
+                                f'(e^({coef:.4f}×{shock:g}/100) − 1) × 100%</div>'
+                            )
                         else:
                             shock = st.number_input(
-                                f"สมมติ {full_name} เปลี่ยนแปลง",
-                                value=1.0, step=0.5,
+                                f"สมมติ {full_name} เปลี่ยนแปลง (หน่วยของดัชนี)",
+                                value=0.1, step=0.05,
                                 key=f"impact_shock_{chosen_var}",
                             )
                             pct_effect = (math.exp(coef * shock) - 1) * 100
@@ -5777,6 +5797,9 @@ elif st.session_state.page == "exec_dashboard":
                         _coef = lr_raw_map[scenario_var]["coef"]
                         if scenario_var.startswith("ln_"):
                             scenario_pct_effect = _coef * scenario_shock
+                        elif scenario_var in _PCT_SCALED_VARS:
+                            # กรอกเป็นจุดร้อยละ → หาร 100 ให้ตรงหน่วยสัดส่วนที่ใช้ในสมการ
+                            scenario_pct_effect = (math.exp(_coef * scenario_shock / 100) - 1) * 100
                         else:
                             scenario_pct_effect = (math.exp(_coef * scenario_shock) - 1) * 100
 
@@ -5823,7 +5846,7 @@ elif st.session_state.page == "exec_dashboard":
                 elif scenario_pct_effect is not None:
                     _kpi_item_4 = _exec_kpi(_exec_navy, icon("bulb", 18, 1.8), f"{scenario_pct_effect:+.2f}%",
                                              f"สมมติฐาน: {_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
-                                             f"{'%' if scenario_var.startswith('ln_') else ''}")
+                                             f"{'%' if scenario_var.startswith('ln_') else (' จุดร้อยละ' if scenario_var in _PCT_SCALED_VARS else '')}")
                 else:
                     _kpi_item_4 = _exec_kpi(_exec_navy, icon("bulb", 18, 1.8), f"{n_pass}/{n_pass + n_watch + n_fail}",
                                              "ผ่านเกณฑ์ข้อสมมติฐาน (ยังไม่ได้ตั้งสมมติฐานตัวแปร)")
@@ -5995,7 +6018,7 @@ elif st.session_state.page == "exec_dashboard":
                             if scenario_pct_effect is not None:
                                 _insight_lines.append(
                                     f"สมมติฐานที่ตั้งไว้ ({_var_full_name(scenario_var)} เปลี่ยน {scenario_shock:g}"
-                                    f"{'%' if scenario_var.startswith('ln_') else ''}) "
+                                    f"{'%' if scenario_var.startswith('ln_') else (' จุดร้อยละ' if scenario_var in _PCT_SCALED_VARS else '')}) "
                                     f"อาจส่งผลต่อ TFP ประมาณ {scenario_pct_effect:+.2f}%"
                                 )
                         else:
