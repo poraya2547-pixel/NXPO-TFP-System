@@ -3496,6 +3496,36 @@ def _drift_forecast(train: pd.Series, h: int) -> float:
     return float(y[-1] + h * (y[-1] - y[0]) / (len(y) - 1))
 
 
+def _drift_forecast_interval(series: pd.Series, periods: int, level: float = 0.95):
+    """พยากรณ์ด้วย Random walk with drift พร้อมช่วงความเชื่อมั่นของการพยากรณ์ (กราฟพยากรณ์หลัก)
+
+    เลือกใช้แทน ARIMA เพราะผล rolling backtest พบว่า Drift มี MAPE ต่ำที่สุดในสามวิธี
+    และ Diebold–Mariano test ไม่พบว่าด้อยกว่าวิธีอื่นอย่างมีนัยสำคัญ จึงเลือกวิธีที่ง่ายกว่า
+    ตามหลักความประหยัด (parsimony) ส่วน ARIMA ยังใช้เป็นวิธีเปรียบเทียบใน backtest
+
+    ค่าพยากรณ์ล่วงหน้า h ปี : ŷ(T+h) = y(T) + h × c โดย c = (y(T) − y(1)) / (T − 1)
+    ส่วนเบี่ยงเบนมาตรฐานของค่าพยากรณ์ : σ̂_h = σ̂ × √(h × (1 + h / T))
+    (σ̂ = ส่วนเบี่ยงเบนมาตรฐานของการเปลี่ยนแปลงรายปี; Hyndman & Athanasopoulos, 2021)
+
+    คืนค่า DataFrame ที่มี index เป็นปีในอนาคต และคอลัมน์ mean / lower / upper
+    (รูปแบบเดียวกับ _auto_arima_forecast เพื่อใช้กับกราฟและตารางเดิมได้ทันที)"""
+    from scipy import stats as _sps
+    y = series.astype(float).values
+    T = len(y)
+    diffs = np.diff(y)
+    c = float(diffs.mean()) if T > 1 else 0.0
+    sigma = float(np.std(diffs, ddof=1)) if T > 2 else 0.0
+    z = float(_sps.norm.ppf(0.5 + level / 2))
+    last_year = int(series.index.max())
+    h = np.arange(1, periods + 1)
+    mean = y[-1] + h * c
+    se = sigma * np.sqrt(h * (1 + h / T))
+    return pd.DataFrame(
+        {"mean": mean, "lower": mean - z * se, "upper": mean + z * se},
+        index=[last_year + int(i) for i in h],
+    )
+
+
 def _diebold_mariano(actual, pred1, pred2, h: int = 1):
     """ทดสอบ Diebold–Mariano (1995) ว่าวิธีพยากรณ์ 1 กับ 2 แม่นต่างกันอย่างมีนัยสำคัญไหม
     ใช้ฟังก์ชันความสูญเสียแบบกำลังสอง d_t = e1_t^2 − e2_t^2 และปรับสำหรับตัวอย่างเล็ก
@@ -3677,7 +3707,7 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
         "dm_drift_naive": _diebold_mariano(origins_df["ค่าจริง"], origins_df["Drift"], origins_df["Naive"], h=step_ahead),
     }
     # วิธีที่แม่นที่สุดจาก rolling backtest (MAPE ต่ำสุด) — ใช้แสดงเป็นป้ายแนะนำเท่านั้น
-    # ไม่ได้เปลี่ยนกราฟพยากรณ์หลัก (ซึ่งยังเป็น ARIMA ตามเดิม)
+    # (กราฟพยากรณ์หลักใช้ Drift ผ่าน _drift_forecast_interval)
     metrics["best_model"] = min(("ARIMA", "Naive", "Drift"), key=lambda k: metrics[f"{k.lower()}_mape"])
 
     if crisis_years:
@@ -3854,7 +3884,7 @@ def _nice_line_chart_with_forecast(hist_series: pd.Series, forecast_df: pd.DataF
         f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
         f'border-radius:50%;background:{color};margin-right:5px;"></span>ข้อมูลจริง</span>'
         f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
-        f'border-radius:50%;background:{forecast_color};margin-right:5px;"></span>พยากรณ์ (ARIMA)</span>'
+        f'border-radius:50%;background:{forecast_color};margin-right:5px;"></span>พยากรณ์ (Drift)</span>'
         f'<span style="white-space:nowrap;"><span style="display:inline-block;width:10px;height:10px;'
         f'border-radius:2px;background:{forecast_color};opacity:0.3;margin-right:5px;"></span>'
         f'ช่วงความเชื่อมั่น 95%</span>'
@@ -4438,7 +4468,7 @@ elif st.session_state.page == "forecast":
         st.markdown(
             f'<div class="section-card"><div class="section-title">'
             f'<div class="section-num">{icon("trend-up", 20, 2)}</div>'
-            f'<div class="section-title-text"><h3>แนวโน้มดัชนีผลิตภาพการผลิตรวม (TFP) ย้อนหลัง พร้อมพยากรณ์ล่วงหน้า (ARIMA)</h3>'
+            f'<div class="section-title-text"><h3>แนวโน้มดัชนีผลิตภาพการผลิตรวม (TFP) ย้อนหลัง พร้อมพยากรณ์ล่วงหน้า (Random walk with drift)</h3>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -4470,7 +4500,7 @@ elif st.session_state.page == "forecast":
                     f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div>{_sub_html}</div></div>'
                 )
 
-            _arima_forecast_available = False
+            _main_forecast_available = False
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
                 # ----- เลือกช่วงพยากรณ์ล่วงหน้า -----
                 # เปลี่ยนจากแถบเลื่อนอิสระ (1-30 ปี) เป็นดรอปดาวน์ตัวเลือกที่กำหนด
@@ -4491,11 +4521,12 @@ elif st.session_state.page == "forecast":
                              "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
                     )
 
-                with st.spinner("กำลังหาโมเดล ARIMA ที่เหมาะสมและพยากรณ์..."):
-                    forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
-                p, d, q = arima_order
+                # กราฟพยากรณ์หลักใช้ Random walk with drift (เลือกจากผล rolling backtest
+                # ด้านล่าง: MAPE ต่ำสุดและไม่ด้อยกว่าวิธีอื่นอย่างมีนัยสำคัญตาม DM test)
+                forecast_df = _drift_forecast_interval(tfp_series, horizon)
+                _drift_slope = (float(tfp_series.iloc[-1]) - float(tfp_series.iloc[0])) / (len(tfp_series) - 1)
                 last_fc_year = forecast_df.index.max()
-                _arima_forecast_available = True
+                _main_forecast_available = True
 
                 # ----- แถบสรุปตัวเลขสำคัญ (KPI) เหนือกราฟ — สรุปให้เห็นภาพรวมได้
                 # ในสายตาเดียว ก่อนลงรายละเอียดในกราฟด้านล่าง — รวมเป็นการ์ดเดียว
@@ -4533,8 +4564,8 @@ elif st.session_state.page == "forecast":
                     )
                     + _kpi_strip_item(
                         _kpi_navy, icon("check", 21, 2),
-                        f"ARIMA({p},{d},{q})",
-                        "เลือกอัตโนมัติ (AIC ต่ำสุด)",
+                        f"{_drift_slope:+.3f}",
+                        "การเปลี่ยนแปลงเฉลี่ยต่อปี<br>(ใช้เป็นแนวโน้มพยากรณ์)",
                     )
                     + '</div>',
                     unsafe_allow_html=True,
@@ -4582,7 +4613,8 @@ elif st.session_state.page == "forecast":
                         f'<div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;'
                         f'color:var(--brand-navy-soft);line-height:1.5;margin-bottom:6px;">'
                         f'{icon("info", 14, 1.8)}'
-                        f'<span>เลือก order ของ ARIMA ด้วยค่า AIC ต่ำสุดจากการลอง grid search อัตโนมัติ</span>'
+                        f'<span>พยากรณ์ด้วย Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี) '
+                        f'ซึ่งแม่นที่สุดจากการทดสอบย้อนหลังด้านล่าง</span>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
@@ -4612,7 +4644,7 @@ elif st.session_state.page == "forecast":
                         st.download_button(
                             "ดาวน์โหลดตัวเลขพยากรณ์เป็น CSV",
                             data=fc_csv,
-                            file_name="TFP_forecast_ARIMA.csv",
+                            file_name="TFP_forecast_drift.csv",
                             mime="text/csv",
                         )
 
@@ -4837,8 +4869,8 @@ elif st.session_state.page == "forecast":
                             f'<span style="background:{_MODEL_COLORS[_best]};color:#fff;font-weight:700;padding:2px 10px;'
                             f'border-radius:999px;">{icon("check", 10, 2.5)} MAPE ต่ำสุด: '
                             f'{_MODEL_LABELS[_best]} ({roll_metrics[_best.lower() + "_mape"]:.2f}%)</span>'
-                            f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักยังใช้ ARIMA '
-                            f'เพื่อแสดงแนวโน้มและช่วงความเชื่อมั่น</span></p></div>',
+                            f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักใช้ Random walk with drift</span>'
+                            f'</p></div>',
                             unsafe_allow_html=True,
                         )
 
@@ -4950,13 +4982,13 @@ elif st.session_state.page == "forecast":
                     f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
                 )
                 st.info(
-                    f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA "
+                    f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์และทดสอบย้อนหลัง "
                     f"อย่างน่าเชื่อถือ (ต้องการอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
                 )
         st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= การ์ดสรุปภาพรวมผลการพยากรณ์ (พื้นกรมท่าเข้ม) =================
-        if _arima_forecast_available:
+        if _main_forecast_available:
             fc_final = float(forecast_df.loc[last_fc_year, "mean"])
             base_val = float(tfp_series.iloc[-1])
             base_year = int(tfp_series.index.max())
@@ -5413,7 +5445,7 @@ elif st.session_state.page == "forecast":
         # เลือกในกล่อง "ผลกระทบของตัวแปร", ค่าที่สมมติเปลี่ยนแปลง) ไว้ใน session_state
         # ก่อนพาไปหน้าแดชบอร์ดสรุป เพื่อให้หน้านั้นแสดงผลตรงกับที่ตั้งค่าไว้ที่นี่ทันที
         # โดยไม่ต้องมาตั้งซ้ำ — เหมาะสำหรับเปิดฉายนำเสนอแบบไม่ต้องเลื่อนจอ
-        if _arima_forecast_available:
+        if _main_forecast_available:
             st.write("")
             with st.container(key="exec_cta_card"):
                 st.markdown(
@@ -5796,8 +5828,7 @@ elif st.session_state.page == "exec_dashboard":
 
                 _has_forecast = len(tfp_series) >= MIN_POINTS_FOR_ARIMA
                 if _has_forecast:
-                    with st.spinner("กำลังพยากรณ์ตามช่วงปีที่ตั้งไว้..."):
-                        forecast_df, arima_order = _auto_arima_forecast(tfp_series, horizon)
+                    forecast_df = _drift_forecast_interval(tfp_series, horizon)
                     fc_year = int(forecast_df.index.max())
                     fc_final = float(forecast_df.loc[fc_year, "mean"])
                     growth_total = ((fc_final / last_val) - 1) * 100 if last_val else 0.0
@@ -5898,19 +5929,19 @@ elif st.session_state.page == "exec_dashboard":
                                 f'💡 ถ้าเป็นไปตามสมมติฐานด้านบน TFP ปี {fc_year} อาจขยับไปที่ราว '
                                 f'<b style="color:var(--brand-navy);">{_scn_final:,.2f}</b> '
                                 f'(เทียบกับพยากรณ์ฐาน {fc_final:,.2f}) — เป็นภาพประกอบเชิงนโยบายอย่างง่าย '
-                                f'จากค่าความยืดหยุ่นของสมการระยะยาว ไม่ใช่การพยากรณ์ร่วมกับแบบจำลอง ARIMA โดยตรง</div>',
+                                f'จากค่าความยืดหยุ่นของสมการระยะยาว ไม่ใช่การพยากรณ์ร่วมกับแบบจำลองพยากรณ์ฐานโดยตรง</div>',
                                 unsafe_allow_html=True,
                             )
                     else:
                         _nice_line_chart(tfp_series, color="#F97316", height=230)
-                        st.info(f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์ด้วย ARIMA")
+                        st.info(f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์")
                     if _has_forecast:
                         st.markdown(
                             f'<div class="exec-chart-footnote" style="font-size:0.78rem;color:var(--brand-navy-soft);'
                             f'line-height:1.6;margin-top:10px;padding-top:10px;'
                             f'border-top:1px dashed var(--card-border);">'
                             f'เส้นสีส้มแสดงค่า TFP ที่สังเกตได้จริงจนถึงปี {last_year} '
-                            f'({last_val:,.2f}) และเส้นสีน้ำเงินแสดงค่าพยากรณ์จากแบบจำลอง ARIMA '
+                            f'({last_val:,.2f}) และเส้นสีน้ำเงินแสดงค่าพยากรณ์แบบ Random walk with drift '
                             f'จนถึงปี {fc_year}<br>โดยแถบช่วงความเชื่อมั่น 95% แสดงระดับความไม่แน่นอนของค่าพยากรณ์ '
                             f'ซึ่งเพิ่มขึ้นตามระยะเวลาการพยากรณ์</div>',
                             unsafe_allow_html=True,
@@ -6020,7 +6051,7 @@ elif st.session_state.page == "exec_dashboard":
                             )
                         else:
                             _insight_lines.append(
-                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) — ข้อมูลยังไม่พอสำหรับพยากรณ์ด้วย ARIMA"
+                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) — ข้อมูลยังไม่พอสำหรับพยากรณ์"
                             )
                     else:
                         if _has_forecast:
@@ -6043,7 +6074,7 @@ elif st.session_state.page == "exec_dashboard":
                                 )
                         else:
                             _insight_lines.append(
-                                "ระบบวิเคราะห์ด้วยแบบจำลองเศรษฐมิติ ARIMA จากข้อมูลผลิตภาพย้อนหลังของประเทศไทย"
+                                "ระบบพยากรณ์ด้วยวิธี Random walk with drift ซึ่งแม่นยำที่สุดจากการทดสอบย้อนหลังกับข้อมูลผลิตภาพของประเทศไทย"
                             )
                     _insight_card_class = (
                         "section-card section-card-compact" if st.session_state.exec_presentation_mode
@@ -6475,7 +6506,7 @@ elif st.session_state.page == "manual":
     )
     manual_steps = [
         ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้าย เพื่อโหลดข้อมูลล่าสุดและรันโมเดลอัตโนมัติ"),
-        ("calendar", "กำหนดช่วงเวลาพยากรณ์", "ในหน้า \"Dashboard พยากรณ์ TFP\" เลือกจำนวนปีที่ต้องการพยากรณ์ล่วงหน้าจากรายการ (3/5/10/15 ปี) ระบบจะเลือกโมเดล ARIMA ที่เหมาะสมให้อัตโนมัติ"),
+        ("calendar", "กำหนดช่วงเวลาพยากรณ์", "ในหน้า \"Dashboard พยากรณ์ TFP\" เลือกจำนวนปีที่ต้องการพยากรณ์ล่วงหน้าจากรายการ (3/5/10/15 ปี) ระบบจะพยากรณ์ด้วยวิธี Random walk with drift พร้อมช่วงความเชื่อมั่น 95%"),
         ("trend-up", "ดูผลพยากรณ์และตัวแปรในสมการ", "ดูกราฟแนวโน้ม TFP ตัวแปรในสมการระยะสั้น/ระยะยาว และผลตรวจสอบข้อสมมติฐานได้จากเมนู \"Dashboard พยากรณ์ TFP\" และ \"ทำความรู้จักตัวแปร\""),
         ("sparkle", "สร้างแดชบอร์ดสำหรับนำเสนอ", "หลังตั้งค่าช่วงปีพยากรณ์/สมมติฐานตัวแปรแล้ว เลื่อนลงสุดหน้าแล้วกดปุ่ม \"สร้างแดชบอร์ดสำหรับนำเสนอ (สรุปหน้าเดียว)\" เพื่อดูสรุปทุกอย่างในจอเดียว เหมาะสำหรับนำเสนอ"),
         ("lock", "เข้าสู่ระบบสำหรับคณะวิจัย", "คณะวิจัยเข้าสู่ระบบด้วยบัญชีที่ได้รับสิทธิ์ เพื่อปรับแต่งตัวแปรในสมการและสร้างรายงานสรุปสำหรับนำเสนอด้วย AI"),
@@ -6508,8 +6539,10 @@ elif st.session_state.page == "manual":
              "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม"),
         ]),
         ("settings", "แบบจำลองและสมการ", [
+            ("Random walk with drift",
+             "วิธีพยากรณ์หลักของระบบ: ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี เลือกใช้เพราะแม่นที่สุดจากการทดสอบย้อนหลัง"),
             ("ARIMA",
-             "แบบจำลองที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต เหมาะกับข้อมูลรายปีอย่าง TFP"),
+             "แบบจำลองที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต ใช้เป็นวิธีเปรียบเทียบในการทดสอบย้อนหลัง"),
             ("พจน์ปรับตัวของสมการ (ECM)",
              "บอกว่าเมื่อค่าจริงเบี่ยงจาก \"จุดสมดุลระยะยาว\" แล้ว จะปรับกลับเข้าสู่สมดุลเร็วแค่ไหน"),
             ("ระยะสั้น / ระยะยาว (Short-run / Long-run)",
