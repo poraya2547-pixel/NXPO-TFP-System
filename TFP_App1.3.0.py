@@ -3719,6 +3719,7 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
                 metrics[f"arima_mape_{label}"] = _mape(sub["ค่าจริง"], sub["ARIMA"])
                 metrics[f"naive_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Naive"])
                 metrics[f"drift_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Drift"])
+                metrics[f"drift_mape_{label}"] = _mape(sub["ค่าจริง"], sub["Drift"])
                 metrics[f"n_{label}"] = len(sub)
             else:
                 metrics[f"arima_mape_{label}"] = None
@@ -4500,6 +4501,38 @@ elif st.session_state.page == "forecast":
                     f'<div><div class="metric-value">{value}</div><div class="metric-label">{label}</div>{_sub_html}</div></div>'
                 )
 
+            def _three_mape_cards(metrics, scope_label):
+                """การ์ด MAPE ของ ARIMA / Naive / Drift เรียงกัน 3 ใบ ติดป้าย "MAPE ต่ำสุด"
+                ที่ใบที่ค่าต่ำที่สุด (เดิมมี 2 ใบ เทียบแค่ ARIMA กับ Naive ทำให้ป้าย "แม่นกว่า"
+                ชวนเข้าใจผิดเมื่อ Drift ซึ่งเป็นวิธีพยากรณ์หลักไม่ได้อยู่ในการเปรียบเทียบ)"""
+                _specs = [
+                    ("ARIMA", "ARIMA", "#16324A", "trend-up"),
+                    ("Naive", "Naive (ค่าปีล่าสุด)", "#F97316", "bars"),
+                    ("Drift", "Drift (วิธีพยากรณ์หลัก)", "#16A34A", "check"),
+                ]
+                _lowest = min(("ARIMA", "Naive", "Drift"), key=lambda k: metrics[f"{k.lower()}_mape"])
+                _cols = st.columns(3)
+                for _col, (_key, _label, _bg, _ic) in zip(_cols, _specs):
+                    _badge = (
+                        f'<div style="position:absolute;top:-9px;right:14px;z-index:2;'
+                        f'background:linear-gradient(135deg,var(--green),#0F7A38);color:#fff;'
+                        f'font-size:0.66rem;font-weight:700;padding:3px 10px;border-radius:999px;'
+                        f'box-shadow:0 4px 10px rgba(22,163,74,0.35);">{icon("check", 10, 2.5)} MAPE ต่ำสุด</div>'
+                        if _key == _lowest else ''
+                    )
+                    with _col:
+                        st.markdown(
+                            '<div style="position:relative;">' + _badge
+                            + _dash_kpi_card(
+                                _bg, icon(_ic, 18, 1.8),
+                                f'{metrics[_key.lower() + "_mape"]:.2f}%',
+                                f'MAPE {_label} · {scope_label}',
+                                sub_label=f'RMSE: {metrics[_key.lower() + "_rmse"]:.3f}',
+                            )
+                            + '</div>',
+                            unsafe_allow_html=True,
+                        )
+
             _main_forecast_available = False
             if len(tfp_series) >= MIN_POINTS_FOR_ARIMA:
                 # ----- เลือกช่วงพยากรณ์ล่วงหน้า -----
@@ -4648,141 +4681,18 @@ elif st.session_state.page == "forecast":
                             mime="text/csv",
                         )
 
-                # ================= ทดสอบความแม่นยำของโมเดลย้อนหลัง (Backtesting) =================
-                # ไม่ใช้ทฤษฎีใหม่เพิ่มเติมจากที่มีอยู่แล้ว — เรียก _auto_arima_forecast
-                # ตัวเดิมซ้ำ โดยซ่อนข้อมูลปีล่าสุดไว้ชั่วคราวแล้วให้โมเดลทายปีที่ซ่อนไว้
-                # จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว พร้อม Naive forecast เป็นเส้นฐาน
-                with st.expander("🎯 ทดสอบความแม่นยำของโมเดลย้อนหลัง (Backtesting)"):
-                    st.markdown(
-                        '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
-                        'margin-top:0;margin-bottom:0;">ทดสอบความแม่นยำของ ARIMA โดยใช้ข้อมูลในอดีตเพื่อพยากรณ์ค่าของ'
-                        'ปีล่าสุดที่สมมติว่ายังไม่ทราบค่าจริง แล้วเปรียบเทียบค่าพยากรณ์กับค่าจริง '
-                        '<span style="white-space:nowrap;">พร้อมเทียบกับ Naive Forecast ซึ่งใช้ค่าปีล่าสุดเป็นค่าพยากรณ์พื้นฐาน '
-                        'เพื่อประเมินว่า ARIMA ให้ผลการพยากรณ์ที่แม่นยำกว่าวิธีพื้นฐานเพียงใด</span></p></div>',
-                        unsafe_allow_html=True,
-                    )
-                    bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
-                    if bt_err:
-                        st.info(bt_err)
-                    else:
-                        _bt_better = bt_metrics["arima_mape"] < bt_metrics["naive_mape"]
-                        _bt_cols = st.columns(2)
-                        with _bt_cols[0]:
-                            st.markdown(
-                                f'<div style="position:relative;">'
-                                + (f'<div style="position:absolute;top:-9px;right:14px;z-index:2;'
-                                   f'background:linear-gradient(135deg,var(--green),#0F7A38);color:#fff;'
-                                   f'font-size:0.66rem;font-weight:700;padding:3px 10px;border-radius:999px;'
-                                   f'box-shadow:0 4px 10px rgba(22,163,74,0.35);">{icon("check", 10, 2.5)} แม่นกว่า</div>'
-                                   if _bt_better else '')
-                                + _dash_kpi_card(
-                                    "#16324A", icon("check" if _bt_better else "alert", 18, 1.8),
-                                    f'{bt_metrics["arima_mape"]:.2f}%',
-                                    f'ค่าเฉลี่ยความคลาดเคลื่อน ARIMA (MAPE, ทดสอบ {bt_metrics["test_years"]} ปีล่าสุด)',
-                                    sub_label=f'RMSE: {bt_metrics["arima_rmse"]:.3f}',
-                                )
-                                + '</div>',
-                                unsafe_allow_html=True,
-                            )
-                        with _bt_cols[1]:
-                            st.markdown(
-                                f'<div style="position:relative;">'
-                                + (f'<div style="position:absolute;top:-9px;right:14px;z-index:2;'
-                                   f'background:linear-gradient(135deg,var(--green),#0F7A38);color:#fff;'
-                                   f'font-size:0.66rem;font-weight:700;padding:3px 10px;border-radius:999px;'
-                                   f'box-shadow:0 4px 10px rgba(22,163,74,0.35);">{icon("check", 10, 2.5)} แม่นกว่า</div>'
-                                   if not _bt_better else '')
-                                + _dash_kpi_card(
-                                    "#F97316", icon("bars", 18, 1.8),
-                                    f'{bt_metrics["naive_mape"]:.2f}%',
-                                    "ค่าเฉลี่ยความคลาดเคลื่อน Naive (เส้นฐานเทียบ)",
-                                    sub_label=f'RMSE: {bt_metrics["naive_rmse"]:.3f}',
-                                )
-                                + '</div>',
-                                unsafe_allow_html=True,
-                            )
-                        # แถบเทียบขนาดความคลาดเคลื่อนแบบภาพ (เห็นสัดส่วนได้ไวกว่าตัวเลขล้วน)
-                        _mape_max = max(bt_metrics["arima_mape"], bt_metrics["naive_mape"], bt_metrics["drift_mape"], 0.01)
-                        st.markdown(
-                            '<div style="margin:14px 2px 4px;">'
-                            + f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">ARIMA</span>'
-                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
-                              f'<div style="width:{bt_metrics["arima_mape"] / _mape_max * 100:.0f}%;height:100%;'
-                              f'background:linear-gradient(90deg,#16324A,#0E2436);border-radius:999px;"></div></div>'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
-                              f'{bt_metrics["arima_mape"]:.2f}%</span></div>'
-                            + f'<div style="display:flex;align-items:center;gap:10px;">'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">Naive</span>'
-                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
-                              f'<div style="width:{bt_metrics["naive_mape"] / _mape_max * 100:.0f}%;height:100%;'
-                              f'background:linear-gradient(90deg,var(--brand-orange),var(--brand-orange-dark));border-radius:999px;"></div></div>'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
-                              f'{bt_metrics["naive_mape"]:.2f}%</span></div>'
-                            + f'<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">Drift</span>'
-                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
-                              f'<div style="width:{bt_metrics["drift_mape"] / _mape_max * 100:.0f}%;height:100%;'
-                              f'background:linear-gradient(90deg,#16A34A,#0F7A38);border-radius:999px;"></div></div>'
-                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
-                              f'{bt_metrics["drift_mape"]:.2f}%</span></div>'
-                            + '</div>',
-                            unsafe_allow_html=True,
-                        )
-                        st.write("")
-                        _bt_reset = bt_df.reset_index()
-                        _bt_rows_html = ""
-                        for _, r in _bt_reset.iterrows():
-                            # ไฮไลต์ค่าที่ทายใกล้เคียงค่าจริงกว่าในแต่ละปีด้วยสีเขียว+ตัวหนา
-                            # ให้เห็นเป็นภาพว่าปีไหน ARIMA ชนะ ปีไหน Naive ชนะ ไม่ต้องนั่งลบเลขเอง
-                            _diffs = {k: abs(r[k] - r["ค่าจริง"]) for k in ("ARIMA", "Naive", "Drift")}
-                            _win = min(_diffs, key=_diffs.get)
-                            _sty = {k: ("color:var(--green);font-weight:700;" if k == _win else "") for k in _diffs}
-                            _bt_rows_html += (
-                                f'<tr><td>{int(r["ปี"])}</td><td>{r["ค่าจริง"]:,.2f}</td>'
-                                f'<td style="{_sty["ARIMA"]}">{r["ARIMA"]:,.2f}</td>'
-                                f'<td style="{_sty["Naive"]}">{r["Naive"]:,.2f}</td>'
-                                f'<td style="{_sty["Drift"]}">{r["Drift"]:,.2f}</td></tr>'
-                            )
-                        st.markdown(
-                            f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
-                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
-                            f'<tbody>{_bt_rows_html}</tbody></table></div>'
-                            f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
-                            f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น</p>',
-                            unsafe_allow_html=True,
-                        )
-                        st.markdown(
-                            f'<div class="bt-desc-box">'
-                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:0;">'
-                            f'แบ่งข้อมูลเป็น {bt_metrics["train_years"]} ปีสำหรับฝึกแบบจำลอง และ '
-                            f'{bt_metrics["test_years"]} ปีล่าสุดสำหรับทดสอบการพยากรณ์ '
-                            f'โดยเลือก ARIMA{bt_metrics["order"]} ด้วยเกณฑ์ AIC · '
-                            f'Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี) ได้ MAPE '
-                            f'{bt_metrics["drift_mape"]:.2f}% (RMSE {bt_metrics["drift_rmse"]:.3f})</p>'
-                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;margin-bottom:0;">'
-                            + ('ผลการทดสอบพบว่า ARIMA พยากรณ์ได้แม่นยำกว่า Naive Forecast ในช่วงทดสอบ'
-                               if _bt_better else
-                               'ผลการทดสอบพบว่า Naive Forecast พยากรณ์ได้ใกล้เคียงค่าจริงกว่า ARIMA เล็กน้อย '
-                               'ในช่วงทดสอบ ซึ่งอาจเกิดขึ้นได้กับอนุกรมเวลาที่มีข้อมูลจำกัด '
-                               'จึงควรตีความผลอย่างระมัดระวัง')
-                            + '</p></div>',
-                            unsafe_allow_html=True,
-                        )
-
                 # ================= Rolling-origin Backtest (เลื่อนจุดทดสอบหลายจุด) =================
-                # ต่อยอดจาก backtest ด้านบนที่ทดสอบแค่จุดเดียว (5 ปีสุดท้าย) — จุดอ่อนคือ
+                # ต่อยอดจาก backtest ด้านล่างที่ทดสอบแค่จุดเดียว (5 ปีสุดท้าย) — จุดอ่อนคือ
                 # ถ้าช่วงนั้นบังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19) ผลลัพธ์อาจสะท้อน
                 # แค่ "ช่วงนั้น" ไม่ใช่ความสามารถโดยรวมของโมเดล จึงเพิ่มการทดสอบแบบเลื่อน
                 # จุดเริ่มทดสอบ (rolling-origin) ไปทีละปีทั่วทั้งอนุกรม แล้วรวมผลทุกจุด
-                with st.expander("🔁 ทดสอบย้อนหลังหลายหน้าต่าง (Rolling-origin Backtest)"):
+                with st.expander("🔁 ทดสอบย้อนหลังหลายหน้าต่าง (Rolling-origin Backtest) · ใช้เลือกวิธีพยากรณ์"):
                     st.markdown(
                         '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
                         'margin-top:0;margin-bottom:0;">การทดสอบนี้ใช้วิธี Rolling-Origin Evaluation โดยเลื่อนช่วงทดสอบไปทีละปี'
                         'ตลอดอนุกรมเวลา แทนการทดสอบเฉพาะ 5 ปีสุดท้าย เพื่อให้ผลการประเมินครอบคลุมหลายช่วงเวลา'
-                        'และลดผลกระทบจากเหตุการณ์เฉพาะช่วง เช่น โควิด-19 จากนั้นจึงรวบรวมผลการพยากรณ์ทั้งหมด'
-                        'เพื่อเปรียบเทียบว่า ARIMA แม่นกว่า Naive Forecast โดยเฉลี่ยหรือไม่</p></div>',
+                        'และลดผลกระทบจากเหตุการณ์เฉพาะช่วง เช่น โควิด-19 จากนั้นรวบรวมผลทุกจุดเพื่อเปรียบเทียบความแม่นยำ'
+                        'ของ ARIMA, Naive และ Drift ผลส่วนนี้คือเกณฑ์หลักที่ใช้เลือกวิธีพยากรณ์ของระบบ</p></div>',
                         unsafe_allow_html=True,
                     )
                     with st.spinner("กำลังทดสอบย้อนหลังหลายหน้าต่าง..."):
@@ -4794,38 +4704,20 @@ elif st.session_state.page == "forecast":
                         st.info(roll_err)
                     else:
                         _roll_better = roll_metrics["arima_mape"] < roll_metrics["naive_mape"]
-                        _roll_cols = st.columns(2)
-                        with _roll_cols[0]:
-                            st.markdown(
-                                _dash_kpi_card(
-                                    "#16324A", icon("check" if _roll_better else "alert", 18, 1.8),
-                                    f'{roll_metrics["arima_mape"]:.2f}%',
-                                    f'ค่าเฉลี่ยความคลาดเคลื่อน ARIMA รวม {roll_metrics["n_windows"]} จุดทดสอบ',
-                                    sub_label=f'RMSE: {roll_metrics["arima_rmse"]:.3f}',
-                                ),
-                                unsafe_allow_html=True,
-                            )
-                        with _roll_cols[1]:
-                            st.markdown(
-                                _dash_kpi_card(
-                                    "#F97316", icon("bars", 18, 1.8),
-                                    f'{roll_metrics["naive_mape"]:.2f}%',
-                                    "ค่าเฉลี่ยความคลาดเคลื่อน Naive (เส้นฐานเทียบ)",
-                                    sub_label=f'RMSE: {roll_metrics["naive_rmse"]:.3f}',
-                                ),
-                                unsafe_allow_html=True,
-                            )
+                        _three_mape_cards(roll_metrics, f'รวม {roll_metrics["n_windows"]} จุดทดสอบ')
                         st.write("")
                         if roll_metrics.get("n_crisis", 0) > 0 and roll_metrics.get("n_normal", 0) > 0:
                             st.markdown(
                                 f'<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
                                 f'แยกตามช่วงเวลา — '
-                                f'ช่วงปกติ ({roll_metrics["n_normal"]} จุด): ARIMA MAPE '
-                                f'{roll_metrics["arima_mape_normal"]:.2f}% เทียบ Naive '
-                                f'{roll_metrics["naive_mape_normal"]:.2f}% &nbsp;|&nbsp; '
-                                f'ช่วงโควิด 2563–2565 ({roll_metrics["n_crisis"]} จุด): ARIMA MAPE '
-                                f'{roll_metrics["arima_mape_crisis"]:.2f}% เทียบ Naive '
-                                f'{roll_metrics["naive_mape_crisis"]:.2f}%</p></div>',
+                                f'ช่วงปกติ ({roll_metrics["n_normal"]} จุด): ARIMA '
+                                f'{roll_metrics["arima_mape_normal"]:.2f}% · Naive '
+                                f'{roll_metrics["naive_mape_normal"]:.2f}% · Drift '
+                                f'{roll_metrics["drift_mape_normal"]:.2f}% &nbsp;|&nbsp; '
+                                f'ช่วงโควิด 2563–2565 ({roll_metrics["n_crisis"]} จุด): ARIMA '
+                                f'{roll_metrics["arima_mape_crisis"]:.2f}% · Naive '
+                                f'{roll_metrics["naive_mape_crisis"]:.2f}% · Drift '
+                                f'{roll_metrics["drift_mape_crisis"]:.2f}%</p></div>',
                                 unsafe_allow_html=True,
                             )
 
@@ -4965,13 +4857,103 @@ elif st.session_state.page == "forecast":
                         )
                         st.markdown(
                             '<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
-                            + ('ตลอดทั้งอนุกรม ARIMA ทายแม่นกว่า Naive โดยเฉลี่ย ซึ่งสนับสนุนว่าผลที่ '
-                               'Naive แม่นกว่าในช่วงทดสอบ 5 ปีล่าสุดด้านบน เป็นผลเฉพาะช่วงที่มีโควิด-19 '
-                               'แทรก (structural break) ไม่ใช่ภาพรวมความสามารถของโมเดล'
+                            + ('ตลอดทั้งอนุกรม ARIMA ทายแม่นกว่า Naive โดยเฉลี่ย '
                                if _roll_better else
-                               'Naive Forecast ใกล้เคียงกว่า ARIMA โดยเฉลี่ย '
-                               'สะท้อนว่าอนุกรมเวลานี้อาจมีความผันผวนสูง ทำให้ ARIMA ไม่ได้เพิ่มความแม่นยำ'
-                               'การพยากรณ์ได้มากกว่าวิธีพื้นฐานอย่างชัดเจน')
+                               'ตลอดทั้งอนุกรม ARIMA ไม่ได้แม่นกว่าวิธีพื้นฐานโดยเฉลี่ย '
+                               'สะท้อนว่าอนุกรม TFP มีพฤติกรรมใกล้เคียง random walk '
+                               'แบบจำลองที่ซับซ้อนกว่าจึงไม่ได้เพิ่มความแม่นยำ ')
+                            + f'วิธีที่ MAPE ต่ำสุดคือ {_MODEL_LABELS[_best]} '
+                              f'({roll_metrics[_best.lower() + "_mape"]:.2f}%)'
+                            + '</p></div>',
+                            unsafe_allow_html=True,
+                        )
+
+                # ================= ทดสอบความแม่นยำของโมเดลย้อนหลัง (Backtesting) =================
+                # ไม่ใช้ทฤษฎีใหม่เพิ่มเติมจากที่มีอยู่แล้ว — เรียก _auto_arima_forecast
+                # ตัวเดิมซ้ำ โดยซ่อนข้อมูลปีล่าสุดไว้ชั่วคราวแล้วให้โมเดลทายปีที่ซ่อนไว้
+                # จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว พร้อม Naive forecast เป็นเส้นฐาน
+                with st.expander("🎯 ทดสอบเฉพาะ 5 ปีล่าสุด (Hold-out) · ผลประกอบ"):
+                    st.markdown(
+                        '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
+                        'margin-top:0;margin-bottom:0;">ซ่อนข้อมูล 5 ปีล่าสุดไว้ แล้วให้ทั้ง 3 วิธี (ARIMA, Naive, Drift) '
+                        'พยากรณ์ช่วงนั้นจากข้อมูลก่อนหน้า เพื่อเทียบกับค่าจริง เป็นการทดสอบหน้าต่างเดียว '
+                        'จึงใช้เป็นผลประกอบ ส่วนการเลือกวิธีพยากรณ์อ้างอิงจาก Rolling-origin Backtest ด้านบน</p></div>',
+                        unsafe_allow_html=True,
+                    )
+                    bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
+                    if bt_err:
+                        st.info(bt_err)
+                    else:
+                        _three_mape_cards(bt_metrics, f'ทดสอบ {bt_metrics["test_years"]} ปีล่าสุด')
+                        # แถบเทียบขนาดความคลาดเคลื่อนแบบภาพ (เห็นสัดส่วนได้ไวกว่าตัวเลขล้วน)
+                        _mape_max = max(bt_metrics["arima_mape"], bt_metrics["naive_mape"], bt_metrics["drift_mape"], 0.01)
+                        st.markdown(
+                            '<div style="margin:14px 2px 4px;">'
+                            + f'<div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">ARIMA</span>'
+                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
+                              f'<div style="width:{bt_metrics["arima_mape"] / _mape_max * 100:.0f}%;height:100%;'
+                              f'background:linear-gradient(90deg,#16324A,#0E2436);border-radius:999px;"></div></div>'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
+                              f'{bt_metrics["arima_mape"]:.2f}%</span></div>'
+                            + f'<div style="display:flex;align-items:center;gap:10px;">'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">Naive</span>'
+                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
+                              f'<div style="width:{bt_metrics["naive_mape"] / _mape_max * 100:.0f}%;height:100%;'
+                              f'background:linear-gradient(90deg,var(--brand-orange),var(--brand-orange-dark));border-radius:999px;"></div></div>'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
+                              f'{bt_metrics["naive_mape"]:.2f}%</span></div>'
+                            + f'<div style="display:flex;align-items:center;gap:10px;margin-top:6px;">'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy-soft);flex-shrink:0;">Drift</span>'
+                              f'<div style="flex:1;background:#EDE7DA;border-radius:999px;height:8px;overflow:hidden;">'
+                              f'<div style="width:{bt_metrics["drift_mape"] / _mape_max * 100:.0f}%;height:100%;'
+                              f'background:linear-gradient(90deg,#16A34A,#0F7A38);border-radius:999px;"></div></div>'
+                              f'<span style="width:52px;font-size:0.76rem;color:var(--brand-navy);font-weight:700;text-align:right;">'
+                              f'{bt_metrics["drift_mape"]:.2f}%</span></div>'
+                            + '</div>',
+                            unsafe_allow_html=True,
+                        )
+                        st.write("")
+                        _bt_reset = bt_df.reset_index()
+                        _bt_rows_html = ""
+                        for _, r in _bt_reset.iterrows():
+                            # ไฮไลต์ค่าที่ทายใกล้เคียงค่าจริงกว่าในแต่ละปีด้วยสีเขียว+ตัวหนา
+                            # ให้เห็นเป็นภาพว่าปีไหน ARIMA ชนะ ปีไหน Naive ชนะ ไม่ต้องนั่งลบเลขเอง
+                            _diffs = {k: abs(r[k] - r["ค่าจริง"]) for k in ("ARIMA", "Naive", "Drift")}
+                            _win = min(_diffs, key=_diffs.get)
+                            _sty = {k: ("color:var(--green);font-weight:700;" if k == _win else "") for k in _diffs}
+                            _bt_rows_html += (
+                                f'<tr><td>{int(r["ปี"])}</td><td>{r["ค่าจริง"]:,.2f}</td>'
+                                f'<td style="{_sty["ARIMA"]}">{r["ARIMA"]:,.2f}</td>'
+                                f'<td style="{_sty["Naive"]}">{r["Naive"]:,.2f}</td>'
+                                f'<td style="{_sty["Drift"]}">{r["Drift"]:,.2f}</td></tr>'
+                            )
+                        st.markdown(
+                            f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
+                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
+                            f'<tbody>{_bt_rows_html}</tbody></table></div>'
+                            f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
+                            f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
+                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น</p>',
+                            unsafe_allow_html=True,
+                        )
+                        _bt_lowest = min(("ARIMA", "Naive", "Drift"), key=lambda k: bt_metrics[f"{k.lower()}_mape"])
+                        _bt_years = pd.Series(bt_df.index if "ปี" not in bt_df.columns else bt_df["ปี"]).astype(int)
+                        _bt_n_covid = int(_bt_years.between(2020, 2022).sum())
+                        st.markdown(
+                            f'<div class="bt-desc-box">'
+                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:0;">'
+                            f'แบ่งข้อมูลเป็น {bt_metrics["train_years"]} ปีสำหรับฝึกแบบจำลอง และ '
+                            f'{bt_metrics["test_years"]} ปีล่าสุดสำหรับทดสอบการพยากรณ์ '
+                            f'(ARIMA เลือก order {bt_metrics["order"]} ด้วยเกณฑ์ AIC)</p>'
+                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;margin-bottom:0;">'
+                            + f'ในหน้าต่างนี้ {_MODEL_LABELS[_bt_lowest]} มี MAPE ต่ำสุด '
+                            + (f'แต่ช่วงทดสอบมีปีโควิด-19 (2020–2022) อยู่ {_bt_n_covid} จาก {len(bt_df)} ปี '
+                               'ซึ่ง TFP ลดลงกะทันหัน วิธีที่ต่อแนวโน้มเดิม (ARIMA และ Drift) จึงคลาดเคลื่อนมาก '
+                               'ขณะที่ Naive ซึ่งคงค่าปีล่าสุดไว้บังเอิญใกล้ค่าที่ลดลง '
+                               if _bt_n_covid else '')
+                            + 'ผลจากหน้าต่างเดียวขึ้นกับช่วงเวลาที่เลือกมาก จึงใช้ Rolling-origin Backtest '
+                              'ซึ่งทดสอบหลายจุดตลอดอนุกรมเป็นเกณฑ์หลักในการเลือกวิธีพยากรณ์'
                             + '</p></div>',
                             unsafe_allow_html=True,
                         )
