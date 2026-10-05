@@ -4802,21 +4802,41 @@ elif st.session_state.page == "forecast":
                         _dm_an = roll_metrics.get("dm_arima_naive")
                         _dm_dn = roll_metrics.get("dm_drift_naive")
 
-                        def _dm_txt(dm):
-                            return (f'DM* = {dm["stat"]:.3f}, p = {dm["pvalue"]:.4f}' if dm else "—")
+                        def _dm_row(dm, m1, m2):
+                            """หนึ่งแถวของตาราง DM: คู่ที่เทียบ | MAPE | DM* | p | ผลสรุปสั้น ๆ"""
+                            _mape1 = roll_metrics[f"{m1.lower()}_mape"]
+                            _mape2 = roll_metrics[f"{m2.lower()}_mape"]
+                            if not dm:
+                                _res = '<span style="color:var(--brand-navy-soft);">จุดทดสอบไม่พอ</span>'
+                                _stat, _p = "—", "—"
+                            else:
+                                _stat, _p = f'{dm["stat"]:.3f}', f'{dm["pvalue"]:.3f}'
+                                if dm["pvalue"] < 0.05:
+                                    _win = m1 if dm["mean_d"] < 0 else m2
+                                    _res = (f'<span style="color:var(--green);font-weight:700;">'
+                                            f'{icon("check", 10, 2.5)} {_win} แม่นกว่า</span>')
+                                else:
+                                    _res = '<span style="color:var(--brand-navy-soft);font-weight:600;">ไม่ต่างกัน</span>'
+                            return (f'<tr><td><b>{m1}</b> vs {m2}</td>'
+                                    f'<td>{_mape1:.2f}% vs {_mape2:.2f}%</td>'
+                                    f'<td>{_stat}</td><td>{_p}</td><td>{_res}</td></tr>')
 
                         st.markdown(
-                            f'<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
-                            f'<b>Random walk with drift</b> (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี): MAPE '
-                            f'{roll_metrics["drift_mape"]:.2f}% (RMSE {roll_metrics["drift_rmse"]:.3f})</p>'
-                            f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:6px 0 0;">'
-                            f'<b>Diebold–Mariano test</b> (H0: แม่นเท่ากัน, ปรับตัวอย่างเล็กแบบ Harvey et al.) — '
-                            f'ARIMA เทียบ Naive: {_dm_txt(_dm_an)} → {_dm_verdict(_dm_an, "ARIMA", "Naive")} &nbsp;|&nbsp; '
-                            f'Drift เทียบ Naive: {_dm_txt(_dm_dn)} → {_dm_verdict(_dm_dn, "Drift", "Naive")}</p>'
-                            f'<p style="font-size:0.82rem;margin:6px 0 0;">'
+                            f'<div class="bt-desc-box">'
+                            f'<p style="font-size:0.85rem;font-weight:700;color:var(--brand-navy);margin:0 0 6px;">'
+                            f'Diebold–Mariano test: แม่นต่างกันจริงไหม?</p>'
+                            f'<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;font-size:0.8rem;">'
+                            f'<thead><tr><th>คู่ที่เทียบ</th><th>MAPE</th><th>DM*</th><th>p-value</th><th>ผล (α = 5%)</th></tr></thead>'
+                            f'<tbody>{_dm_row(_dm_an, "ARIMA", "Naive")}{_dm_row(_dm_dn, "Drift", "Naive")}</tbody>'
+                            f'</table></div>'
+                            f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;line-height:1.6;">'
+                            f'H₀: สองวิธีแม่นเท่ากัน · p &lt; 0.05 จึงถือว่าต่างกันจริง · '
+                            f'DM* ติดลบ = วิธีแรกคลาดเคลื่อนน้อยกว่า · ปรับตัวอย่างเล็กตาม Harvey et al. (1997)<br>'
+                            f'Drift = Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี)</p>'
+                            f'<p style="font-size:0.82rem;margin:10px 0 0;">'
                             f'<span style="background:{_MODEL_COLORS[_best]};color:#fff;font-weight:700;padding:2px 10px;'
-                            f'border-radius:999px;">{icon("check", 10, 2.5)} วิธีที่แม่นที่สุดจาก rolling backtest: '
-                            f'{_MODEL_LABELS[_best]} (MAPE {roll_metrics[_best.lower() + "_mape"]:.2f}%)</span>'
+                            f'border-radius:999px;">{icon("check", 10, 2.5)} MAPE ต่ำสุด: '
+                            f'{_MODEL_LABELS[_best]} ({roll_metrics[_best.lower() + "_mape"]:.2f}%)</span>'
                             f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักยังใช้ ARIMA '
                             f'เพื่อแสดงแนวโน้มและช่วงความเชื่อมั่น</span></p></div>',
                             unsafe_allow_html=True,
