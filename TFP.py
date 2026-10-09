@@ -433,7 +433,7 @@ def _stationarity_rows(df: pd.DataFrame, variables: list) -> list:
             note = "ลำดับความนิ่งไม่ชัดเจน (t ทั้งที่ระดับและที่ผลต่างยังไม่ถึงค่าวิกฤต 5%)"
         elif order != majority:
             status = _STATUS_WATCH
-            note = f"ตัวแปรอื่นในสมการส่วนใหญ่เป็น {majority} ไม่สอดคล้องกัน"
+            note = f"ไม่สอดคล้องกับตัวแปรส่วนใหญ่ที่เป็น {majority}"
         else:
             status, note = _STATUS_PASS, ""
         rows.append(_diag_row("Stationarity (Long-run)", r["variable"], order, status, note))
