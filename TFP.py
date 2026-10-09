@@ -466,8 +466,16 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
         try:
             r_raw = adf_report(df[col], col)
             order_raw = r_raw["order_of_integration"]
-            status_raw = _STATUS_WATCH if order_raw == "I(2)?" else _STATUS_PASS
-            note_raw = f"แปลงเป็น {diff_symbol}{lag_suffix} ก่อนเข้าสมการระยะสั้น"
+            # I(2)? แต่สมการใช้ Δ² อยู่แล้วถือว่าจัดการแล้ว จึงเตือนเฉพาะกรณีใช้แค่ Δ
+            status_raw = _STATUS_WATCH if (order_raw == "I(2)?" and diff_order < 2) else _STATUS_PASS
+            # ใส่หมายเหตุเฉพาะกรณี I(2)? (ไม่นิ่งที่ผลต่างครั้งที่ 1) เพราะกรณีอื่น
+            # คอลัมน์ผลลัพธ์กับแถว Δ ถัดไปบอกครบอยู่แล้ว
+            if order_raw != "I(2)?":
+                note_raw = ""
+            elif diff_order == 2:
+                note_raw = "ไม่นิ่งที่ผลต่างครั้งที่ 1 จึงใช้ผลต่างครั้งที่ 2 (Δ²) ในสมการระยะสั้น"
+            else:
+                note_raw = "ไม่นิ่งที่ผลต่างครั้งที่ 1 แต่สมการระยะสั้นใช้เพียง Δ ควรตรวจสอบเพิ่มเติม"
         except Exception as e:
             order_raw, status_raw = "n/a", _STATUS_WATCH
             note_raw = f"คำนวณไม่ได้: {e}"
