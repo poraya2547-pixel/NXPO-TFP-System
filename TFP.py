@@ -391,7 +391,7 @@ def run_short_run(df: pd.DataFrame, dep: str, short_run_spec: list,
               "แต่ถ้าใช้เป็นการทดสอบ cointegration ต้องเทียบค่าวิกฤตของ ECM test "
               "(Banerjee, Dolado & Mestre, 1998) ซึ่งเข้มกว่า")
     else:
-        print("-> ECM(-1) ไม่ติดลบ หรือไม่ significant: ผิดจากที่ทฤษฎี ECM คาดไว้ ต้องทบทวนสเปก")
+        print("-> ECM(-1) ไม่ติดลบ หรือไม่ significant: ผิดจากที่ทฤษฎี ECM คาดไว้ ต้องทบทวนการกำหนดตัวแปรในสมการ")
 
     return res
 
@@ -467,7 +467,7 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
             r_raw = adf_report(df[col], col)
             order_raw = r_raw["order_of_integration"]
             status_raw = _STATUS_WATCH if order_raw == "I(2)?" else _STATUS_PASS
-            note_raw = f"สเปกปัจจุบันแปลงด้วย {diff_symbol}{lag_suffix} ก่อนเข้าสมการระยะสั้น"
+            note_raw = f"แปลงเป็น {diff_symbol}{lag_suffix} ก่อนเข้าสมการระยะสั้น"
         except Exception as e:
             order_raw, status_raw = "n/a", _STATUS_WATCH
             note_raw = f"คำนวณไม่ได้: {e}"
@@ -487,7 +487,7 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
                 note_t = "นิ่งที่ระดับ 10% แต่ไม่นิ่งที่ 5%"
             else:
                 status_t = _STATUS_FAIL
-                note_t = f"หลังแปลงด้วย {diff_symbol} แล้วยัง non-stationary ตาม ADF — diff_order ในสเปกอาจไม่พอ"
+                note_t = f"หลังแปลงด้วย {diff_symbol} แล้วยัง non-stationary ตาม ADF — อันดับการหาผลต่างอาจไม่เพียงพอ"
             result_t = f"t={t_t:.3f} (5%={c_t['5%']:.3f}), p={p_t:.3f}"
         except Exception as e:
             status_t, note_t, result_t = _STATUS_WATCH, f"คำนวณไม่ได้: {e}", "n/a"
