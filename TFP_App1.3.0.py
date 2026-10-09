@@ -2118,6 +2118,10 @@ _LABEL_LINE_BREAKS = {
     "ค่าธรรมเนียมในการใช้ทรัพย์สินทางปัญญาต่อ GDP": "ค่าธรรมเนียมในการใช้ทรัพย์สิน|ทางปัญญาต่อ GDP",
     "ดัชนีความซับซ้อนทางเศรษฐกิจด้านการค้า": "ดัชนีความซับซ้อนทางเศรษฐกิจ|ด้านการค้า",
     "จำนวนนักวิจัยต่อประชากรล้านคน": "จำนวนนักวิจัยต่อ|ประชากรล้านคน",
+    "ดัชนีผลิตภาพปัจจัยการผลิตรวม (ตัวแปรตาม)": "ดัชนีผลิตภาพปัจจัยการผลิตรวม|(ตัวแปรตาม)",
+    "สัดส่วนจำนวนสิ่งพิมพ์ทางวิทยาศาสตร์และเทคนิคต่อ GDP": "สัดส่วนจำนวนสิ่งพิมพ์ทางวิทยาศาสตร์|และเทคนิคต่อ GDP",
+    "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาครัฐต่อ GDP": "สัดส่วนการลงทุนด้านวิจัยและพัฒนา|ของภาครัฐต่อ GDP",
+    "สัดส่วนการลงทุนด้านวิจัยและพัฒนาของภาคเอกชนต่อ GDP": "สัดส่วนการลงทุนด้านวิจัยและพัฒนา|ของภาคเอกชนต่อ GDP",
     "Engle-Granger (coint, MacKinnon)": "Engle-Granger|(coint, MacKinnon)",
     "Breusch-Godfrey (": "Breusch-Godfrey|(",
 }
@@ -4186,10 +4190,12 @@ if st.session_state.page == "home":
             # กำหนดความกว้างคอลัมน์เอง (table-layout: fixed) — ปล่อยอัตโนมัติแล้วคอลัมน์
             # "รายการ" แคบจนชื่อตัวแปรตัดหลายบรรทัด ขณะที่ "หมายเหตุ" กว้างเกินเนื้อหา
             # ลำดับ: หมวด / รายการ / ผลลัพธ์ / สถานะ / หมายเหตุ (รวม 100%)
-            _diag_col_widths = [11, 33, 16, 13, 27]
+            _diag_col_widths = [11, 31, 15, 15, 28]
             colgroup_html = "".join(f'<col style="width:{w}%;">' for w in _diag_col_widths)
             st.markdown(
-                f'<div style="overflow-x:auto;"><table class="tfp-table" style="table-layout:fixed;min-width:900px;">'
+                '<style>.diag-table td:last-child{text-align:left;}'
+                '.diag-table .badge-pill{padding:4px 10px;gap:5px;max-width:100%;}</style>'
+                f'<div style="overflow-x:auto;"><table class="tfp-table diag-table" style="table-layout:fixed;min-width:900px;">'
                 f'<colgroup>{colgroup_html}</colgroup><thead><tr>{header_html}</tr></thead>'
                 f'<tbody>{rows_html}</tbody></table></div>',
                 unsafe_allow_html=True,
