@@ -436,7 +436,7 @@ def _stationarity_rows(df: pd.DataFrame, variables: list) -> list:
             note = f"ตัวแปรอื่นในสมการส่วนใหญ่เป็น {majority} ไม่สอดคล้องกัน"
         else:
             status, note = _STATUS_PASS, ""
-        rows.append(_diag_row("Stationarity", r["variable"], order, status, note))
+        rows.append(_diag_row("Stationarity (Long-run)", r["variable"], order, status, note))
     return rows
 
 
