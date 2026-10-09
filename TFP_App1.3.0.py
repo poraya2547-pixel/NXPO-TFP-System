@@ -4183,8 +4183,14 @@ if st.session_state.page == "home":
                 for row in diag_table_display.values.tolist()
             )
             header_html = "".join(f"<th>{c}</th>" for c in diag_table_display.columns)
+            # กำหนดความกว้างคอลัมน์เอง (table-layout: fixed) — ปล่อยอัตโนมัติแล้วคอลัมน์
+            # "รายการ" แคบจนชื่อตัวแปรตัดหลายบรรทัด ขณะที่ "หมายเหตุ" กว้างเกินเนื้อหา
+            # ลำดับ: หมวด / รายการ / ผลลัพธ์ / สถานะ / หมายเหตุ (รวม 100%)
+            _diag_col_widths = [11, 33, 16, 13, 27]
+            colgroup_html = "".join(f'<col style="width:{w}%;">' for w in _diag_col_widths)
             st.markdown(
-                f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>{header_html}</tr></thead>'
+                f'<div style="overflow-x:auto;"><table class="tfp-table" style="table-layout:fixed;min-width:900px;">'
+                f'<colgroup>{colgroup_html}</colgroup><thead><tr>{header_html}</tr></thead>'
                 f'<tbody>{rows_html}</tbody></table></div>',
                 unsafe_allow_html=True,
             )
