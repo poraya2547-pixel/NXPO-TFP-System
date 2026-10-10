@@ -922,7 +922,7 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 /* ช่องชื่อตัวแปรสองบรรทัด: รหัสย่อตัวหนา + ชื่อไทยตัวเล็ก (ดู _var_cell_html) */
 .vcell { line-height: 1.3; }
 .vcell-abbr { display: block; font-weight: 700; color: var(--brand-navy); }
-.vcell-desc { display: block; font-size: 0.78em; font-weight: 400; color: #6B7A8C; margin-top: 1px; }
+.vcell-desc { display: block; font-size: 0.88em; font-weight: 400; color: #5F6E80; margin-top: 2px; }
 
 /* ----- ตาราง HTML ธีมครีม-ส้ม สำหรับตัวเลขพยากรณ์ ARIMA ----- */
 .tfp-table-cream {
@@ -4296,7 +4296,7 @@ if st.session_state.page == "home":
             for row in combined_table.values.tolist()
         )
         st.markdown(
-            f'<div style="overflow-x:auto;"><table class="tfp-table tfp-table-left"><thead><tr>'
+            f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
             f'{combined_header_html}</tr></thead><tbody>{combined_rows_html}</tbody></table></div>',
             unsafe_allow_html=True,
         )
