@@ -4453,17 +4453,21 @@ if st.session_state.page == "home":
                     except Exception:
                         _ord = "I(1)"
                     d_default = 2 if _ord in ("I(2)", "I(>2)?") else 1
+                    # ชื่อตัวแปรแยกเป็นหัวข้อบรรทัดของตัวเอง แล้วป้ายของสองช่องสั้นเท่ากัน
+                    # (บรรทัดเดียว) กรอบเลือกทั้งสองฝั่งจึงอยู่ระดับเดียวกันและกว้างเท่ากัน
+                    st.markdown(f'<div style="font-weight:600;color:#1F3A5F;margin:6px 0 -6px;">'
+                                f'{var_label_with_abbr(v)}</div>', unsafe_allow_html=True)
                     c1, c2 = st.columns(2)
                     with c1:
                         d = st.selectbox(
-                            f"{var_label_with_abbr(v)} — ผลต่าง (Unit Root: {_ord})",
+                            f"ผลต่าง (Unit Root: {_ord})",
                             options=[1, 2], index=d_default - 1,
                             format_func=lambda x: "Δ (ผลต่างครั้งที่ 1)" if x == 1 else "Δ² (ผลต่างครั้งที่ 2)",
                             key=f"sr_diff_{v}",
                         )
                     with c2:
                         l = st.selectbox(
-                            f"{var_label_with_abbr(v)} — ช่วงเวลา (lag)",
+                            "ช่วงเวลา (lag)",
                             options=[0, 1, 2], index=0,
                             format_func=lambda x: "t (ปีปัจจุบัน)" if x == 0 else f"t-{x}",
                             key=f"sr_lag_{v}",
