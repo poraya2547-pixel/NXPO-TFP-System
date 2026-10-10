@@ -82,7 +82,7 @@ from TFP import (
     build_model_frame, run_long_run, run_short_run,
     build_coefficient_tables, build_tfpi_yoy_summary, summary_adj_r2,
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
-    ADF_DIFF_TREND, ADF_LEVEL_TREND, ADF_DIFF2_TREND, adf_skv_compare,
+    ADF_DIFF_TREND, ADF_LEVEL_TREND,
 )
 from data_loader import load_data_gsheet
 import inspect
@@ -3346,34 +3346,23 @@ def _fmt3(x) -> str:
         return "–"
 
 
-_DIFF_ORDER_LABEL = {0: "ระดับ (Level)", 1: "ผลต่างครั้งที่ 1", 2: "ผลต่างครั้งที่ 2"}
+_LEVEL_TREND_PHRASE = {"c": "แบบมีค่าคงที่", "ct": "แบบมีค่าคงที่และแนวโน้ม", "n": "แบบไม่มีค่าคงที่"}
 
 
-def _build_adf_skv_table(model_df: pd.DataFrame, variables: list) -> pd.DataFrame:
-    """ตารางทดสอบ ADF "แบบเดียวกับ สวค." (รูปปกติ ไม่ใส่ ln + อันดับผลต่าง/exogenous ตามตาราง
-    UR*_ ใน EViews workfile) ใช้เทียบตัวเลขกับ EViews แบบตัวต่อตัว — เรียก adf_skv_compare()
-    จาก TFP.py ไม่ใช้ตัดสินผลของโมเดล"""
-    rows = []
-    for r in adf_skv_compare(model_df, variables):
-        rows.append({
-            "ตัวแปร": var_label_with_abbr(r["variable"]),
-            "ตาราง EViews": r["eviews_table"],
-            "ทดสอบที่": f'{r["raw_variable"]} · {_DIFF_ORDER_LABEL.get(r["diff_order"], r["diff_order"])}',
-            "Exog.": _TREND_LABEL.get(r["trend"], r["trend"]),
-            "t*": f'{r["t"]:.6f}',
-            "ค่าวิกฤต 5%": f'{r["crit5"]:.4f}',
-            "lag": int(r["lag"]),
-            "n": int(r["nobs"]),
-            "maxlag": int(r["maxlag"]),
-            "นิ่งที่ 5%": "ใช่" if r["stationary_5pct"] else "ไม่",
-        })
-    return pd.DataFrame(rows)
+def _adf_note_html(title: str, items: list) -> str:
+    """กล่องคำอธิบายสั้น ๆ เหนือตาราง ADF: หัวข้อตัวหนา + รายการแบบ bullet (อ่านง่ายกว่า
+    ข้อความยาวบรรทัดเดียวที่คั่นด้วยจุด)"""
+    lis = "".join(f"<li>{t}</li>" for t in items)
+    return (
+        '<div style="font-size:0.9rem;color:#5b6b7f;line-height:1.6;margin:2px 0 10px;">'
+        f'<div style="font-weight:600;color:#1f3550;margin-bottom:2px;">{title}</div>'
+        f'<ul style="margin:0;padding-left:1.2rem;">{lis}</ul></div>'
+    )
 
 
 result_ready = False
 diag_table_display = None
 adf_detail_table = None
-adf_skv_table = None
 n_pass = n_watch = n_fail = 0
 adj_r2_lr = adj_r2_sr = None
 vars_customized = False
@@ -3424,12 +3413,6 @@ if "gsheet_raw_df" in st.session_state:
         except Exception as e:
             adf_detail_table = None
             st.info(f"ไม่สามารถสร้างตารางรายละเอียดผล ADF ได้: {e}")
-        try:
-            _adf_vars = list(dict.fromkeys([dep_ln] + list(active_lr_vars) + [c for c, _, _ in active_sr_spec]))
-            adf_skv_table = _build_adf_skv_table(model_df, _adf_vars)
-        except Exception as e:
-            adf_skv_table = None
-            st.info(f"ไม่สามารถสร้างตารางเทียบผล ADF กับ สวค. ได้: {e}")
 
         result_ready = True
 
@@ -4301,13 +4284,16 @@ if st.session_state.page == "home":
         # --- รายละเอียดผล Unit Root (ADF) รายตัวแปร — กดเปิดดูได้ ไม่รกตารางหลัก ---
         if adf_detail_table is not None and not adf_detail_table.empty:
             with st.expander("🔎 ดูรายละเอียดผลทดสอบ Unit Root (ADF) รายตัวแปร", expanded=False):
-                st.caption(
-                    f"ทดสอบที่ระดับ (Level) แบบ{_TREND_LABEL.get(ADF_LEVEL_TREND, ADF_LEVEL_TREND)} · "
-                    "เลือกจำนวน lag ด้วย SBC (Schwarz) · ช่วงล่าช้าสูงสุดตามสูตร Schwert (1989) · "
-                    "ทดสอบไล่จากระดับ → ผลต่างครั้งที่ 1 (ΔY) → ผลต่างครั้งที่ 2 (Δ²Y) · "
-                    "ตัดสินด้วย t* เทียบค่าวิกฤต 5% (MacKinnon): ถ้า t* ติดลบมากกว่าค่าวิกฤต = นิ่ง "
-                    "· ใช้ช่วงปีที่มีข้อมูลของแต่ละตัวแปร จึงทำให้ค่าวิกฤตต่างกันเล็กน้อยในแต่ละแถว"
-                )
+                st.markdown(_adf_note_html(
+                    "วิธีทดสอบ",
+                    [
+                        f"ทดสอบไล่ตามลำดับ: ระดับ (Level) {_LEVEL_TREND_PHRASE.get(ADF_LEVEL_TREND, ADF_LEVEL_TREND)} "
+                        "→ ผลต่างครั้งที่ 1 (ΔY) → ผลต่างครั้งที่ 2 (Δ²Y)",
+                        "เลือกจำนวน lag ด้วยเกณฑ์ SBC โดยจำนวน lag สูงสุดคำนวณตามสูตรของ Schwert (1989)",
+                        "ถ้า t* ติดลบมากกว่าค่าวิกฤต 5% (MacKinnon) แปลว่าอนุกรมนิ่ง",
+                        "ค่าวิกฤตแต่ละแถวต่างกันเล็กน้อย เพราะแต่ละตัวแปรมีจำนวนปีของข้อมูลไม่เท่ากัน",
+                    ],
+                ), unsafe_allow_html=True)
                 adf_header = "".join(f"<th>{c}</th>" for c in adf_detail_table.columns)
                 adf_rows = "".join(
                     "<tr>" + "".join(
@@ -4329,36 +4315,6 @@ if st.session_state.page == "home":
                     key="dl_adf_detail",
                 )
 
-                # --- ตารางทดสอบแบบเดียวกับ สวค. สำหรับเทียบตัวเลขกับ EViews workfile ---
-                if adf_skv_table is not None and not adf_skv_table.empty:
-                    st.markdown("**ทดสอบแบบเดียวกับ สวค. (ใช้เทียบกับ EViews)**")
-                    st.caption(
-                        "ตารางด้านบนทดสอบในรูปที่ใช้จริงในสมการ (เช่น ln(TFPI)) ส่วนตารางนี้ทดสอบในรูปปกติ "
-                        "และที่อันดับผลต่างเดียวกับตาราง UR0_/UR1_/UR2_ ใน EViews workfile ของ สวค. "
-                        "เพื่อเทียบตัวเลขแบบตัวต่อตัวเท่านั้น ไม่ได้ใช้ตัดสินผลของแบบจำลอง · "
-                        "ค่าวิกฤตอาจต่างจาก EViews ในทศนิยมตำแหน่งที่ 4 เพราะ EViews ใช้ MacKinnon (1996) "
-                        "ส่วนระบบใช้ MacKinnon (2010)"
-                    )
-                    skv_header = "".join(f"<th>{c}</th>" for c in adf_skv_table.columns)
-                    skv_rows = "".join(
-                        "<tr>" + "".join(
-                            f"<td>{_label_line_breaks(v) if col == 'ตัวแปร' else v}</td>"
-                            for col, v in zip(adf_skv_table.columns, row)
-                        ) + "</tr>"
-                        for row in adf_skv_table.values.tolist()
-                    )
-                    st.markdown(
-                        '<div style="overflow-x:auto;"><table class="tfp-table" style="min-width:1000px;">'
-                        f'<thead><tr>{skv_header}</tr></thead><tbody>{skv_rows}</tbody></table></div>',
-                        unsafe_allow_html=True,
-                    )
-                    st.download_button(
-                        "⬇️ ดาวน์โหลดผล ADF แบบเดียวกับ สวค. (.csv)",
-                        data=adf_skv_table.to_csv(index=False).encode("utf-8-sig"),
-                        file_name="adf_compare_eviews_TFP.csv",
-                        mime="text/csv",
-                        key="dl_adf_skv",
-                    )
         st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= หมวด 3: ปรับตัวแปรในสมการ (สำหรับงานวิจัย) =================
