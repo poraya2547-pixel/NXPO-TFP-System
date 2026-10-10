@@ -918,7 +918,7 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
    และคอลัมน์ตัวเลขสัมประสิทธิ์ยังกึ่งกลางตามปกติ (สืบทอดจาก .tfp-table เดิม)
    เพราะตัวเลขอ่านง่ายกว่าเมื่อกึ่งกลาง (ใช้เฉพาะตารางนี้ผ่านคลาสเสริมนี้ ไม่กระทบ
    ตาราง Diagnostics/สัดส่วนอิทธิพลอื่น ๆ ที่ใช้แค่คลาส .tfp-table เฉยๆ) ----- */
-.tfp-table-left td:first-child { text-align: left; padding-left: calc(10px + 1in); }
+.tfp-table-left td:first-child { text-align: left; padding-left: 28px; }
 /* ช่องชื่อตัวแปรสองบรรทัด: รหัสย่อตัวหนา + ชื่อไทยตัวเล็ก (ดู _var_cell_html) */
 .vcell { line-height: 1.3; }
 .vcell-abbr { display: block; font-weight: 700; color: var(--brand-navy); }
@@ -4296,7 +4296,7 @@ if st.session_state.page == "home":
             for row in combined_table.values.tolist()
         )
         st.markdown(
-            f'<div style="overflow-x:auto;"><table class="tfp-table"><thead><tr>'
+            f'<div style="overflow-x:auto;"><table class="tfp-table tfp-table-left"><thead><tr>'
             f'{combined_header_html}</tr></thead><tbody>{combined_rows_html}</tbody></table></div>',
             unsafe_allow_html=True,
         )
