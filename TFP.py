@@ -402,7 +402,8 @@ def run_long_run(df: pd.DataFrame, dep: str, long_run_vars: list):
     # 1994/2010 asymptotic approximation) ไม่ใช่ค่าวิกฤตของ ADF ทั่วไปที่ adfuller() คืนมา
     # (ค่าวิกฤต EG ติดลบมากกว่า ADF ธรรมดา และยิ่งเข้มขึ้นเมื่อจำนวนตัวแปรเพิ่ม)
     # ตั้ง autolag=SIC, maxlag=4 ให้ตรงกับ EViews -> tau ควรได้ -3.3536
-    # p-value อาจต่างจาก EViews เล็กน้อย (statsmodels ใช้ MacKinnon 2010, EViews ใช้ 1996)
+    # p-value/ค่าวิกฤตอาจต่างจาก EViews เล็กน้อย: statsmodels coint() ใช้ค่าวิกฤต MacKinnon (2010)
+    # และ p-value MacKinnon (1994) ส่วน EViews ใช้ MacKinnon (1996) ทั้งคู่
     # หมายเหตุ: coint() รันสมการ cointegrating regression ของตัวเองภายในฟังก์ชัน (จึงต้องป้อน
     # dep กับ long_run_vars แบบ "ดิบ" ไม่ใส่ constant เอง - coint() ใส่ trend ให้แล้วผ่าน trend="c")
     # ผลลัพธ์ (coint_t, p, crit) จึงอาจต่างจาก res.resid ที่ประมาณด้วย OLS ตรงๆ เล็กน้อยถ้า
@@ -606,7 +607,7 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
     if hasattr(lr_res, "eg_pvalue"):
         eg_t, eg_p, eg_crit = lr_res.eg_stat, lr_res.eg_pvalue, lr_res.eg_crit
         # ตัดสินด้วย tau เทียบค่าวิกฤต (แสดง tau/ค่าวิกฤตเป็นหลัก) ส่วน p มาจาก
-        # MacKinnon (2010) ของ statsmodels ซึ่งต่างจาก EViews ที่ใช้รุ่น 1996
+        # MacKinnon (1994) ของ statsmodels (ค่าวิกฤตใช้ MacKinnon 2010) ซึ่งต่างจาก EViews ที่ใช้รุ่น 1996
         result = f"tau={eg_t:.4f} (5%={eg_crit[1]:.3f}), p={eg_p:.3f}*"
         if eg_t < eg_crit[1]:
             status, note = _STATUS_PASS, ""
@@ -617,7 +618,7 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
             status = _STATUS_FAIL
             note = (f"tau ไม่ถึงค่าวิกฤต -> ปฏิเสธ H0 ไม่ได้ ไม่ยืนยัน cointegration "
                     f"(1%={eg_crit[0]:.3f}, 5%={eg_crit[1]:.3f}, 10%={eg_crit[2]:.3f})")
-        note = (note + " " if note else "") + "*p จาก MacKinnon (2010); EViews ใช้ MacKinnon (1996) จึงต่างกันได้"
+        note = (note + " " if note else "") + "*p จาก MacKinnon (1994) ส่วนค่าวิกฤตจาก MacKinnon (2010); EViews ใช้ MacKinnon (1996) จึงต่างกันได้"
         return _diag_row("Cointegration", "Engle-Granger (coint, MacKinnon)", result, status, note)
 
     # fallback: ADF ธรรมดาบน residual (ไม่ใช่ค่าวิกฤต EG ที่ถูกต้อง — first-pass เท่านั้น)
