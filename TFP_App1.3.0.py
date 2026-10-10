@@ -3354,6 +3354,21 @@ def _fmt3(x) -> str:
         return "–"
 
 
+def _var_change_chips_html(active: list, selected: list, label_func) -> str:
+    """แถบสถานะใต้ช่องเลือกตัวแปร: เทา = ใช้อยู่เหมือนเดิม, เขียว = จะเพิ่มเข้า,
+    แดงขีดฆ่า = จะตัดออก (ยังไม่มีผลจนกว่าจะกดยืนยัน)"""
+    chips = []
+    for v in selected:
+        if v in active:
+            chips.append(f'<span class="var-chg-chip keep"><span class="nm">{label_func(v)}</span></span>')
+        else:
+            chips.append(f'<span class="var-chg-chip add">＋ <span class="nm">{label_func(v)}</span></span>')
+    for v in active:
+        if v not in selected:
+            chips.append(f'<span class="var-chg-chip remove">－ <span class="nm">{label_func(v)}</span></span>')
+    return f'<div class="var-chg-row">{"".join(chips)}</div>'
+
+
 _LEVEL_TREND_PHRASE = {"c": "แบบมีค่าคงที่", "ct": "แบบมีค่าคงที่และแนวโน้ม", "n": "แบบไม่มีค่าคงที่"}
 
 
@@ -4350,6 +4365,22 @@ if st.session_state.page == "home":
                 background: #FFFFFF !important;
                 border-radius: 12px;
             }
+            /* แท็กตัวแปรที่เลือกอยู่ในช่อง multiselect: เปลี่ยนจากสีแดง (ดูเหมือนลบ/ผิดพลาด)
+               เป็นกรมท่า เพื่อให้สีแดง/เขียวใช้สื่อเฉพาะ "ตัดออก/เพิ่มเข้า" ในแถบสถานะด้านล่าง */
+            .st-key-ms_lr_vars [data-baseweb="tag"], .st-key-ms_sr_vars [data-baseweb="tag"] {
+                background: #1F3A5F !important; color: #FFFFFF !important;
+            }
+            .st-key-ms_lr_vars [data-baseweb="tag"] *, .st-key-ms_sr_vars [data-baseweb="tag"] * {
+                color: #FFFFFF !important; fill: #FFFFFF !important;
+            }
+            .var-chg-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 2px 0 14px; align-items: center; }
+            .var-chg-chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px;
+                padding: 3px 11px; font-size: 0.82rem; line-height: 1.4; border: 1px solid transparent; }
+            .var-chg-chip.keep { background: #EEF2F7; color: #1F3A5F; border-color: #D5DEE9; }
+            .var-chg-chip.add { background: #E6F4EA; color: #1E7B3A; border-color: #9FD4AE; font-weight: 600; }
+            .var-chg-chip.remove { background: #FDECEC; color: #B42318; border-color: #F4B4AE; font-weight: 600; }
+            .var-chg-chip.remove .nm { text-decoration: line-through; }
+            .var-chg-hint { font-size: 0.8rem; color: #6B7A8C; margin: -6px 0 6px; }
             </style>
             """,
             unsafe_allow_html=True,
@@ -4360,6 +4391,14 @@ if st.session_state.page == "home":
                 "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัดตัวแปรออก "
                 "หรือเพิ่มตัวแปรเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
                 "รอบการใช้งานนี้เท่านั้น และทุกครั้งที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
+            )
+            st.markdown(
+                '<div class="var-chg-row" style="margin-bottom:6px;">'
+                '<span style="font-size:0.82rem;color:#6B7A8C;">ความหมายของสีในแถบสถานะ:</span>'
+                '<span class="var-chg-chip keep">ใช้อยู่เหมือนเดิม</span>'
+                '<span class="var-chg-chip add">＋ จะเพิ่มเข้า</span>'
+                '<span class="var-chg-chip remove">－ <span class="nm">จะตัดออก</span></span></div>',
+                unsafe_allow_html=True,
             )
 
             # ตัวเลือก = ตัวแปรที่เป็นไปได้ทั้งหมด (CANDIDATE_VARS) ที่มีข้อมูลจริง ไม่ใช่แค่ชุด
@@ -4373,6 +4412,9 @@ if st.session_state.page == "home":
                 format_func=var_label_with_abbr,
                 key="ms_lr_vars",
             )
+            st.markdown('<div class="var-chg-hint">กดลูกศร ⌄ ในช่องเพื่อเลือกตัวแปรเพิ่ม และกด × บนตัวแปรเพื่อตัดออก</div>'
+                        + _var_change_chips_html(active_lr_vars, new_lr_vars, var_label_with_abbr),
+                        unsafe_allow_html=True)
             if len(new_lr_vars) > 5:
                 st.caption("⚠️ สมการระยะยาวมีตัวแปรเกิน 5 ตัว ระบบจะทดสอบ Engle-Granger ไม่ได้ "
                            "(ค่าวิกฤตที่ใช้รองรับสูงสุด 5 ตัว) ตาราง Diagnostics จะแสดงผลแบบสำรองแทน")
@@ -4385,6 +4427,9 @@ if st.session_state.page == "home":
                 format_func=var_label_with_abbr,
                 key="ms_sr_vars",
             )
+            st.markdown('<div class="var-chg-hint">กดลูกศร ⌄ ในช่องเพื่อเลือกตัวแปรเพิ่ม และกด × บนตัวแปรเพื่อตัดออก</div>'
+                        + _var_change_chips_html(active_sr_bases, new_sr_bases, var_label_with_abbr),
+                        unsafe_allow_html=True)
 
             # รูปแบบของตัวแปรในสมการระยะสั้น (ผลต่าง + lag): ตัวที่ใช้อยู่แล้วคงรูปแบบเดิม,
             # ตัวที่อยู่ในสเปกของ สวค. ใช้รูปแบบเดิมของ สวค., ตัวใหม่ให้คณะวิจัยเลือกเอง
