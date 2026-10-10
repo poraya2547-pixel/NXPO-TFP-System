@@ -82,6 +82,7 @@ from TFP import (
     build_model_frame, run_long_run, run_short_run,
     build_coefficient_tables, build_tfpi_yoy_summary, summary_adj_r2,
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
+    ADF_DIFF_TREND, ADF_LEVEL_TREND,
 )
 from data_loader import load_data_gsheet
 import inspect
@@ -3303,8 +3304,41 @@ with st.sidebar:
 # รันโมเดล (ถ้ามีไฟล์อัปโหลด) — คำนวณผลลัพธ์ทั้งหมดไว้ก่อน เพื่อนำไปแสดงในการ์ด
 # สรุปสถานะที่หัวหน้าเพจ (metric cards) และในแต่ละหมวดด้านล่าง
 # ------------------------------------------------------------------------------
+_TREND_LABEL = {"c": "ค่าคงที่", "ct": "ค่าคงที่ + แนวโน้ม", "n": "ไม่มีค่าคงที่"}
+
+
+def _build_adf_detail_table(model_df: pd.DataFrame, dep_ln: str,
+                            lr_vars: list, sr_spec: list) -> pd.DataFrame:
+    """ตารางผล ADF รายตัวแปร (ตัวแปรตาม + ตัวแปรระยะยาว + ตัวแปรระยะสั้นที่ใช้งานจริง)
+    เรียก adf_report() จาก TFP.py ตัวเดียวกับตาราง Diagnostics — ไม่ได้คำนวณใหม่ด้วยวิธีอื่น
+    ตัดสินด้วย t* เทียบค่าวิกฤต 5% (MacKinnon) แบบเดียวกับ EViews"""
+    sr_bases = [c for c, _, _ in sr_spec]
+    variables = list(dict.fromkeys([dep_ln] + list(lr_vars) + sr_bases))
+    rows = []
+    for v in variables:
+        if v not in model_df.columns:
+            continue
+        r = adf_report(model_df[v], v)
+        used_in = ("ตัวแปรตาม" if v == dep_ln else
+                   " / ".join(s for s, ok in (("ระยะยาว", v in lr_vars), ("ระยะสั้น", v in sr_bases)) if ok))
+        rows.append({
+            "ตัวแปร": var_label_with_abbr(v),
+            "ใช้ในสมการ": used_in,
+            "Level: t*": f"{r['adf_level_t']:.3f}",
+            "Level: ค่าวิกฤต 5%": f"{r['adf_level_crit5']:.3f}",
+            "ΔY: รูปแบบ": _TREND_LABEL.get(ADF_DIFF_TREND.get(v, "c"), ADF_DIFF_TREND.get(v, "c")),
+            "ΔY: t*": f"{r['adf_diff_t']:.3f}",
+            "ΔY: ค่าวิกฤต 5%": f"{r['adf_diff_crit5']:.3f}",
+            "ΔY: lag": int(r["diff_lag"]),
+            "ΔY: n": int(r["diff_nobs"]),
+            "ผลสรุป": r["order_of_integration"],
+        })
+    return pd.DataFrame(rows)
+
+
 result_ready = False
 diag_table_display = None
+adf_detail_table = None
 n_pass = n_watch = n_fail = 0
 adj_r2_lr = adj_r2_sr = None
 vars_customized = False
@@ -3346,6 +3380,15 @@ if "gsheet_raw_df" in st.session_state:
             n_pass = int(len(diag_table) - n_fail - n_watch)
         except Exception as e:
             st.info(f"ไม่สามารถรันตารางตรวจสอบข้อสมมติฐานได้ครบทุกรายการ: {e}")
+
+        # ตารางรายละเอียดผล ADF รายตัวแปร (ค่า t*, ค่าวิกฤต 5%, lag, n) — ใช้ adf_report()
+        # ตัวเดียวกับที่ตาราง Diagnostics ใช้สรุป I(0)/I(1) จึงได้ผลตรงกันทุกตัว
+        # แสดงในกล่องกดดูรายละเอียดใต้ตาราง Diagnostics (ไม่เปลี่ยนตารางหลัก)
+        try:
+            adf_detail_table = _build_adf_detail_table(model_df, dep_ln, active_lr_vars, active_sr_spec)
+        except Exception as e:
+            adf_detail_table = None
+            st.info(f"ไม่สามารถสร้างตารางรายละเอียดผล ADF ได้: {e}")
 
         result_ready = True
 
@@ -4213,6 +4256,36 @@ if st.session_state.page == "home":
                 mime="text/csv",
                 key="dl_diag_table",
             )
+
+        # --- รายละเอียดผล Unit Root (ADF) รายตัวแปร — กดเปิดดูได้ ไม่รกตารางหลัก ---
+        if adf_detail_table is not None and not adf_detail_table.empty:
+            with st.expander("🔎 ดูรายละเอียดผลทดสอบ Unit Root (ADF) รายตัวแปร", expanded=False):
+                st.caption(
+                    f"ทดสอบที่ระดับ (Level) แบบ{_TREND_LABEL.get(ADF_LEVEL_TREND, ADF_LEVEL_TREND)} · "
+                    "เลือกจำนวน lag ด้วย SBC (Schwarz) · ช่วงล่าช้าสูงสุดตามสูตร Schwert (1989) · "
+                    "ตัดสินด้วย t* เทียบค่าวิกฤต 5% (MacKinnon): ถ้า t* ติดลบมากกว่าค่าวิกฤต = นิ่ง "
+                    "· ใช้ช่วงปีที่มีข้อมูลของแต่ละตัวแปร จึงทำให้ค่าวิกฤตต่างกันเล็กน้อยในแต่ละแถว"
+                )
+                adf_header = "".join(f"<th>{c}</th>" for c in adf_detail_table.columns)
+                adf_rows = "".join(
+                    "<tr>" + "".join(
+                        f"<td>{_label_line_breaks(v) if col == 'ตัวแปร' else v}</td>"
+                        for col, v in zip(adf_detail_table.columns, row)
+                    ) + "</tr>"
+                    for row in adf_detail_table.values.tolist()
+                )
+                st.markdown(
+                    '<div style="overflow-x:auto;"><table class="tfp-table" style="min-width:1000px;">'
+                    f'<thead><tr>{adf_header}</tr></thead><tbody>{adf_rows}</tbody></table></div>',
+                    unsafe_allow_html=True,
+                )
+                st.download_button(
+                    "⬇️ ดาวน์โหลดผล ADF รายตัวแปร (.csv)",
+                    data=adf_detail_table.to_csv(index=False).encode("utf-8-sig"),
+                    file_name="adf_unit_root_TFP.csv",
+                    mime="text/csv",
+                    key="dl_adf_detail",
+                )
         st.markdown('</div>', unsafe_allow_html=True)
 
         # ================= หมวด 3: ปรับตัวแปรในสมการ (สำหรับงานวิจัย) =================
