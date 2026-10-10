@@ -141,6 +141,7 @@ RAW_TO_MODEL = {
     "RDP": "RDP_GDP", "FEE_GDP": "FEE_GDP", "PATENT_GDP": "PATENT_GDP",
     "TUM_GDP": "TUM_GDP", "PCT_GDP": "PCT_GDP", "JOURN_GDP": "JOUR_GDP",
     "TRADE": "TRADE_GDP", "MKTCOM": "MKTCOM", "TFPI": "TFPI",
+    "INDUS": "INDUS_GDP",   # สัดส่วนมูลค่าเพิ่มภาคอุตสาหกรรมต่อ GDP (หน่วย % ในชีต Data)
 }
 
 LOG_VARS = ["HDI", "RDH_GDP", "JOUR_GDP", "PATENT_GDP", "TUM_GDP", "PCT_GDP", "TFPI"]
@@ -157,7 +158,7 @@ RDH_SOURCE = "researcher"  # "researcher" | "data"
 # FDI, RDG, RDP, FEE_GDP, TRADE = "%"  ส่วน HDI("Index"), RDH_GDP("คนต่อล้านคน"),
 # TUM_GDP/JOURN_GDP("รายการ/ล้านบาท") ไม่ใช่ % จึงไม่ต้องแปลง
 # ตรวจสอบ MKTCOM เพิ่มเติมด้วยว่าเป็น % หรือไม่ ถ้าใช่ให้เพิ่มชื่อเข้า list นี้
-PERCENT_VARS = ["FDI_GDP", "RDG_GDP", "RDP_GDP", "FEE_GDP", "TRADE_GDP"]
+PERCENT_VARS = ["FDI_GDP", "RDG_GDP", "RDP_GDP", "FEE_GDP", "TRADE_GDP", "INDUS_GDP"]
 
 # --- ตัวแปรในสมการระยะยาว (จากคอลัมน์ "ค่าสัมประสิทธิ์สมการระยะยาว" ในตารางที่ 2) ---
 LONG_RUN_VARS = ["FDI_GDP", "FEE_GDP", "ln_HDI", "ln_JOUR_GDP", "MKTCOM"]
@@ -181,6 +182,16 @@ SHORT_RUN_SPEC = [
     ("ln_TUM_GDP", 1, 2),
     ("TRADE_GDP", 1, 2),
     ("MKTCOM", 1, 0),
+]
+
+# --- ตัวแปรอิสระที่เป็นไปได้ทั้งหมด (ตัวแปรที่ สวค. พิจารณาก่อนคัดเลือกสมการ) ---
+# ใช้เป็นตัวเลือกในหน้าเว็บ "ปรับตัวแปรในสมการ" ให้คณะวิจัยเพิ่มตัวแปรที่ไม่อยู่ใน
+# LONG_RUN_VARS / SHORT_RUN_SPEC เข้าสมการได้ และใช้แสดงตาราง ADF ให้ครบทุกตัว
+# (ตัวที่ไม่มีข้อมูลในชุดข้อมูลจริงจะถูกข้ามอัตโนมัติ)
+CANDIDATE_VARS = [
+    "FDI_GDP", "FEE_GDP", "ln_HDI", "ln_RDH_GDP", "RDG_GDP", "RDP_GDP",
+    "ln_JOUR_GDP", "ln_PCT_GDP", "ln_PATENT_GDP", "ln_TUM_GDP", "INDUS_GDP",
+    "TRADE_GDP", "MKTCOM",
 ]
 
 
@@ -397,8 +408,17 @@ def run_long_run(df: pd.DataFrame, dep: str, long_run_vars: list):
     # ผลลัพธ์ (coint_t, p, crit) จึงอาจต่างจาก res.resid ที่ประมาณด้วย OLS ตรงๆ เล็กน้อยถ้า
     # lag/trend ที่ coint() เลือกอัตโนมัติไม่ตรงกับที่ statsmodels.OLS ใช้ แต่ค่าสัมประสิทธิ์
     # สมการระยะยาว (res.params) ยังคงใช้จาก OLS ตรงๆ เหมือนเดิมทุกประการ ไม่กระทบ
-    eg_stat, eg_p, eg_crit = coint(sub[dep], sub[long_run_vars].values, trend="c",
-                                     autolag="bic", maxlag=EG_MAXLAG)
+    # coint() มีค่าวิกฤต MacKinnon ถึงจำนวนตัวแปรจำกัด ถ้าคณะวิจัยใส่ตัวแปรระยะยาวมาก
+    # เกินไปจะคำนวณไม่ได้ — ไม่ให้แอปล่ม: ข้ามไป แล้ว _cointegration_row() จะใช้ ADF
+    # ธรรมดาบน residual (ADF fallback) แทนพร้อมหมายเหตุ
+    try:
+        eg_stat, eg_p, eg_crit = coint(sub[dep], sub[long_run_vars].values, trend="c",
+                                         autolag="bic", maxlag=EG_MAXLAG)
+    except Exception as e:
+        print(f"\nEngle-Granger (coint) คำนวณไม่ได้: {e} -> ใช้ ADF fallback ในตาราง Diagnostics")
+        res.eg_error = (f"ตัวแปรในสมการระยะยาวมี {len(long_run_vars)} ตัว เกินกว่าที่ค่าวิกฤต "
+                        "Engle-Granger ใน statsmodels รองรับ (สูงสุด 5 ตัว)")
+        return res, resid
     res.eg_stat, res.eg_pvalue, res.eg_crit = eg_stat, eg_p, eg_crit
 
     print(f"\nEngle-Granger cointegration test (coint(), MacKinnon critical values):")
@@ -602,6 +622,13 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
 
     # fallback: ADF ธรรมดาบน residual (ไม่ใช่ค่าวิกฤต EG ที่ถูกต้อง — first-pass เท่านั้น)
     adf_stat, adf_p, *_ = adfuller(resid.dropna(), autolag="AIC")
+    eg_error = getattr(lr_res, "eg_error", None)
+    if eg_error:
+        # ทดสอบ EG จริงไม่ได้ -> ไม่ตัดสินว่าผ่าน แม้ ADF ธรรมดาจะผ่าน เพราะค่าวิกฤต ADF หลวมกว่า EG
+        note = (f"{eg_error} จึงแสดง ADF ธรรมดาบน residual แทน (ค่าวิกฤตหลวมกว่า Engle-Granger "
+                "ใช้ตัดสิน cointegration ไม่ได้) — ควรลดตัวแปรในสมการระยะยาวเหลือไม่เกิน 5 ตัว")
+        return _diag_row("Cointegration", "Engle-Granger residual (ADF fallback)",
+                         f"p={adf_p:.3f}", _STATUS_WATCH, note)
     if adf_p < 0.05:
         status, note = _STATUS_PASS, ""
     elif adf_p < 0.10:
