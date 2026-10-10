@@ -82,7 +82,7 @@ from TFP import (
     build_model_frame, run_long_run, run_short_run,
     build_coefficient_tables, build_tfpi_yoy_summary, summary_adj_r2,
     adf_report, run_diagnostics, LONG_RUN_VARS, SHORT_RUN_SPEC, DEP_VAR,
-    ADF_DIFF_TREND, ADF_LEVEL_TREND,
+    ADF_DIFF_TREND, ADF_LEVEL_TREND, CANDIDATE_VARS,
 )
 from data_loader import load_data_gsheet
 import inspect
@@ -3075,7 +3075,7 @@ if "active_long_run_vars" not in st.session_state:
 if "active_short_run_spec" not in st.session_state:
     st.session_state.active_short_run_spec = list(SHORT_RUN_SPEC)
 if "var_audit_log" not in st.session_state:
-    st.session_state.var_audit_log = []  # แต่ละรายการ: เวลา/ตัดออก/เพิ่มกลับ/เหตุผล
+    st.session_state.var_audit_log = []  # แต่ละรายการ: เวลา/ตัดออก/เพิ่ม/เหตุผล
 
 # ------------------------------------------------------------------------------
 # แถบด้านข้าง: โลโก้ + เมนูนำทาง + ช่องอัปโหลดข้อมูล
@@ -3309,18 +3309,26 @@ _TREND_LABEL = {"c": "ค่าคงที่", "ct": "ค่าคงที่
 
 def _build_adf_detail_table(model_df: pd.DataFrame, dep_ln: str,
                             lr_vars: list, sr_spec: list) -> pd.DataFrame:
-    """ตารางผล ADF รายตัวแปร (ตัวแปรตาม + ตัวแปรระยะยาว + ตัวแปรระยะสั้นที่ใช้งานจริง)
-    เรียก adf_report() จาก TFP.py ตัวเดียวกับตาราง Diagnostics — ไม่ได้คำนวณใหม่ด้วยวิธีอื่น
-    ตัดสินด้วย t* เทียบค่าวิกฤต 5% (MacKinnon) แบบเดียวกับ EViews"""
+    """ตารางผล ADF รายตัวแปร — แสดงครบทุกตัวแปร (ตัวแปรตาม + CANDIDATE_VARS ทั้งหมด)
+    เรียงตามตารางค่าสัมประสิทธิ์ ตัวที่ไม่ได้อยู่ในสมการ (หรือไม่มีข้อมูล) แสดง "–"
+    เหมือนตารางค่าสัมประสิทธิ์ ถ้าคณะวิจัยเพิ่มตัวแปรเข้าสมการ แถวนั้นจะคำนวณให้อัตโนมัติ
+    เรียก adf_report() จาก TFP.py ตัวเดียวกับตาราง Diagnostics — ไม่ได้คำนวณใหม่ด้วยวิธีอื่น"""
     sr_bases = [c for c, _, _ in sr_spec]
-    variables = list(dict.fromkeys([dep_ln] + list(lr_vars) + sr_bases))
+    variables = list(dict.fromkeys([dep_ln] + list(CANDIDATE_VARS) + list(lr_vars) + sr_bases))
+    value_cols = ["Level: t*", "Level: ค่าวิกฤต 5%", "ΔY: รูปแบบ", "ΔY: t*", "ΔY: ค่าวิกฤต 5%",
+                  "ΔY: lag", "ΔY: n", "Δ²Y: t*", "Δ²Y: ค่าวิกฤต 5%", "ผลสรุป"]
     rows = []
     for v in variables:
-        if v not in model_df.columns:
+        used = v == dep_ln or v in lr_vars or v in sr_bases
+        used_in = ("ตัวแปรตาม" if v == dep_ln else
+                   " / ".join(s for s, ok in (("ระยะยาว", v in lr_vars), ("ระยะสั้น", v in sr_bases)) if ok)
+                   or "ไม่ได้ใช้")
+        if not used or v not in model_df.columns:
+            rows.append({"ตัวแปร": var_label_with_abbr(v),
+                         "ใช้ในสมการ": used_in if v in model_df.columns else "ไม่มีข้อมูล",
+                         **{c: "–" for c in value_cols}})
             continue
         r = adf_report(model_df[v], v)
-        used_in = ("ตัวแปรตาม" if v == dep_ln else
-                   " / ".join(s for s, ok in (("ระยะยาว", v in lr_vars), ("ระยะสั้น", v in sr_bases)) if ok))
         rows.append({
             "ตัวแปร": var_label_with_abbr(v),
             "ใช้ในสมการ": used_in,
@@ -3383,7 +3391,15 @@ if "gsheet_raw_df" in st.session_state:
         sr_res = run_short_run(model_df, dep_ln, active_sr_spec, lr_resid)
 
     if sr_res is None:
-        st.error("รันสมการระยะสั้นไม่สำเร็จ (พารามิเตอร์ >= observations) — ตรวจสอบข้อมูลนำเข้า")
+        st.error("รันสมการระยะสั้นไม่สำเร็จ (จำนวนพารามิเตอร์ >= จำนวนข้อมูล) — "
+                 "ตัวแปรในสมการระยะสั้นอาจมากเกินไปสำหรับจำนวนปีของข้อมูล")
+        # ถ้าเกิดจากคณะวิจัยเพิ่มตัวแปรเอง หน้าปรับตัวแปรจะไม่แสดง (เพราะไม่มีผลลัพธ์)
+        # จึงต้องมีปุ่มคืนค่าเริ่มต้นตรงนี้ ไม่งั้นจะติดอยู่จนกว่าจะเปิดหน้าเว็บใหม่
+        if (active_lr_vars != list(LONG_RUN_VARS) or active_sr_bases != default_sr_bases):
+            if st.button("↩️ คืนค่าตัวแปรเริ่มต้น (ตามที่กำหนดในโค้ด TFP.py)", key="reset_vars_on_error"):
+                st.session_state.active_long_run_vars = list(LONG_RUN_VARS)
+                st.session_state.active_short_run_spec = list(SHORT_RUN_SPEC)
+                st.rerun()
     else:
         lr_table, sr_table = build_coefficient_tables(lr_res, sr_res)
         combined_table = _merge_coefficient_tables(lr_table, sr_table)
@@ -3638,7 +3654,7 @@ _MODEL_COLORS = {"ARIMA": "#16324A", "Naive": "#F97316", "Drift": "#16A34A"}
 
 # ตัวแปรร้อยละต่อ GDP ที่ TFP.load_data() หาร 100 แล้ว (ต้องตรงกับ TFP.PERCENT_VARS)
 # ใช้แปลงค่าที่ผู้ใช้กรอกเป็น "จุดร้อยละ" ในหน้าจำลองผลกระทบ ให้ตรงหน่วยในสมการ
-_PCT_SCALED_VARS = {"FDI_GDP", "FEE_GDP", "RDG_GDP", "RDP_GDP", "TRADE_GDP"}
+_PCT_SCALED_VARS = {"FDI_GDP", "FEE_GDP", "RDG_GDP", "RDP_GDP", "TRADE_GDP", "INDUS_GDP"}
 _MODEL_LABELS = {"ARIMA": "ARIMA", "Naive": "Naive", "Drift": "Random walk with drift"}
 
 
@@ -4341,12 +4357,15 @@ if st.session_state.page == "home":
         with st.expander("🛠️ กดเพื่อปรับตัวแปรในสมการ (สำหรับคณะวิจัย)", expanded=False,
                           key="adjust_vars_expander"):
             st.caption(
-                "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัด/เพิ่มตัวแปร "
-                "กลับเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
+                "ใช้ส่วนนี้เมื่อพิจารณาจากตาราง Diagnostics ด้านบนแล้วเห็นว่าควรตัดตัวแปรออก "
+                "หรือเพิ่มตัวแปรเข้าสมการ (เช่น VIF สูงเกินไป) การปรับที่นี่จะไม่แก้ไขไฟล์ TFP.py — มีผลเฉพาะ "
                 "รอบการใช้งานนี้เท่านั้น และทุกครั้งที่ปรับจะถูกบันทึกไว้ในประวัติด้านล่างพร้อมเหตุผล"
             )
 
-            all_lr_vars = list(LONG_RUN_VARS)
+            # ตัวเลือก = ตัวแปรที่เป็นไปได้ทั้งหมด (CANDIDATE_VARS) ที่มีข้อมูลจริง ไม่ใช่แค่ชุด
+            # default ของ สวค. — คณะวิจัยจึงเพิ่มตัวแปรใหม่ (เช่น PATENT, PCT) เข้าสมการได้
+            candidate_opts = [v for v in CANDIDATE_VARS if v in model_df.columns]
+            all_lr_vars = list(dict.fromkeys(candidate_opts + list(active_lr_vars)))
             new_lr_vars = st.multiselect(
                 "ตัวแปรในสมการระยะยาว (Long-run)",
                 options=all_lr_vars,
@@ -4354,8 +4373,11 @@ if st.session_state.page == "home":
                 format_func=var_label_with_abbr,
                 key="ms_lr_vars",
             )
+            if len(new_lr_vars) > 5:
+                st.caption("⚠️ สมการระยะยาวมีตัวแปรเกิน 5 ตัว ระบบจะทดสอบ Engle-Granger ไม่ได้ "
+                           "(ค่าวิกฤตที่ใช้รองรับสูงสุด 5 ตัว) ตาราง Diagnostics จะแสดงผลแบบสำรองแทน")
 
-            all_sr_bases = [c for c, _, _ in SHORT_RUN_SPEC]
+            all_sr_bases = list(dict.fromkeys(candidate_opts + list(active_sr_bases)))
             new_sr_bases = st.multiselect(
                 "ตัวแปรในสมการระยะสั้น (Short-run ECM)",
                 options=all_sr_bases,
@@ -4363,6 +4385,49 @@ if st.session_state.page == "home":
                 format_func=var_label_with_abbr,
                 key="ms_sr_vars",
             )
+
+            # รูปแบบของตัวแปรในสมการระยะสั้น (ผลต่าง + lag): ตัวที่ใช้อยู่แล้วคงรูปแบบเดิม,
+            # ตัวที่อยู่ในสเปกของ สวค. ใช้รูปแบบเดิมของ สวค., ตัวใหม่ให้คณะวิจัยเลือกเอง
+            # (ค่าเริ่มต้นตามผล Unit Root: I(2) -> Δ², อื่น ๆ -> Δ)
+            active_spec_map = {c: (d, l) for c, d, l in active_sr_spec}
+            default_spec_map = {c: (d, l) for c, d, l in SHORT_RUN_SPEC}
+            new_sr_spec = []
+            new_form_vars = [v for v in new_sr_bases if v not in active_spec_map and v not in default_spec_map]
+            if new_form_vars:
+                st.markdown("**รูปแบบของตัวแปรที่เพิ่มเข้าสมการระยะสั้น**")
+                st.caption("ค่าเริ่มต้นเลือกตามผล Unit Root: ถ้าเป็น I(2) ใช้ผลต่างครั้งที่ 2 (Δ²) "
+                           "นอกนั้นใช้ผลต่างครั้งที่ 1 (Δ) ปรับเองได้")
+            for v in new_sr_bases:
+                if v in active_spec_map:
+                    d, l = active_spec_map[v]
+                elif v in default_spec_map:
+                    d, l = default_spec_map[v]
+                else:
+                    try:
+                        _ord = adf_report(model_df[v], v)["order_of_integration"]
+                    except Exception:
+                        _ord = "I(1)"
+                    d_default = 2 if _ord in ("I(2)", "I(>2)?") else 1
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        d = st.selectbox(
+                            f"{var_label_with_abbr(v)} — ผลต่าง (Unit Root: {_ord})",
+                            options=[1, 2], index=d_default - 1,
+                            format_func=lambda x: "Δ (ผลต่างครั้งที่ 1)" if x == 1 else "Δ² (ผลต่างครั้งที่ 2)",
+                            key=f"sr_diff_{v}",
+                        )
+                    with c2:
+                        l = st.selectbox(
+                            f"{var_label_with_abbr(v)} — ช่วงเวลา (lag)",
+                            options=[0, 1, 2], index=0,
+                            format_func=lambda x: "t (ปีปัจจุบัน)" if x == 0 else f"t-{x}",
+                            key=f"sr_lag_{v}",
+                        )
+                new_sr_spec.append((v, int(d), int(l)))
+
+            def _spec_text(v):
+                d, l = next(((d, l) for c, d, l in new_sr_spec if c == v), (1, 0))
+                return f"{v} ({'Δ' if d == 1 else 'Δ²'}{f', t-{l}' if l else ''})"
 
             reason = st.text_area(
                 "เหตุผลของการปรับ (จำเป็นต้องกรอกก่อนยืนยัน)",
@@ -4384,9 +4449,9 @@ if st.session_state.page == "home":
                 if removed_sr:
                     change_parts.append(f"ตัดออก (ระยะสั้น): {', '.join(var_label_with_abbr(v) for v in removed_sr)}")
                 if added_lr:
-                    change_parts.append(f"เพิ่มกลับ (ระยะยาว): {', '.join(var_label_with_abbr(v) for v in added_lr)}")
+                    change_parts.append(f"เพิ่ม (ระยะยาว): {', '.join(var_label_with_abbr(v) for v in added_lr)}")
                 if added_sr:
-                    change_parts.append(f"เพิ่มกลับ (ระยะสั้น): {', '.join(var_label_with_abbr(v) for v in added_sr)}")
+                    change_parts.append(f"เพิ่ม (ระยะสั้น): {', '.join(var_label_with_abbr(v) for v in added_sr)}")
                 st.info("การเปลี่ยนแปลงที่จะเกิดขึ้นถ้ายืนยัน: " + " | ".join(change_parts))
 
                 CONFIRM_PHRASE = "ยืนยันการปรับตัวแปร"
@@ -4407,14 +4472,12 @@ if st.session_state.page == "home":
                         "เวลา": thai_timestamp(),
                         "ตัดออก (ระยะยาว)": ", ".join(removed_lr) or "-",
                         "ตัดออก (ระยะสั้น)": ", ".join(removed_sr) or "-",
-                        "เพิ่มกลับ (ระยะยาว)": ", ".join(added_lr) or "-",
-                        "เพิ่มกลับ (ระยะสั้น)": ", ".join(added_sr) or "-",
+                        "เพิ่ม (ระยะยาว)": ", ".join(added_lr) or "-",
+                        "เพิ่ม (ระยะสั้น)": ", ".join(_spec_text(v) for v in added_sr) or "-",
                         "เหตุผล": reason.strip(),
                     })
                     st.session_state.active_long_run_vars = new_lr_vars
-                    st.session_state.active_short_run_spec = [
-                        spec for spec in SHORT_RUN_SPEC if spec[0] in new_sr_bases
-                    ]
+                    st.session_state.active_short_run_spec = new_sr_spec
                     st.success("บันทึกและปรับตัวแปรแล้ว กำลังรันโมเดลใหม่...")
                     st.rerun()
             else:
