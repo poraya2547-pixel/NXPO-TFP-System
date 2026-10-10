@@ -640,14 +640,15 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
     return _diag_row("Cointegration", "Engle-Granger residual (ADF fallback)", f"p={adf_p:.3f}", status, note)
 
 
-def _multicollinearity_rows(df: pd.DataFrame, variables: list) -> list:
-    """VIF ของตัวแปรอิสระในสมการระยะยาว + รายงานคู่ตัวแปรที่สหสัมพันธ์สูงสุด
-    เมื่อ VIF เริ่มสูง (ช่วยตีความว่า "สูงเพราะคู่กับตัวไหน")"""
-    sub = df[list(dict.fromkeys(variables))].dropna()
-    X = add_constant(sub)
-    corr = sub.corr()
+def _vif_rows(X_df: pd.DataFrame, category: str, label_map: dict | None = None) -> list:
+    """คำนวณ VIF ของทุกคอลัมน์ใน X_df (ไม่รวม const) + รายงานคู่ตัวแปรที่สหสัมพันธ์สูงสุด
+    เมื่อ VIF เริ่มสูง (ช่วยตีความว่า "สูงเพราะคู่กับตัวไหน")
+    เกณฑ์: VIF > 10 ไม่ผ่าน, 5-10 ต้องพิจารณาเพิ่มเติม"""
+    label_map = label_map or {}
+    X = add_constant(X_df, has_constant="add")
+    corr = X_df.corr()
     rows = []
-    for i, v in enumerate(sub.columns):
+    for i, v in enumerate(X_df.columns):
         vif = variance_inflation_factor(X.values, i + 1)  # +1 เพื่อข้าม const
         if vif > 10:
             status = _STATUS_FAIL
@@ -656,11 +657,40 @@ def _multicollinearity_rows(df: pd.DataFrame, variables: list) -> list:
         else:
             status = _STATUS_PASS
         note = ""
-        if vif > 5 and len(sub.columns) > 1:
+        if vif > 5 and len(X_df.columns) > 1:
             partner = corr[v].drop(v).abs().idxmax()
-            note = f"r={corr.loc[v, partner]:.3f} กับ {partner}"
-        rows.append(_diag_row("Multicollinearity", v, f"VIF={vif:.1f}", status, note))
+            note = f"r={corr.loc[v, partner]:.3f} กับ {label_map.get(partner, partner)}"
+        rows.append(_diag_row(category, label_map.get(v, v), f"VIF={vif:.1f}", status, note))
     return rows
+
+
+def _multicollinearity_rows(df: pd.DataFrame, variables: list) -> list:
+    """VIF ของตัวแปรอิสระในสมการระยะยาว (ข้อมูลระดับ/level)"""
+    sub = df[list(dict.fromkeys(variables))].dropna()
+    return _vif_rows(sub, "Multicollinearity (Long-run)")
+
+
+def _short_run_regressor_label(code: str) -> str:
+    """แปลงชื่อคอลัมน์ในสมการระยะสั้นเป็นป้ายแบบเดียวกับหมวด Stationarity (Short-run)
+    เช่น d2_RDG_GDP_lag2 -> "Δ²RDG_GDP (t-2)", d1_FDI_GDP_lag0 -> "ΔFDI_GDP",
+    ECM_lag1 -> "ECM (t-1)" (หน้าเว็บแปลงต่อเป็นชื่อเต็มภาษาไทยด้วย var_label_with_abbr)"""
+    m = re.match(r"^d([12])_(.+)_lag(\d+)$", code)
+    if m:
+        d, base, lag = m.groups()
+        return f"{'Δ' if d == '1' else 'Δ²'}{base}{f' (t-{lag})' if int(lag) else ''}"
+    if code == "ECM_lag1":
+        return "ECM (t-1)"
+    return code
+
+
+def _multicollinearity_short_run_rows(sr_res) -> list:
+    """VIF ของตัวแปรอิสระในสมการระยะสั้น — ใช้ตัวแปร "หลังแปลงแล้ว" (Δ, Δ², lag) รวม
+    ECM(-1) และช่วงปีเดียวกับที่ OLS ใช้จริง (sr_res.model.exog) จึงตรงกับสมการที่ประมาณค่า"""
+    names = list(sr_res.model.exog_names)
+    X_all = pd.DataFrame(sr_res.model.exog, columns=names)
+    X_df = X_all.drop(columns=[c for c in names if c == "const"])
+    label_map = {c: _short_run_regressor_label(c) for c in X_df.columns}
+    return _vif_rows(X_df, "Multicollinearity (Short-run)", label_map)
 
 
 def _heteroskedasticity_row(res, label: str) -> dict:
@@ -723,6 +753,12 @@ def run_diagnostics(model_df: pd.DataFrame, dep_ln: str, long_run_vars: list,
         rows += _stationarity_short_run_rows(model_df, short_run_spec)
     rows.append(_cointegration_row(lr_res, lr_resid))
     rows += _multicollinearity_rows(model_df, long_run_vars)
+    if sr_res is not None:
+        try:
+            rows += _multicollinearity_short_run_rows(sr_res)
+        except Exception as e:
+            rows.append(_diag_row("Multicollinearity (Short-run)", "VIF", "n/a", _STATUS_WATCH,
+                                  f"คำนวณไม่ได้: {e}"))
     rows.append(_heteroskedasticity_row(lr_res, "สมการระยะยาว"))
     rows.append(_autocorrelation_row(lr_res, "สมการระยะยาว"))
     rows.append(_normality_row(lr_res, "สมการระยะยาว"))
