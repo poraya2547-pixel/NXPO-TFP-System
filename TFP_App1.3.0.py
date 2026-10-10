@@ -4288,10 +4288,13 @@ if st.session_state.page == "home":
             # กำหนดความกว้างคอลัมน์เอง (table-layout: fixed) — ปล่อยอัตโนมัติแล้วคอลัมน์
             # "รายการ" แคบจนชื่อตัวแปรตัดหลายบรรทัด ขณะที่ "หมายเหตุ" กว้างเกินเนื้อหา
             # ลำดับ: หมวด / รายการ / ผลลัพธ์ / สถานะ / หมายเหตุ (รวม 100%)
-            _diag_col_widths = [11, 31, 15, 15, 28]
+            # คอลัมน์ "หมวด" กว้างพอให้คำยาวอย่าง Heteroskedasticity / Multicollinearity
+            # อยู่บรรทัดเดียว (เดิม 11% แคบจนคำภาษาอังกฤษถูกตัดกลางคำ)
+            _diag_col_widths = [16, 29, 14, 14, 27]
             colgroup_html = "".join(f'<col style="width:{w}%;">' for w in _diag_col_widths)
             st.markdown(
                 '<style>.diag-table td:last-child{text-align:left;}'
+                '.diag-table td:first-child{word-break:keep-all;overflow-wrap:normal;hyphens:none;}'
                 '.diag-table .badge-pill{padding:4px 10px;gap:5px;max-width:100%;}</style>'
                 f'<div style="overflow-x:auto;"><table class="tfp-table diag-table" style="table-layout:fixed;min-width:900px;">'
                 f'<colgroup>{colgroup_html}</colgroup><thead><tr>{header_html}</tr></thead>'
