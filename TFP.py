@@ -247,7 +247,28 @@ ADF_DIFF_TREND = {
     "ln_HDI": "c", "ln_JOUR_GDP": "c", "MKTCOM": "n",
 }
 ADF_LEVEL_TREND = "c"   # ทดสอบที่ level ใช้ Constant (สวค. ไม่ได้บันทึกผล level ไว้)
-EG_MAXLAG = 4           # maxlag ของ Engle-Granger ตามที่ EViews ใช้กับ n=23
+# Exogenous ของการทดสอบที่ผลต่างอันดับ 2 (Δ²) — สวค. ใช้ Constant ในตาราง UR2_RDH, UR2_RDP
+# ตัวแปรที่ไม่อยู่ใน dict จะใช้ 'c'
+ADF_DIFF2_TREND: dict = {}
+
+# --- สเปกการทดสอบ Unit Root "แบบเดียวกับ สวค." (ใช้เทียบผลกับ EViews workfile เท่านั้น) ---
+# ระบบทดสอบตัวแปรในรูปที่ใช้จริงในสมการ (เช่น ln_TFPI) แต่ สวค. ทดสอบในรูปปกติ (TFPI)
+# และทดสอบแต่ละตัวแปรที่ระดับผลต่างต่างกัน (ชื่อตาราง UR0_/UR1_/UR2_ = ระดับ/ผลต่าง 1/ผลต่าง 2)
+# key = ชื่อคอลัมน์ในโมเดล -> (คอลัมน์รูปปกติที่ สวค. ทดสอบ, อันดับผลต่าง, exogenous, ชื่อตาราง EViews)
+SKV_UR_SPEC = {
+    "ln_TFPI":     ("TFPI",      1, "c", "UR1_TFP"),
+    "FDI_GDP":     ("FDI_GDP",   1, "n", "UR1_FDI"),
+    "FEE_GDP":     ("FEE_GDP",   1, "n", "UR1_FEE"),
+    "ln_HDI":      ("HDI",       1, "c", "UR1_HDI"),
+    "ln_JOUR_GDP": ("JOUR_GDP",  1, "c", "UR1_JOUR"),
+    "MKTCOM":      ("MKTCOM",    1, "n", "UR1_MKTCOM"),
+    "ln_RDH_GDP":  ("RDH_GDP",   2, "c", "UR2_RDH"),
+    "RDG_GDP":     ("RDG_GDP",   1, "c", "UR1_RDG"),
+    "RDP_GDP":     ("RDP_GDP",   2, "c", "UR2_RDP"),
+    "ln_TUM_GDP":  ("TUM_GDP",   0, "c", "UR0_TUM"),
+    "TRADE_GDP":   ("TRADE_GDP", 1, "c", "UR1_TRADE"),
+}
+EG_MAXLAG = 4          # maxlag ของ Engle-Granger ตามที่ EViews ใช้กับ n=23
 
 
 def eviews_maxlag(T: int) -> int:
@@ -273,20 +294,69 @@ def adf_report(series: pd.Series, name: str) -> dict:
     """ใช้ช่วงปีของตัวแปรนั้นเอง (dropna เฉพาะตัวแปร) แบบเดียวกับ EViews
     ตัดสินด้วยการเทียบ t-stat กับค่าวิกฤต 5% (ตรงกับ EViews) แทน p-value
     maxlag คิดจากจำนวน obs ของ series ตั้งต้น ทั้งที่ level และ difference
-    หมายเหตุ: ทดสอบในรูปที่ใช้จริงในสมการ (เช่น ln_TFPI) ซึ่ง สวค. ทดสอบในรูปปกติ"""
+    หมายเหตุ: ทดสอบในรูปที่ใช้จริงในสมการ (เช่น ln_TFPI) ซึ่ง สวค. ทดสอบในรูปปกติ
+    (ถ้าต้องการเทียบกับ EViews ของ สวค. แบบตัวต่อตัว ใช้ adf_skv_compare() แทน)
+
+    ลำดับการตัดสิน: ระดับ -> ผลต่างครั้งที่ 1 (Δ) -> ผลต่างครั้งที่ 2 (Δ²)
+      I(0) = นิ่งที่ระดับ, I(1) = นิ่งที่ Δ, I(2) = นิ่งที่ Δ²,
+      "I(>2)?" = ยังไม่นิ่งแม้ที่ Δ² (ลำดับไม่ชัดเจน ควรตรวจสอบข้อมูล)"""
     T = len(series.dropna())
     ls, lp, ll, _, lc = adf_eviews(series, ADF_LEVEL_TREND, T, True)
     ds, dp, dl, dn, dc = adf_eviews(
         series.diff(), ADF_DIFF_TREND.get(name, "c"), T, True)
-    order = ("I(0)" if ls < lc["5%"] else
-             "I(1)" if ds < dc["5%"] else "I(2)?")
+    # ผลต่างครั้งที่ 2 — maxlag ยังคิดจาก T ของ series ตั้งต้น เหมือน level และ Δ
+    try:
+        d2s, d2p, d2l, d2n, d2c = adf_eviews(
+            series.diff().diff(), ADF_DIFF2_TREND.get(name, "c"), T, True)
+        d2_crit5 = d2c["5%"]
+    except Exception:
+        d2s = d2p = d2_crit5 = np.nan
+        d2l = d2n = None
+    if ls < lc["5%"]:
+        order = "I(0)"
+    elif ds < dc["5%"]:
+        order = "I(1)"
+    elif not np.isnan(d2s) and d2s < d2_crit5:
+        order = "I(2)"
+    else:
+        order = "I(>2)?"
     return {"variable": name,
             "adf_level_t": round(ls, 4), "adf_level_p": round(lp, 4),
             "adf_level_crit5": round(lc["5%"], 4),
             "adf_diff_t": round(ds, 4), "adf_diff_p": round(dp, 4),
             "adf_diff_crit5": round(dc["5%"], 4),
             "diff_lag": dl, "diff_nobs": dn,
+            "adf_diff2_t": round(d2s, 4), "adf_diff2_p": round(d2p, 4),
+            "adf_diff2_crit5": round(d2_crit5, 4),
+            "diff2_lag": d2l, "diff2_nobs": d2n,
             "order_of_integration": order}
+
+
+def adf_skv_compare(df: pd.DataFrame, variables: list | None = None) -> list:
+    """ทดสอบ ADF "แบบเดียวกับ สวค." ตาม SKV_UR_SPEC เพื่อเทียบกับตาราง UR*_ ใน EViews
+    workfile แบบตัวต่อตัว: ใช้ตัวแปรรูปปกติ (ไม่ใส่ ln), อันดับผลต่าง และ exogenous ตามที่
+    สวค. ทดสอบ — ไม่ใช้ในการตัดสินผลของโมเดล (ผลของโมเดลใช้ adf_report() บนรูปที่ใช้จริง)
+    variables: รายชื่อคอลัมน์โมเดลที่ต้องการ (None = ทุกตัวใน SKV_UR_SPEC)"""
+    rows = []
+    for model_col in (variables or list(SKV_UR_SPEC)):
+        if model_col not in SKV_UR_SPEC:
+            continue
+        raw_col, d_order, trend, ur_table = SKV_UR_SPEC[model_col]
+        if raw_col not in df.columns:
+            continue
+        series = df[raw_col]
+        T = len(series.dropna())
+        x = series
+        for _ in range(d_order):
+            x = x.diff()
+        stat, p, lag, nobs, crit = adf_eviews(x, trend, T, True)
+        rows.append({"variable": model_col, "raw_variable": raw_col,
+                     "eviews_table": ur_table, "diff_order": d_order, "trend": trend,
+                     "t": round(stat, 6), "crit5": round(crit["5%"], 4),
+                     "p": round(p, 4), "lag": lag, "nobs": nobs,
+                     "maxlag": eviews_maxlag(T),
+                     "stationary_5pct": bool(stat < crit["5%"])})
+    return rows
 
 
 def summary_adj_r2(res) -> float:
@@ -428,9 +498,9 @@ def _stationarity_rows(df: pd.DataFrame, variables: list) -> list:
     rows = []
     for r in reports:
         order = r["order_of_integration"]
-        if order == "I(2)?":
+        if order == "I(>2)?":
             status = _STATUS_WATCH
-            note = "ลำดับความนิ่งไม่ชัดเจน (t ทั้งที่ระดับและที่ผลต่างยังไม่ถึงค่าวิกฤต 5%)"
+            note = "ลำดับความนิ่งไม่ชัดเจน (t ที่ระดับ, Δ และ Δ² ยังไม่ถึงค่าวิกฤต 5%)"
         elif order != majority:
             status = _STATUS_WATCH
             note = f"ไม่สอดคล้องกับตัวแปรส่วนใหญ่ที่เป็น {majority}"
@@ -446,7 +516,7 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
     เปลี่ยนตามตัวแปรที่เลือกด้วย (ไม่ใช่ SHORT_RUN_SPEC ตายตัวจากไฟล์โค้ด)
 
     ตรวจ 2 รอบต่อตัวแปร (ตัดตัวแปรซ้ำถ้ามี base column เดียวกันมากกว่าหนึ่งสเปก):
-      (1) ตัวแปรต้นฉบับ (ก่อนแปลง) — ผ่าน adf_report() ตัวเดิม ว่าเป็น I(0)/I(1)/I(2)?
+      (1) ตัวแปรต้นฉบับ (ก่อนแปลง) — ผ่าน adf_report() ตัวเดิม ว่าเป็น I(0)/I(1)/I(2)/I(>2)?
       (2) ตัวแปรหลัง Transformation ตามสเปกจริงที่ใช้ในสมการ (Δ หรือ Δ² พร้อม lag ถ้ามี)
           ผ่าน build_diff_regressor() ตัวเดิมที่ run_short_run() ใช้สร้าง regressor จริง
           แล้วทดสอบ ADF ตรง ๆ ว่าตัวแปรหลังแปลงนิ่ง (stationary) หรือไม่
@@ -462,20 +532,24 @@ def _stationarity_short_run_rows(df: pd.DataFrame, short_run_spec: list) -> list
         diff_symbol = "Δ" if diff_order == 1 else "Δ²"
         lag_suffix = f" (t-{lag})" if lag else ""
 
-        # (1) ตัวแปรต้นฉบับ — I(0)/I(1)/I(2)? เหมือน _stationarity_rows() เดิม
+        # (1) ตัวแปรต้นฉบับ — I(0)/I(1)/I(2) เหมือน _stationarity_rows() เดิม
         try:
             r_raw = adf_report(df[col], col)
             order_raw = r_raw["order_of_integration"]
-            # I(2)? แต่สมการใช้ Δ² อยู่แล้วถือว่าจัดการแล้ว จึงเตือนเฉพาะกรณีใช้แค่ Δ
-            status_raw = _STATUS_WATCH if (order_raw == "I(2)?" and diff_order < 2) else _STATUS_PASS
-            # ใส่หมายเหตุเฉพาะกรณี I(2)? (ไม่นิ่งที่ผลต่างครั้งที่ 1) เพราะกรณีอื่น
-            # คอลัมน์ผลลัพธ์กับแถว Δ ถัดไปบอกครบอยู่แล้ว
-            if order_raw != "I(2)?":
-                note_raw = ""
-            elif diff_order == 2:
-                note_raw = "ไม่นิ่งที่ผลต่างครั้งที่ 1 จึงใช้ผลต่างครั้งที่ 2 (Δ²) ในสมการระยะสั้น"
+            # I(2) แต่สมการใช้ Δ² อยู่แล้วถือว่าจัดการแล้ว จึงเตือนเฉพาะกรณีใช้แค่ Δ
+            # ส่วน I(>2)? (ไม่นิ่งแม้ที่ Δ²) เตือนเสมอ
+            if order_raw == "I(>2)?":
+                status_raw = _STATUS_WATCH
+                note_raw = "ยังไม่นิ่งแม้ที่ผลต่างครั้งที่ 2 (Δ²) ควรตรวจสอบข้อมูลเพิ่มเติม"
+            elif order_raw == "I(2)" and diff_order == 2:
+                status_raw = _STATUS_PASS
+                note_raw = "นิ่งที่ผลต่างครั้งที่ 2 (I(2)) จึงใช้ Δ² ในสมการระยะสั้น"
+            elif order_raw == "I(2)":
+                status_raw = _STATUS_WATCH
+                note_raw = "เป็น I(2) แต่สมการระยะสั้นใช้เพียง Δ ควรตรวจสอบเพิ่มเติม"
             else:
-                note_raw = "ไม่นิ่งที่ผลต่างครั้งที่ 1 แต่สมการระยะสั้นใช้เพียง Δ ควรตรวจสอบเพิ่มเติม"
+                # กรณีอื่น คอลัมน์ผลลัพธ์กับแถว Δ ถัดไปบอกครบอยู่แล้ว
+                status_raw, note_raw = _STATUS_PASS, ""
         except Exception as e:
             order_raw, status_raw = "n/a", _STATUS_WATCH
             note_raw = f"คำนวณไม่ได้: {e}"
