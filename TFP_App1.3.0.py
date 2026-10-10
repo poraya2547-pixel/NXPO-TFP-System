@@ -4331,7 +4331,7 @@ if st.session_state.page == "home":
                 adf_header = "".join(f"<th>{c}</th>" for c in adf_detail_table.columns)
                 adf_rows = "".join(
                     "<tr>" + "".join(
-                        f"<td>{_label_line_breaks(v) if col == 'ตัวแปร' else v}</td>"
+                        f"<td>{_label_line_breaks(v) if col == 'ตัวแปร' else (str(v).replace(' / ', '<br>') if col == 'ใช้ในสมการ' else v)}</td>"
                         for col, v in zip(adf_detail_table.columns, row)
                     ) + "</tr>"
                     for row in adf_detail_table.values.tolist()
