@@ -919,6 +919,10 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
    เพราะตัวเลขอ่านง่ายกว่าเมื่อกึ่งกลาง (ใช้เฉพาะตารางนี้ผ่านคลาสเสริมนี้ ไม่กระทบ
    ตาราง Diagnostics/สัดส่วนอิทธิพลอื่น ๆ ที่ใช้แค่คลาส .tfp-table เฉยๆ) ----- */
 .tfp-table-left td:first-child { text-align: left; padding-left: calc(10px + 1in); }
+/* ช่องชื่อตัวแปรสองบรรทัด: รหัสย่อตัวหนา + ชื่อไทยตัวเล็ก (ดู _var_cell_html) */
+.vcell { line-height: 1.3; }
+.vcell-abbr { display: block; font-weight: 700; color: var(--brand-navy); }
+.vcell-desc { display: block; font-size: 0.78em; font-weight: 400; color: #6B7A8C; margin-top: 1px; }
 
 /* ----- ตาราง HTML ธีมครีม-ส้ม สำหรับตัวเลขพยากรณ์ ARIMA ----- */
 .tfp-table-cream {
@@ -2109,6 +2113,37 @@ def _var_full_name(code: str) -> str:
     if " : " in label:
         return label.split(" : ", 1)[0]
     return label
+
+
+# คำอธิบายบรรทัดล่างสำหรับรหัสที่ไม่มีชื่อไทยใน VARIABLE_LABELS
+_VAR_CELL_EXTRA_DESC = {"ECM": "พจน์ปรับตัวเข้าสู่ดุลยภาพระยะยาว"}
+_VAR_CELL_CODE_RE = re.compile(r"^(Δ²?)?\s*([A-Za-z][A-Za-z0-9_]*)(\s*\(t-\d+\))?$")
+
+
+def _var_cell_html(text) -> str:
+    """ช่องชื่อตัวแปรแบบสองบรรทัด (ใช้แสดงผลบนเว็บเท่านั้น ไม่กระทบ CSV/Word/PPTX):
+    บรรทัดบน = รหัสย่อตัวหนา (พร้อม Δ/Δ² และ (t-n) ถ้ามี) เช่น "Δ²RDG/GDP (t-2)"
+    บรรทัดล่าง = ชื่อภาษาไทยตัวเล็กสีเทา
+    รับได้ทั้งรหัสดิบ ("FDI_GDP", "Δ²RDG_GDP (t-2)", "ECM (t-1)") และป้ายแบบ
+    "ชื่อไทย : ตัวย่อ" จาก VARIABLE_LABELS — ถ้าไม่ใช่ตัวแปร (เช่น Breusch-Pagan)
+    คืนข้อความเดิมผ่าน _label_line_breaks() เหมือนพฤติกรรมเดิม"""
+    t = str(text).strip()
+    abbr = thai = None
+    m = _VAR_CELL_CODE_RE.match(t)
+    if m and (m.group(2) in VARIABLE_LABELS or m.group(2) in _VAR_CELL_EXTRA_DESC):
+        prefix, base, lag = m.group(1) or "", m.group(2), (m.group(3) or "").strip()
+        label = VARIABLE_LABELS.get(base, base)
+        if " : " in label:
+            thai, short = label.split(" : ", 1)
+        else:
+            thai, short = _VAR_CELL_EXTRA_DESC.get(base, ""), label
+        abbr = f"{prefix}{short}{(' ' + lag) if lag else ''}"
+    elif " : " in t:
+        thai, abbr = t.split(" : ", 1)
+    if abbr is None:
+        return _label_line_breaks(t)
+    sub = f'<span class="vcell-desc">{thai}</span>' if thai else ""
+    return f'<div class="vcell"><span class="vcell-abbr">{abbr}</span>{sub}</div>'
 
 
 # จุดขึ้นบรรทัดใหม่ของป้ายยาวในตาราง Diagnostics (ใช้ตอนแสดงผล HTML เท่านั้น ไม่กระทบ CSV)
@@ -3318,7 +3353,9 @@ def _build_adf_detail_table(model_df: pd.DataFrame, dep_ln: str,
     value_cols = ["Level: t*", "Level: ค่าวิกฤต 5%", "ΔY: รูปแบบ", "ΔY: t*", "ΔY: ค่าวิกฤต 5%",
                   "ΔY: lag", "ΔY: n", "Δ²Y: t*", "Δ²Y: ค่าวิกฤต 5%", "ผลสรุป"]
     rows = []
+    codes = []
     for v in variables:
+        codes.append(v)
         used = v == dep_ln or v in lr_vars or v in sr_bases
         used_in = ("ตัวแปรตาม" if v == dep_ln else
                    " / ".join(s for s, ok in (("ระยะยาว", v in lr_vars), ("ระยะสั้น", v in sr_bases)) if ok)
@@ -3343,7 +3380,9 @@ def _build_adf_detail_table(model_df: pd.DataFrame, dep_ln: str,
             "Δ²Y: ค่าวิกฤต 5%": _fmt3(r.get("adf_diff2_crit5")),
             "ผลสรุป": r["order_of_integration"],
         })
-    return pd.DataFrame(rows)
+    out = pd.DataFrame(rows)
+    out.attrs["codes"] = codes  # รหัสดิบ ใช้แสดงช่องตัวแปรแบบสองบรรทัดบนเว็บ
+    return out
 
 
 def _fmt3(x) -> str:
@@ -4152,7 +4191,7 @@ if st.session_state.page == "home":
             for base, info in rows:
                 coef = info.get("coef")
                 p_val = info.get("p")
-                label = _var_full_name(base) if base in VARIABLE_LABELS else base
+                label = base  # แสดงแบบสองบรรทัด (ตัวย่อ + ชื่อไทย) ผ่าน _var_cell_html
                 coef_text = f"{coef:.3f}" if coef is not None else "-"
                 p_text = f"{p_val:.3f}" if p_val is not None else "-"
                 is_up = (coef or 0) >= 0
@@ -4161,7 +4200,7 @@ if st.session_state.page == "home":
                     else f'<span class="nxpo-var-dir down">{icon("trend-down", 15, 2)}</span>'
                 )
                 body_html += (
-                    f"<tr><td>{_label_line_breaks(label)}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
+                    f"<tr><td>{_var_cell_html(label)}</td><td>{coef_text}</td><td>{p_text}</td><td>{dir_html}</td></tr>"
                 )
             st.markdown(
                 f'<div class="section-card"><div class="nxpo-var-card-head">'
@@ -4215,7 +4254,7 @@ if st.session_state.page == "home":
         combined_header_html = "".join(f"<th>{c}</th>" for c in combined_table.columns)
         combined_rows_html = "".join(
             "<tr>" + "".join(
-                f'<td style="font-weight:600;color:var(--brand-navy);">{v}</td>'
+                f'<td>{_var_cell_html(v)}</td>'
                 if i == 0 else f"<td>{_style_coef_cell(v)}</td>"
                 for i, v in enumerate(row)
             ) + "</tr>"
@@ -4277,12 +4316,14 @@ if st.session_state.page == "home":
                 s = s.replace(" (Long-run)", "<br>(Long-run)")
                 return s
 
+            # คอลัมน์ "รายการ" ใช้รหัสดิบจาก diag_table (ก่อนแปลงเป็นชื่อเต็ม) เพื่อแสดงแบบ
+            # สองบรรทัด ตัวย่อ + ชื่อไทย — ส่วน CSV ยังใช้ diag_table_display (ชื่อเต็ม) เหมือนเดิม
             rows_html = "".join(
                 "<tr>" + "".join(
-                    f"<td>{_status_badge(v) if col == 'สถานะ' else (_label_line_breaks(v) if col == 'รายการ' else _wrap_short_long_run(v))}</td>"
+                    f"<td>{_status_badge(v) if col == 'สถานะ' else (_var_cell_html(raw_item) if col == 'รายการ' else _wrap_short_long_run(v))}</td>"
                     for col, v in zip(diag_table_display.columns, row)
                 ) + "</tr>"
-                for row in diag_table_display.values.tolist()
+                for row, raw_item in zip(diag_table_display.values.tolist(), diag_table["รายการ"].tolist())
             )
             header_html = "".join(f"<th>{c}</th>" for c in diag_table_display.columns)
             # กำหนดความกว้างคอลัมน์เอง (table-layout: fixed) — ปล่อยอัตโนมัติแล้วคอลัมน์
@@ -4331,10 +4372,11 @@ if st.session_state.page == "home":
                 adf_header = "".join(f"<th>{c}</th>" for c in adf_detail_table.columns)
                 adf_rows = "".join(
                     "<tr>" + "".join(
-                        f"<td>{_label_line_breaks(v) if col == 'ตัวแปร' else (str(v).replace(' / ', '<br>') if col == 'ใช้ในสมการ' else v)}</td>"
+                        f"<td>{_var_cell_html(code) if col == 'ตัวแปร' else (str(v).replace(' / ', '<br>') if col == 'ใช้ในสมการ' else v)}</td>"
                         for col, v in zip(adf_detail_table.columns, row)
                     ) + "</tr>"
-                    for row in adf_detail_table.values.tolist()
+                    for row, code in zip(adf_detail_table.values.tolist(),
+                                         adf_detail_table.attrs.get("codes", adf_detail_table["ตัวแปร"].tolist()))
                 )
                 st.markdown(
                     '<div style="overflow-x:auto;"><table class="tfp-table" style="min-width:1000px;">'
