@@ -710,7 +710,7 @@ div[data-testid="stVerticalBlock"]:has(.nxpo-topbar) {
 .nxpo-var-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; margin-top: 12px; }
 .nxpo-var-table th {
     text-align: center; color: var(--brand-navy-soft); font-weight: 600; font-size: 0.76rem;
-    padding: 0 8px 8px 8px; border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.03em;
+    padding: 8px 8px; vertical-align: middle; border-bottom: 1px solid var(--card-border); text-transform: uppercase; letter-spacing: 0.03em;
 }
 .nxpo-var-table th:not(:first-child), .nxpo-var-table td:not(:first-child) { text-align: center; }
 .nxpo-var-table td { padding: 9px 8px; border-bottom: 1px solid var(--card-border); color: var(--brand-navy); vertical-align: middle; }
