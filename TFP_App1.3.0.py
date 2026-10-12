@@ -3249,9 +3249,9 @@ if st.session_state.portal_role is None:
     # ตอนยังไม่ดึงข้อมูล ย้าย/คัดลอกมาไว้ที่หน้า landing นี้ด้วยตามที่ขอ -----
     st.write("")
     _welcome_steps = [
-        ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้ายมือ"),
-        ("sparkle", "ระบบรันโมเดลให้อัตโนมัติ", "ระบบจะเลือกโมเดล ARIMA ที่เหมาะสม"),
-        ("trend-up", "ดูผลพยากรณ์ที่นี่", "กราฟแสดงแนวโน้ม TFP และตัวแปรในสมการ"),
+        ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้าย"),
+        ("sparkle", "ประมวลผลอัตโนมัติ", "ระบบประมาณค่าแบบจำลองและพยากรณ์ TFP ด้วยวิธี Random walk with drift"),
+        ("trend-up", "แสดงผลการพยากรณ์", "กราฟแนวโน้ม TFP ค่าพยากรณ์ และตัวแปรในสมการ"),
     ]
     _welcome_cols = st.columns(3)
     for _wcol, (ic, title, desc) in zip(_welcome_cols, _welcome_steps):
@@ -3732,11 +3732,11 @@ def _diebold_mariano(actual, pred1, pred2, h: int = 1):
 def _dm_verdict(dm: dict, name1: str, name2: str, alpha: float = 0.05) -> str:
     """แปลผล DM เป็นข้อความสั้น ๆ สำหรับแสดงบนหน้าเว็บ"""
     if not dm:
-        return "จุดทดสอบไม่พอสำหรับทดสอบ"
+        return "จุดทดสอบไม่เพียงพอสำหรับการทดสอบ"
     if dm["pvalue"] >= alpha:
-        return f"แม่นไม่ต่างกันอย่างมีนัยสำคัญที่ระดับ {alpha:.0%}"
+        return f"ความแม่นยำไม่แตกต่างกันอย่างมีนัยสำคัญที่ระดับ {alpha:g}"
     better = name1 if dm["mean_d"] < 0 else name2
-    return f"{better} แม่นกว่าอย่างมีนัยสำคัญที่ระดับ {alpha:.0%}"
+    return f"{better} แม่นยำกว่าอย่างมีนัยสำคัญที่ระดับ {alpha:g}"
 
 
 _MODEL_COLORS = {"ARIMA": "#16324A", "Naive": "#F97316", "Drift": "#16A34A"}
@@ -3939,7 +3939,7 @@ def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
     color_scale = alt.Scale(domain=["ARIMA", "Naive", "Drift"], range=["#16324A", "#F97316", "#16A34A"])
     base = alt.Chart(chart_df).encode(
         x=alt.X(
-            "เกณฑ์:Q", title="ตัดจุดที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก",
+            "เกณฑ์:Q", title="จำนวนปีขั้นต่ำของข้อมูลฝึก",
             axis=alt.Axis(grid=False, domain=False, tickColor="#E9ECF1",
                            labelColor="#5B6B7C", labelFontSize=11, titlePadding=14),
         ),
@@ -3951,10 +3951,10 @@ def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
         ),
         color=alt.Color("โมเดล:N", scale=color_scale, legend=alt.Legend(title=None, orient="top")),
         tooltip=[
-            alt.Tooltip("เกณฑ์:Q", title="ตัดจุดที่น้อยกว่า (ปี)"),
+            alt.Tooltip("เกณฑ์:Q", title="จำนวนปีขั้นต่ำของข้อมูลฝึก"),
             alt.Tooltip("โมเดล:N", title="โมเดล"),
             alt.Tooltip("MAPE:Q", title="MAPE", format=".2f"),
-            alt.Tooltip("จำนวนจุด:Q", title="จำนวนจุดที่เหลือ"),
+            alt.Tooltip("จำนวนจุด:Q", title="จำนวนจุดทดสอบที่เหลือ"),
         ],
     )
     line = base.mark_line(interpolate="monotone", strokeWidth=2.4)
@@ -4100,7 +4100,7 @@ def _compute_influence_df(model_df: pd.DataFrame, dep_ln: str, active_lr_vars: l
     total_abs = infl_df["abs_beta"].sum()
     infl_df["สัดส่วน (%)"] = infl_df["abs_beta"] / total_abs * 100
     infl_df["ทิศทาง"] = infl_df["std_beta"].apply(
-        lambda x: "หนุนเสริม TFP (+)" if x >= 0 else "ฉุดรั้ง TFP (−)"
+        lambda x: "ส่งผลเชิงบวก (+)" if x >= 0 else "ส่งผลเชิงลบ (−)"
     )
     infl_df = infl_df.sort_values("สัดส่วน (%)", ascending=False).reset_index(drop=True)
     return infl_df, None
@@ -4739,15 +4739,15 @@ elif st.session_state.page == "forecast":
             f'<div style="font-family:var(--font-elegant);font-weight:600;font-size:1.15rem;'
             f'color:var(--brand-navy);margin-bottom:6px;">ยังไม่มีข้อมูลให้แสดงผล</div>'
             f'<div style="font-size:0.92rem;color:var(--brand-navy-soft);line-height:1.6;max-width:480px;margin:0 auto;">'
-            f'กดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้ายมือ เพื่อเริ่มดึงข้อมูล<br>'
-            f'และแสดงผลพยากรณ์ TFP ที่นี่</div>'
+            f'กรุณากดปุ่ม "คลิกดึงข้อมูลอัตโนมัติ" ที่แถบเมนูด้านซ้าย<br>'
+            f'เพื่อดึงข้อมูลและแสดงผลการพยากรณ์ TFP</div>'
             '</div>',
             unsafe_allow_html=True,
         )
         _welcome_steps = [
-            ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้ายมือ"),
-            ("sparkle", "ระบบรันโมเดลให้อัตโนมัติ", "ระบบจะเลือกโมเดล ARIMA ที่เหมาะสม"),
-            ("trend-up", "ดูผลพยากรณ์ที่นี่", "กราฟแสดงแนวโน้ม TFP และตัวแปรในสมการ"),
+            ("database", "ดึงข้อมูลอัตโนมัติ", "กดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้าย"),
+            ("sparkle", "ประมวลผลอัตโนมัติ", "ระบบประมาณค่าแบบจำลองและพยากรณ์ TFP ด้วยวิธี Random walk with drift"),
+            ("trend-up", "แสดงผลการพยากรณ์", "กราฟแนวโน้ม TFP ค่าพยากรณ์ และตัวแปรในสมการ"),
         ]
         _welcome_cols = st.columns(3)
         for _wcol, (ic, title, desc) in zip(_welcome_cols, _welcome_steps):
@@ -4776,7 +4776,7 @@ elif st.session_state.page == "forecast":
         st.markdown(
             f'<div class="section-card"><div class="section-title">'
             f'<div class="section-num">{icon("trend-up", 20, 2)}</div>'
-            f'<div class="section-title-text"><h3>แนวโน้มดัชนีผลิตภาพการผลิตรวม (TFP) ย้อนหลัง พร้อมพยากรณ์ล่วงหน้า (Random walk with drift)</h3>'
+            f'<div class="section-title-text"><h3>แนวโน้มดัชนีผลิตภาพปัจจัยการผลิตรวม (TFP) และค่าพยากรณ์ด้วยวิธี Random walk with drift</h3>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -4857,8 +4857,8 @@ elif st.session_state.page == "forecast":
                         index=1,
                         format_func=lambda n: f"{_last_data_year + 1}–{_last_data_year + n} ({n} ปี)",
                         key="tfp_forecast_horizon",
-                        help="เลือกช่วงเวลาที่ต้องการพยากรณ์ล่วงหน้า ยิ่งพยากรณ์ไกลจากข้อมูลจริง "
-                             "ยิ่งมีความไม่แน่นอนสูงขึ้น (ช่วงความเชื่อมั่นจะกว้างขึ้นตามไปด้วย)",
+                        help="การพยากรณ์ระยะยาวขึ้นจะมีความไม่แน่นอนสูงขึ้น "
+                             "ช่วงความเชื่อมั่นจึงกว้างขึ้นตามระยะเวลาการพยากรณ์",
                     )
 
                 # กราฟพยากรณ์หลักใช้ Random walk with drift (เลือกจากผล rolling backtest
@@ -4905,7 +4905,7 @@ elif st.session_state.page == "forecast":
                     + _kpi_strip_item(
                         _kpi_navy, icon("check", 21, 2),
                         f"{_drift_slope:+.3f}",
-                        "การเปลี่ยนแปลงเฉลี่ยต่อปี<br>(ใช้เป็นแนวโน้มพยากรณ์)",
+                        "การเปลี่ยนแปลงเฉลี่ยต่อปี<br>(ค่า Drift ที่ใช้พยากรณ์)",
                     )
                     + '</div>',
                     unsafe_allow_html=True,
@@ -4914,9 +4914,9 @@ elif st.session_state.page == "forecast":
 
                 st.markdown(
                     '<p style="font-size:0.76rem;color:var(--brand-navy-soft);margin:0 2px 8px;">'
-                    f'{icon("info", 11, 2)} กราฟแสดงข้อมูลตั้งแต่ปี 2000 เป็นต้นไปเพื่อความชัดเจน '
-                    f'(โมเดลยังคำนวณจากข้อมูลเต็ม {len(tfp_series)} ปี ตั้งแต่ {tfp_series.index.min()} '
-                    f'เหมือนเดิมทุกประการ ไม่กระทบผลพยากรณ์ใดๆ)</p>',
+                    f'{icon("info", 11, 2)} กราฟแสดงข้อมูลตั้งแต่ปี 2000 เพื่อความชัดเจน '
+                    f'ทั้งนี้ การพยากรณ์คำนวณจากข้อมูลทั้งหมด {len(tfp_series)} ปี '
+                    f'({tfp_series.index.min()}–{tfp_series.index.max()})</p>',
                     unsafe_allow_html=True,
                 )
                 _nice_line_chart_with_forecast(
@@ -4941,7 +4941,7 @@ elif st.session_state.page == "forecast":
                     f'<div class="fc-highlight-label">ขอบบน 95%</div></div></div>'
                     f'<div class="fc-highlight-item"><div class="fc-highlight-icon">{icon("sparkle", 17, 1.8)}</div>'
                     f'<div><div class="fc-highlight-value">95%</div>'
-                    f'<div class="fc-highlight-label">ความเชื่อมั่นของช่วงพยากรณ์</div></div></div>'
+                    f'<div class="fc-highlight-label">ระดับความเชื่อมั่นของช่วงพยากรณ์</div></div></div>'
                     '</div>',
                     unsafe_allow_html=True,
                 )
@@ -4953,13 +4953,13 @@ elif st.session_state.page == "forecast":
                         f'<div style="display:flex;align-items:center;gap:7px;font-size:0.78rem;'
                         f'color:var(--brand-navy-soft);line-height:1.5;margin-bottom:6px;">'
                         f'{icon("info", 14, 1.8)}'
-                        f'<span>พยากรณ์ด้วย Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี) '
-                        f'ซึ่งแม่นที่สุดจากการทดสอบย้อนหลังด้านล่าง</span>'
+                        f'<span>พยากรณ์ด้วยวิธี Random walk with drift (ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี) '
+                        f'ซึ่งมีค่า MAPE ต่ำที่สุดจากการทดสอบย้อนหลังด้านล่าง</span>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
 
-                    with st.expander("📋 ดูตัวเลขพยากรณ์รายปี"):
+                    with st.expander("📋 ตารางค่าพยากรณ์รายปี"):
                         fc_display = forecast_df.rename(
                             columns={"mean": "ค่าพยากรณ์", "lower": "ขอบล่าง 95%", "upper": "ขอบบน 95%"}
                         ).round(4)
@@ -4982,7 +4982,7 @@ elif st.session_state.page == "forecast":
                         )
                         fc_csv = fc_display.to_csv().encode("utf-8-sig")
                         st.download_button(
-                            "ดาวน์โหลดตัวเลขพยากรณ์เป็น CSV",
+                            "ดาวน์โหลดตารางค่าพยากรณ์ (.csv)",
                             data=fc_csv,
                             file_name="TFP_forecast_drift.csv",
                             mime="text/csv",
@@ -4993,16 +4993,17 @@ elif st.session_state.page == "forecast":
                 # ถ้าช่วงนั้นบังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19) ผลลัพธ์อาจสะท้อน
                 # แค่ "ช่วงนั้น" ไม่ใช่ความสามารถโดยรวมของโมเดล จึงเพิ่มการทดสอบแบบเลื่อน
                 # จุดเริ่มทดสอบ (rolling-origin) ไปทีละปีทั่วทั้งอนุกรม แล้วรวมผลทุกจุด
-                with st.expander("🔁 ทดสอบย้อนหลังหลายหน้าต่าง (Rolling-origin Backtest) · ใช้เลือกวิธีพยากรณ์"):
+                with st.expander("🔁 การทดสอบย้อนหลังแบบเลื่อนจุดเริ่มพยากรณ์ (Rolling-origin) · เกณฑ์หลักในการเลือกวิธีพยากรณ์"):
                     st.markdown(
                         '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
-                        'margin-top:0;margin-bottom:0;">การทดสอบนี้ใช้วิธี Rolling-Origin Evaluation โดยเลื่อนช่วงทดสอบไปทีละปี'
-                        'ตลอดอนุกรมเวลา แทนการทดสอบเฉพาะ 5 ปีสุดท้าย เพื่อให้ผลการประเมินครอบคลุมหลายช่วงเวลา'
-                        'และลดผลกระทบจากเหตุการณ์เฉพาะช่วง เช่น โควิด-19 จากนั้นรวบรวมผลทุกจุดเพื่อเปรียบเทียบความแม่นยำ'
-                        'ของ ARIMA, Naive และ Drift ผลส่วนนี้คือเกณฑ์หลักที่ใช้เลือกวิธีพยากรณ์ของระบบ</p></div>',
+                        'margin-top:0;margin-bottom:0;">การทดสอบนี้เลื่อนจุดเริ่มพยากรณ์ไปทีละ 1 ปีตลอดอนุกรมเวลา '
+                        'แทนการทดสอบเฉพาะ 5 ปีล่าสุด เพื่อให้ผลการประเมินครอบคลุมหลายช่วงเวลา '
+                        'และลดอิทธิพลของเหตุการณ์เฉพาะช่วง เช่น การแพร่ระบาดของโควิด-19 '
+                        'จากนั้นนำผลทุกจุดมาเปรียบเทียบความแม่นยำของ ARIMA, Naive และ Drift '
+                        'ผลการทดสอบส่วนนี้ใช้เป็นเกณฑ์หลักในการเลือกวิธีพยากรณ์ของระบบ</p></div>',
                         unsafe_allow_html=True,
                     )
-                    with st.spinner("กำลังทดสอบย้อนหลังหลายหน้าต่าง..."):
+                    with st.spinner("กำลังทดสอบย้อนหลังแบบ Rolling-origin..."):
                         roll_df, roll_metrics, roll_err = _run_rolling_backtest(
                             tfp_series, min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1,
                             crisis_years=(2020, 2022),
@@ -5011,17 +5012,17 @@ elif st.session_state.page == "forecast":
                         st.info(roll_err)
                     else:
                         _roll_better = roll_metrics["arima_mape"] < roll_metrics["naive_mape"]
-                        _three_mape_cards(roll_metrics, f'รวม {roll_metrics["n_windows"]} จุดทดสอบ')
+                        _three_mape_cards(roll_metrics, f'{roll_metrics["n_windows"]} จุดทดสอบ')
                         st.write("")
                         if roll_metrics.get("n_crisis", 0) > 0 and roll_metrics.get("n_normal", 0) > 0:
                             st.markdown(
                                 f'<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
-                                f'แยกตามช่วงเวลา — '
+                                f'MAPE แยกตามช่วงเวลา — '
                                 f'ช่วงปกติ ({roll_metrics["n_normal"]} จุด): ARIMA '
                                 f'{roll_metrics["arima_mape_normal"]:.2f}% · Naive '
                                 f'{roll_metrics["naive_mape_normal"]:.2f}% · Drift '
                                 f'{roll_metrics["drift_mape_normal"]:.2f}% &nbsp;|&nbsp; '
-                                f'ช่วงโควิด 2563–2565 ({roll_metrics["n_crisis"]} จุด): ARIMA '
+                                f'ช่วงโควิด-19 ปี 2020–2022 ({roll_metrics["n_crisis"]} จุด): ARIMA '
                                 f'{roll_metrics["arima_mape_crisis"]:.2f}% · Naive '
                                 f'{roll_metrics["naive_mape_crisis"]:.2f}% · Drift '
                                 f'{roll_metrics["drift_mape_crisis"]:.2f}%</p></div>',
@@ -5045,9 +5046,9 @@ elif st.session_state.page == "forecast":
                                 if dm["pvalue"] < 0.05:
                                     _win = m1 if dm["mean_d"] < 0 else m2
                                     _res = (f'<span style="color:var(--green);font-weight:700;">'
-                                            f'{icon("check", 10, 2.5)} {_win} แม่นกว่า</span>')
+                                            f'{icon("check", 10, 2.5)} {_win} แม่นยำกว่า</span>')
                                 else:
-                                    _res = '<span style="color:var(--brand-navy-soft);font-weight:600;">ไม่ต่างกัน</span>'
+                                    _res = '<span style="color:var(--brand-navy-soft);font-weight:600;">ไม่แตกต่างกัน</span>'
                             return (f'<tr><td><b>{m1}</b> vs {m2}</td>'
                                     f'<td>{_mape1:.2f}% vs {_mape2:.2f}%</td>'
                                     f'<td>{_stat}</td><td>{_p}</td><td>{_res}</td></tr>')
@@ -5055,20 +5056,21 @@ elif st.session_state.page == "forecast":
                         st.markdown(
                             f'<div class="bt-desc-box">'
                             f'<p style="font-size:0.85rem;font-weight:700;color:var(--brand-navy);margin:0 0 6px;">'
-                            f'Diebold–Mariano test: แม่นต่างกันจริงไหม?</p>'
+                            f'การทดสอบ Diebold–Mariano: ความแม่นยำแตกต่างกันอย่างมีนัยสำคัญหรือไม่</p>'
                             f'<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;font-size:0.8rem;">'
-                            f'<thead><tr><th>คู่ที่เทียบ</th><th>MAPE</th><th>DM*</th><th>p-value</th><th>ผล (α = 5%)</th></tr></thead>'
+                            f'<thead><tr><th>คู่ที่เทียบ</th><th>MAPE</th><th>DM*</th><th>p-value</th><th>ผลการทดสอบ (α = 0.05)</th></tr></thead>'
                             f'<tbody>{_dm_row(_dm_an, "ARIMA", "Naive")}{_dm_row(_dm_dn, "Drift", "Naive")}</tbody>'
                             f'</table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;line-height:1.6;">'
-                            f'H₀: สองวิธีแม่นเท่ากัน · p &lt; 0.05 จึงถือว่าต่างกันจริง · '
-                            f'DM* ติดลบ = วิธีแรกคลาดเคลื่อนน้อยกว่า · ปรับตัวอย่างเล็กตาม Harvey et al. (1997)<br>'
-                            f'Drift = Random walk with drift (ค่าปีล่าสุด + การเปลี่ยนแปลงเฉลี่ยต่อปี)</p>'
+                            f'H₀: ความแม่นยำของทั้งสองวิธีไม่แตกต่างกัน · ปฏิเสธ H₀ เมื่อ p-value &lt; 0.05 · '
+                            f'DM* ติดลบ หมายถึงวิธีแรกมีความคลาดเคลื่อนน้อยกว่า · '
+                            f'ปรับค่าสำหรับตัวอย่างขนาดเล็กตาม Harvey et al. (1997)<br>'
+                            f'Drift หมายถึง Random walk with drift (ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี)</p>'
                             f'<p style="font-size:0.82rem;margin:10px 0 0;">'
                             f'<span style="background:{_MODEL_COLORS[_best]};color:#fff;font-weight:700;padding:2px 10px;'
                             f'border-radius:999px;">{icon("check", 10, 2.5)} MAPE ต่ำสุด: '
                             f'{_MODEL_LABELS[_best]} ({roll_metrics[_best.lower() + "_mape"]:.2f}%)</span>'
-                            f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักใช้ Random walk with drift</span>'
+                            f'<span style="color:var(--brand-navy-soft);"> &nbsp;กราฟพยากรณ์หลักใช้วิธี Random walk with drift</span>'
                             f'</p></div>',
                             unsafe_allow_html=True,
                         )
@@ -5081,9 +5083,9 @@ elif st.session_state.page == "forecast":
                             st.altair_chart(_mape_chart, use_container_width=True)
                             st.markdown(
                                 '<div class="bt-desc-box"><p style="font-size:0.78rem;color:var(--brand-navy-soft);margin:0;">'
-                                "เลื่อนเมาส์ไปที่จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือ ณ เกณฑ์นั้น "
-                                "โดยพิจารณาว่าเส้น ARIMA ลดลงอย่างต่อเนื่องหรือเกิดการลดลงเฉพาะช่วงที่มีข้อมูลทดสอบน้อย "
-                                '<span style="white-space:nowrap;">เพื่อแยกแยะระหว่าง ผลจากข้อมูลฝึกที่ไม่เพียงพอ กับ ความผันผวนจากกลุ่มตัวอย่างขนาดเล็ก</span></p></div>',
+                                "ชี้เมาส์ที่จุดบนเส้นเพื่อดูจำนวนจุดทดสอบที่เหลือในแต่ละเกณฑ์ "
+                                "หาก MAPE ของ ARIMA ลดลงอย่างต่อเนื่อง แสดงว่าความคลาดเคลื่อนเดิมมาจากข้อมูลฝึกไม่เพียงพอ "
+                                "แต่หากลดลงเฉพาะช่วงท้ายที่จุดทดสอบเหลือน้อย อาจเป็นเพียงความผันผวนจากตัวอย่างขนาดเล็ก</p></div>",
                                 unsafe_allow_html=True,
                             )
 
@@ -5099,13 +5101,12 @@ elif st.session_state.page == "forecast":
                         if _max_ts > _min_ts:
                             _default_mature = min(_max_ts, max(_min_ts, MIN_POINTS_FOR_ARIMA * 2))
                             mature_threshold = st.slider(
-                                "ตัดจุดทดสอบที่ฝึกด้วยข้อมูลน้อยกว่ากี่ปีออก (ดูผลเฉพาะจุดที่โมเดลมีข้อมูลฝึกพอสมควรแล้ว)",
+                                "จำนวนปีขั้นต่ำของข้อมูลฝึก (ตัดจุดทดสอบที่มีข้อมูลฝึกน้อยกว่าเกณฑ์นี้ออก)",
                                 min_value=_min_ts, max_value=_max_ts, value=_default_mature,
                                 key="tfp_rolling_mature_threshold",
-                                help="จุดทดสอบช่วงต้น ๆ ฝึกด้วยข้อมูลน้อยมาก ทำให้ ARIMA ประมาณค่า "
-                                     "พารามิเตอร์ได้ไม่แม่น และอาจดึงค่าเฉลี่ยความคลาดเคลื่อนโดยรวมให้ดู "
-                                     "แย่กว่าความเป็นจริง เลื่อนแถบนี้เพื่อดูว่าผลเปลี่ยนไปแค่ไหนถ้าตัดจุด "
-                                     "ทดสอบที่ข้อมูลฝึกน้อยเกินไปออก",
+                                help="จุดทดสอบช่วงต้นมีข้อมูลฝึกน้อย ทำให้ ARIMA ประมาณค่าพารามิเตอร์ได้ไม่แม่นยำ "
+                                     "และอาจทำให้ค่าความคลาดเคลื่อนเฉลี่ยสูงกว่าความเป็นจริง "
+                                     "ปรับเกณฑ์นี้เพื่อดูผลเมื่อตัดจุดทดสอบดังกล่าวออก",
                             )
                             _mature_df = roll_df[roll_df["จำนวนปีที่ฝึก"] >= mature_threshold]
 
@@ -5119,23 +5120,27 @@ elif st.session_state.page == "forecast":
                                 _dm_mat = _diebold_mariano(_mature_df["ค่าจริง"], _mature_df["ARIMA"], _mature_df["Naive"])
                                 _mat_better = _arima_mape_mat < _naive_mape_mat
                                 st.markdown(
-                                    f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;">'
-                                    f'เฉพาะจุดที่ฝึกด้วยข้อมูล ≥ {mature_threshold} ปี ({len(_mature_df)} จุด): '
-                                    f'ARIMA MAPE {_arima_mape_mat:.2f}% เทียบ Naive {_naive_mape_mat:.2f}% '
-                                    f'และ Drift {_drift_mape_mat:.2f}% · DM (ARIMA เทียบ Naive): '
-                                    + (f'p = {_dm_mat["pvalue"]:.4f} → {_dm_verdict(_dm_mat, "ARIMA", "Naive")}' if _dm_mat else 'จุดไม่พอ')
-                                    + (' — <b style="color:var(--green);">ARIMA แม่นกว่าเมื่อมีข้อมูลฝึกเพียงพอ</b> '
-                                       '(สนับสนุนว่าที่ ARIMA แพ้ในภาพรวมส่วนหนึ่งมาจากจุดทดสอบช่วงต้นที่ข้อมูลฝึกน้อยเกินไป)'
+                                    f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;line-height:1.7;">'
+                                    f'เฉพาะจุดทดสอบที่มีข้อมูลฝึกอย่างน้อย {mature_threshold} ปี ({len(_mature_df)} จุด): '
+                                    f'MAPE ของ ARIMA {_arima_mape_mat:.2f}% · Naive {_naive_mape_mat:.2f}% · '
+                                    f'Drift {_drift_mape_mat:.2f}%<br>'
+                                    f'การทดสอบ Diebold–Mariano (ARIMA เทียบกับ Naive): '
+                                    + (f'p-value = {_dm_mat["pvalue"]:.4f} → {_dm_verdict(_dm_mat, "ARIMA", "Naive")}'
+                                       if _dm_mat else 'จุดทดสอบไม่เพียงพอสำหรับการทดสอบ')
+                                    + ('<br><b style="color:var(--green);">ARIMA มี MAPE ต่ำกว่า Naive เมื่อมีข้อมูลฝึกเพียงพอ</b> '
+                                       '(สอดคล้องกับข้อสันนิษฐานว่าความคลาดเคลื่อนของ ARIMA ในภาพรวม '
+                                       'ส่วนหนึ่งมาจากจุดทดสอบช่วงต้นที่มีข้อมูลฝึกน้อย)'
                                        if _mat_better else
-                                       ' — Naive ยังคงแม่นกว่าหรือใกล้เคียงแม้ตัดจุดข้อมูลฝึกน้อยออกแล้ว '
-                                       '(สนับสนุนว่าอนุกรมนี้มีพฤติกรรมใกล้ random walk มากกว่าจะเป็นปัญหาข้อมูลฝึกไม่พอ)')
+                                       '<br><b>Naive ยังคงมี MAPE ต่ำกว่าหรือใกล้เคียงกับ ARIMA</b> '
+                                       'แม้ตัดจุดทดสอบที่มีข้อมูลฝึกน้อยออกแล้ว '
+                                       '(สะท้อนว่าอนุกรมมีพฤติกรรมใกล้เคียง Random walk มากกว่าปัญหาข้อมูลฝึกไม่เพียงพอ)')
                                     + '</p>',
                                     unsafe_allow_html=True,
                                 )
                             else:
                                 st.caption(
-                                    "จุดทดสอบที่ผ่านเกณฑ์นี้น้อยเกินไป (น้อยกว่า 3 จุด) ยังสรุปไม่ได้ "
-                                    "ลองลดค่าขั้นต่ำลง"
+                                    "จุดทดสอบที่ผ่านเกณฑ์มีน้อยกว่า 3 จุด จึงไม่สามารถสรุปผลได้ "
+                                    "กรุณาลดจำนวนปีขั้นต่ำของข้อมูลฝึก"
                                 )
 
                         _roll_rows_html = ""
@@ -5154,22 +5159,22 @@ elif st.session_state.page == "forecast":
                             f'<div class="backtest-table backtest-table-scroll" '
                             f'style="overflow-x:auto;overflow-y:auto;max-height:420px;">'
                             f'<table class="tfp-table-cream">'
-                            f'<thead><tr><th>ปีที่ทาย</th><th>จำนวนปีที่ฝึก</th><th>ค่าจริง</th>'
-                            f'<th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
+                            f'<thead><tr><th>ปีที่พยากรณ์</th><th>จำนวนปีข้อมูลฝึก</th><th>ค่าจริง</th>'
+                            f'<th>ARIMA</th><th>Naive</th><th>Drift</th></tr></thead>'
                             f'<tbody>{_roll_rows_html}</tbody></table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
                             f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น &nbsp;|&nbsp; เลื่อนขึ้น-ลงในตารางเพื่อดูทุกจุดทดสอบ</p>',
+                            f'= ค่าพยากรณ์ที่ใกล้เคียงค่าจริงที่สุดในปีนั้น &nbsp;·&nbsp; เลื่อนตารางเพื่อดูจุดทดสอบทั้งหมด</p>',
                             unsafe_allow_html=True,
                         )
                         st.markdown(
                             '<div class="bt-desc-box"><p style="font-size:0.82rem;color:var(--brand-navy-soft);margin:0;">'
-                            + ('ตลอดทั้งอนุกรม ARIMA ทายแม่นกว่า Naive โดยเฉลี่ย '
+                            + ('เมื่อพิจารณาตลอดทั้งอนุกรม ARIMA มี MAPE เฉลี่ยต่ำกว่า Naive '
                                if _roll_better else
-                               'ตลอดทั้งอนุกรม ARIMA ไม่ได้แม่นกว่าวิธีพื้นฐานโดยเฉลี่ย '
-                               'สะท้อนว่าอนุกรม TFP มีพฤติกรรมใกล้เคียง random walk '
-                               'แบบจำลองที่ซับซ้อนกว่าจึงไม่ได้เพิ่มความแม่นยำ ')
-                            + f'วิธีที่ MAPE ต่ำสุดคือ {_MODEL_LABELS[_best]} '
+                               'เมื่อพิจารณาตลอดทั้งอนุกรม ARIMA ไม่ได้มีความแม่นยำสูงกว่าวิธีพื้นฐาน '
+                               'สะท้อนว่าอนุกรม TFP มีพฤติกรรมใกล้เคียง Random walk '
+                               'แบบจำลองที่ซับซ้อนกว่าจึงไม่ได้ช่วยเพิ่มความแม่นยำ ')
+                            + f'โดยวิธีที่มี MAPE ต่ำที่สุด คือ {_MODEL_LABELS[_best]} '
                               f'({roll_metrics[_best.lower() + "_mape"]:.2f}%)'
                             + '</p></div>',
                             unsafe_allow_html=True,
@@ -5179,19 +5184,20 @@ elif st.session_state.page == "forecast":
                 # ไม่ใช้ทฤษฎีใหม่เพิ่มเติมจากที่มีอยู่แล้ว — เรียก _auto_arima_forecast
                 # ตัวเดิมซ้ำ โดยซ่อนข้อมูลปีล่าสุดไว้ชั่วคราวแล้วให้โมเดลทายปีที่ซ่อนไว้
                 # จากนั้นเทียบกับค่าจริงที่รู้อยู่แล้ว พร้อม Naive forecast เป็นเส้นฐาน
-                with st.expander("🎯 ทดสอบเฉพาะ 5 ปีล่าสุด (Hold-out) · ผลประกอบ"):
+                with st.expander("🎯 การทดสอบด้วยข้อมูล 5 ปีล่าสุด (Hold-out) · ผลประกอบการพิจารณา"):
                     st.markdown(
                         '<div class="bt-desc-box"><p style="font-size:0.85rem;color:var(--brand-navy-soft);line-height:1.65;'
-                        'margin-top:0;margin-bottom:0;">ซ่อนข้อมูล 5 ปีล่าสุดไว้ แล้วให้ทั้ง 3 วิธี (ARIMA, Naive, Drift) '
-                        'พยากรณ์ช่วงนั้นจากข้อมูลก่อนหน้า เพื่อเทียบกับค่าจริง เป็นการทดสอบหน้าต่างเดียว '
-                        'จึงใช้เป็นผลประกอบ ส่วนการเลือกวิธีพยากรณ์อ้างอิงจาก Rolling-origin Backtest ด้านบน</p></div>',
+                        'margin-top:0;margin-bottom:0;">แยกข้อมูล 5 ปีล่าสุดออกเป็นชุดทดสอบ แล้วให้ทั้ง 3 วิธี '
+                        '(ARIMA, Naive และ Drift) พยากรณ์ช่วงเวลาดังกล่าวจากข้อมูลก่อนหน้า เพื่อเปรียบเทียบกับค่าจริง '
+                        'เนื่องจากเป็นการทดสอบเพียงช่วงเดียว ผลส่วนนี้จึงใช้ประกอบการพิจารณา '
+                        'ส่วนการเลือกวิธีพยากรณ์อ้างอิงจากการทดสอบแบบ Rolling-origin ด้านบน</p></div>',
                         unsafe_allow_html=True,
                     )
                     bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
                     if bt_err:
                         st.info(bt_err)
                     else:
-                        _three_mape_cards(bt_metrics, f'ทดสอบ {bt_metrics["test_years"]} ปีล่าสุด')
+                        _three_mape_cards(bt_metrics, f'{bt_metrics["test_years"]} ปีล่าสุด')
                         # แถบเทียบขนาดความคลาดเคลื่อนแบบภาพ (เห็นสัดส่วนได้ไวกว่าตัวเลขล้วน)
                         _mape_max = max(bt_metrics["arima_mape"], bt_metrics["naive_mape"], bt_metrics["drift_mape"], 0.01)
                         st.markdown(
@@ -5237,11 +5243,11 @@ elif st.session_state.page == "forecast":
                             )
                         st.markdown(
                             f'<div class="backtest-table" style="overflow-x:auto;"><table class="tfp-table-cream">'
-                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA ทาย</th><th>Naive ทาย</th><th>Drift ทาย</th></tr></thead>'
+                            f'<thead><tr><th>ปี</th><th>ค่าจริง</th><th>ARIMA</th><th>Naive</th><th>Drift</th></tr></thead>'
                             f'<tbody>{_bt_rows_html}</tbody></table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;">'
                             f'{icon("check", 10, 2.5)} <span style="color:var(--green);font-weight:600;">ตัวเลขสีเขียว</span> '
-                            f'= ค่าทายที่ใกล้เคียงค่าจริงที่สุดในปีนั้น</p>',
+                            f'= ค่าพยากรณ์ที่ใกล้เคียงค่าจริงที่สุดในปีนั้น</p>',
                             unsafe_allow_html=True,
                         )
                         _bt_lowest = min(("ARIMA", "Naive", "Drift"), key=lambda k: bt_metrics[f"{k.lower()}_mape"])
@@ -5250,29 +5256,30 @@ elif st.session_state.page == "forecast":
                         st.markdown(
                             f'<div class="bt-desc-box">'
                             f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:0;">'
-                            f'แบ่งข้อมูลเป็น {bt_metrics["train_years"]} ปีสำหรับฝึกแบบจำลอง และ '
-                            f'{bt_metrics["test_years"]} ปีล่าสุดสำหรับทดสอบการพยากรณ์ '
-                            f'(ARIMA เลือก order {bt_metrics["order"]} ด้วยเกณฑ์ AIC)</p>'
+                            f'แบ่งข้อมูลเป็นชุดฝึก {bt_metrics["train_years"]} ปี และชุดทดสอบ '
+                            f'{bt_metrics["test_years"]} ปีล่าสุด '
+                            f'(ARIMA เลือกอันดับ {bt_metrics["order"]} ด้วยเกณฑ์ AIC)</p>'
                             f'<p style="font-size:0.82rem;color:var(--brand-navy-soft);margin-top:6px;margin-bottom:0;">'
-                            + f'ในหน้าต่างนี้ {_MODEL_LABELS[_bt_lowest]} มี MAPE ต่ำสุด '
-                            + (f'แต่ช่วงทดสอบมีปีโควิด-19 (2020–2022) อยู่ {_bt_n_covid} จาก {len(bt_df)} ปี '
-                               'ซึ่ง TFP ลดลงกะทันหัน วิธีที่ต่อแนวโน้มเดิม (ARIMA และ Drift) จึงคลาดเคลื่อนมาก '
-                               '<br>ขณะที่ Naive ซึ่งคงค่าปีล่าสุดไว้บังเอิญใกล้ค่าที่ลดลง '
+                            + f'ในช่วงทดสอบนี้ {_MODEL_LABELS[_bt_lowest]} มี MAPE ต่ำที่สุด '
+                            + (f'อย่างไรก็ตาม ช่วงทดสอบครอบคลุมช่วงโควิด-19 (2020–2022) จำนวน {_bt_n_covid} จาก {len(bt_df)} ปี '
+                               'ซึ่ง TFP ลดลงอย่างฉับพลัน วิธีที่ต่อยอดแนวโน้มเดิม (ARIMA และ Drift) จึงมีความคลาดเคลื่อนสูง '
+                               'ขณะที่ Naive ซึ่งใช้ค่าปีล่าสุดได้รับผลกระทบน้อยกว่า '
                                if _bt_n_covid else '')
-                            + 'ผลจากหน้าต่างเดียวขึ้นกับช่วงเวลาที่เลือกมาก จึงใช้ Rolling-origin Backtest '
-                              'ซึ่งทดสอบหลายจุดตลอดอนุกรมเป็นเกณฑ์หลักในการเลือกวิธีพยากรณ์'
+                            + '<br>เนื่องจากผลการทดสอบเพียงช่วงเดียวขึ้นอยู่กับช่วงเวลาที่เลือกเป็นอย่างมาก '
+                              'ระบบจึงใช้การทดสอบแบบ Rolling-origin ซึ่งทดสอบหลายจุดตลอดอนุกรม '
+                              'เป็นเกณฑ์หลักในการเลือกวิธีพยากรณ์'
                             + '</p></div>',
                             unsafe_allow_html=True,
                         )
             else:
                 _nice_line_chart(tfp_series, color="#F97316", height=340)
                 st.caption(
-                    f"ข้อมูล {len(tfp_series)} ปี (ปี {tfp_series.index.min()}–{tfp_series.index.max()}) "
-                    f"| ค่าล่าสุด = {tfp_series.iloc[-1]:.4f}"
+                    f"ข้อมูล {len(tfp_series)} ปี ({tfp_series.index.min()}–{tfp_series.index.max()}) "
+                    f"· ค่าล่าสุด {tfp_series.iloc[-1]:.4f}"
                 )
                 st.info(
-                    f"ข้อมูลมีเพียง {len(tfp_series)} ปี ยังไม่พอสำหรับพยากรณ์และทดสอบย้อนหลัง "
-                    f"อย่างน่าเชื่อถือ (ต้องการอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
+                    f"ข้อมูลมีเพียง {len(tfp_series)} ปี ซึ่งไม่เพียงพอสำหรับการพยากรณ์และการทดสอบย้อนหลัง "
+                    f"(ต้องมีอย่างน้อย {MIN_POINTS_FOR_ARIMA} ปี)"
                 )
         st.markdown('</div>', unsafe_allow_html=True)
 
@@ -5298,7 +5305,7 @@ elif st.session_state.page == "forecast":
                 f'<ul class="nxpo-summary-list">'
                 f'<li><span class="tick">{icon("check", 11, 2.4)}</span>TFP มีแนวโน้ม{_trend_word}อย่างต่อเนื่อง</li>'
                 f'<li><span class="tick">{icon("check", 11, 2.4)}</span>อัตราการเติบโตเฉลี่ย (CAGR) {cagr:+.1f}% ต่อปี</li>'
-                f'<li><span class="tick">{icon("check", 11, 2.4)}</span>ส่งผลต่อผลิตภาพการผลิตและเศรษฐกิจไทยโดยรวม</li>'
+                f'<li><span class="tick">{icon("check", 11, 2.4)}</span>พยากรณ์ด้วยวิธี Random walk with drift ที่ระดับความเชื่อมั่น 95%</li>'
                 f'</ul></div>',
                 unsafe_allow_html=True,
             )
@@ -5334,7 +5341,7 @@ elif st.session_state.page == "forecast":
                 unsafe_allow_html=True,
             )
             if not options:
-                st.info("ไม่พบข้อมูลตัวแปรอิสระในชุดนี้")
+                st.info("ไม่พบตัวแปรอิสระในสมการนี้")
                 return None
             # กรอบพื้นหลังสีขาวครอบกล่องทั้งก้อน + ช่อง selectbox ตรงกลางสีครีม
             # (สไตล์เดียวกับกล่อง "สมมติตัวแปรเปลี่ยนแปลง" ด้านล่างของหน้านี้)
@@ -5356,7 +5363,7 @@ elif st.session_state.page == "forecast":
             )
             with st.container(border=True, key=f"vartrend_box_{widget_key}"):
                 picked = st.selectbox(
-                    "เลือกตัวแปรอิสระที่ต้องการดูกราฟ",
+                    "เลือกตัวแปรอิสระ",
                     options=options,
                     format_func=var_label_with_abbr,
                     key=widget_key,
@@ -5369,7 +5376,8 @@ elif st.session_state.page == "forecast":
                 st.markdown(
                     f'<div style="text-align:center;color:var(--brand-navy-soft);'
                     f'font-size:0.85rem;margin-top:2px;">'
-                    f'{var_label_with_abbr(picked)} — ข้อมูล {len(series)} ปี</div>',
+                    f'{var_label_with_abbr(picked)} · ข้อมูล {len(series)} ปี '
+                    f'({series.index.min()}–{series.index.max()})</div>',
                     unsafe_allow_html=True,
                 )
             return picked
@@ -5377,19 +5385,19 @@ elif st.session_state.page == "forecast":
         st.markdown(
             f'<div class="section-card"><div class="section-title">'
             f'<div class="section-num">{icon("search", 19, 1.8)}</div>'
-            f'<div class="section-title-text"><h3>กราฟแนวโน้มตัวแปรอิสระรายตัว</h3>'
+            f'<div class="section-title-text"><h3>แนวโน้มของตัวแปรอิสระรายตัว</h3>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
         col_lr, col_sr = st.columns(2, gap="large")
         with col_lr:
             chosen_var_lr = _var_trend_box(
-                "ตัวแปรอิสระที่ส่งผลระยะยาว", available_vars_lr, "dashboard_var_select_lr",
+                "ตัวแปรอิสระในสมการระยะยาว", available_vars_lr, "dashboard_var_select_lr",
                 icon_name="trend-up", accent="#D8A867",
             )
         with col_sr:
             chosen_var_sr = _var_trend_box(
-                "ตัวแปรอิสระที่ส่งผลระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
+                "ตัวแปรอิสระในสมการระยะสั้น", available_vars_sr, "dashboard_var_select_sr",
                 icon_name="trend-down", accent="#D8A867",
             )
         st.markdown('</div>', unsafe_allow_html=True)
@@ -5406,7 +5414,7 @@ elif st.session_state.page == "forecast":
             st.markdown(
                 f'<div class="section-card"><div class="section-title">'
                 f'<div class="section-num">{icon("bulb", 20, 1.6)}</div>'
-                f'<div class="section-title-text"><h3>ตัวแปรนี้ส่งผลต่อ TFP มากน้อยแค่ไหน</h3>'
+                f'<div class="section-title-text"><h3>การจำลองผลกระทบของตัวแปรต่อ TFP (What-if Analysis)</h3>'
                 f'</div></div>',
                 unsafe_allow_html=True,
             )
@@ -5417,18 +5425,18 @@ elif st.session_state.page == "forecast":
 
             if lr_info is None:
                 st.info(
-                    f"'{var_label_with_abbr(chosen_var)}' ไม่ได้อยู่ในสมการระยะยาวชุดปัจจุบัน "
-                    f"จึงยังไม่มีค่าสัมประสิทธิ์ให้คำนวณผลกระทบ"
+                    f"'{var_label_with_abbr(chosen_var)}' ไม่ได้อยู่ในสมการระยะยาว "
+                    f"จึงไม่สามารถคำนวณผลกระทบได้"
                 )
             else:
                 coef = lr_info["coef"]
                 p_val = lr_info["p"]
                 star = _significance_stars(p_val)
                 sig_text = {
-                    "***": "มีนัยสำคัญทางสถิติสูงมาก (ความเชื่อมั่น 99%)",
-                    "**": "มีนัยสำคัญทางสถิติ (ความเชื่อมั่น 95%)",
-                    "*": "มีนัยสำคัญทางสถิติเล็กน้อย (ความเชื่อมั่น 90%)",
-                    "": "ยังไม่มีนัยสำคัญทางสถิติในระดับที่ยอมรับได้ทั่วไป — ควรตีความตัวเลขด้วยความระมัดระวัง",
+                    "***": "มีนัยสำคัญทางสถิติที่ระดับ 0.01",
+                    "**": "มีนัยสำคัญทางสถิติที่ระดับ 0.05",
+                    "*": "มีนัยสำคัญทางสถิติที่ระดับ 0.10",
+                    "": "ไม่มีนัยสำคัญทางสถิติ ควรตีความผลด้วยความระมัดระวัง",
                 }[star]
 
                 # กรอบพื้นหลังสีขาวครอบกล่อง input ทั้งก้อน + ช่องตัวเลขตรงกลางสีครีม
@@ -5487,7 +5495,7 @@ elif st.session_state.page == "forecast":
                     with st.container(border=True, key="shock_input_box"):
                         if is_log:
                             shock = st.number_input(
-                                f"สมมติ {full_name} เปลี่ยนแปลง (%)",
+                                f"สมมติให้{full_name}เปลี่ยนแปลง (%)",
                                 min_value=-50.0, max_value=50.0, value=1.0, step=0.5,
                                 key=f"impact_shock_{chosen_var}",
                             )
@@ -5501,35 +5509,35 @@ elif st.session_state.page == "forecast":
                             # จึงให้ผู้ใช้กรอกเป็น "จุดร้อยละ" แล้วหาร 100 ก่อนคูณสัมประสิทธิ์
                             # (กรอก 1 = สัดส่วนต่อ GDP เพิ่ม 1 จุดร้อยละ เช่น 2% → 3%)
                             shock = st.number_input(
-                                f"สมมติ {full_name} เปลี่ยนแปลง (จุดร้อยละของ GDP)",
+                                f"สมมติให้{full_name}เปลี่ยนแปลง (จุดร้อยละของ GDP)",
                                 min_value=-20.0, max_value=20.0, value=1.0, step=0.5,
                                 key=f"impact_shock_{chosen_var}",
                             )
                             pct_effect = (math.exp(coef * shock / 100) - 1) * 100
                             formula_text = (
                                 f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
-                                f'(ตัวแปรนี้ไม่ได้อยู่ในรูป log จึงตีความเป็น semi-elasticity)</div>'
+                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นกึ่งหนึ่ง หรือ Semi-elasticity)</div>'
                                 f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
                                 f'(e^({coef:.4f}×{shock:g}/100) − 1) × 100%</div>'
                             )
                         else:
                             shock = st.number_input(
-                                f"สมมติ {full_name} เปลี่ยนแปลง (หน่วยของดัชนี)",
+                                f"สมมติให้{full_name}เปลี่ยนแปลง (หน่วยของดัชนี)",
                                 value=0.1, step=0.05,
                                 key=f"impact_shock_{chosen_var}",
                             )
                             pct_effect = (math.exp(coef * shock) - 1) * 100
                             formula_text = (
                                 f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
-                                f'(ตัวแปรนี้ไม่ได้อยู่ในรูป log จึงตีความเป็น semi-elasticity)</div>'
+                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นกึ่งหนึ่ง หรือ Semi-elasticity)</div>'
                                 f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
                                 f'(e^({coef:.4f}×{shock:g}) − 1) × 100%</div>'
                             )
                         st.markdown(
                             '<div style="font-size:0.82rem;color:var(--brand-navy-soft);'
                             'line-height:1.5;margin-top:-4px;">'
-                            'ปรับตัวเลขด้านบนเพื่อดูว่าถ้าตัวแปรนี้เปลี่ยนแปลงมากน้อยต่างกัน<br>'
-                            'TFP จะเปลี่ยนไปกี่ % (คำนวณจากค่าสัมประสิทธิ์ในสมการระยะยาวปัจจุบัน)'
+                            'ปรับค่าด้านบนเพื่อดูผลกระทบต่อ TFP เมื่อตัวแปรเปลี่ยนแปลงในขนาดต่าง ๆ<br>'
+                            'คำนวณจากค่าสัมประสิทธิ์ของสมการระยะยาว'
                             '</div>',
                             unsafe_allow_html=True,
                         )
@@ -5541,10 +5549,10 @@ elif st.session_state.page == "forecast":
                     # ป้ายนัยสำคัญ: สี/ข้อความ ตามระดับดาว (***/**/*/ไม่มี) ให้ดูเป็น badge
                     # เดียวกันแทนที่จะเป็นประโยคลอย ๆ แยกก้อนเหมือนก่อนหน้านี้
                     badge_map = {
-                        "***": ("var(--green)", "#E9F9EE", "นัยสำคัญสูงมาก (ความเชื่อมั่น 99%)"),
-                        "**": ("var(--green)", "#E9F9EE", "มีนัยสำคัญ (ความเชื่อมั่น 95%)"),
-                        "*": ("#B45309", "#FEF3E2", "นัยสำคัญเล็กน้อย (ความเชื่อมั่น 90%)"),
-                        "": ("var(--red)", "#FDEDED", "ยังไม่มีนัยสำคัญทางสถิติในระดับที่ยอมรับได้ทั่วไป"),
+                        "***": ("var(--green)", "#E9F9EE", "มีนัยสำคัญที่ระดับ 0.01"),
+                        "**": ("var(--green)", "#E9F9EE", "มีนัยสำคัญที่ระดับ 0.05"),
+                        "*": ("#B45309", "#FEF3E2", "มีนัยสำคัญที่ระดับ 0.10"),
+                        "": ("var(--red)", "#FDEDED", "ไม่มีนัยสำคัญทางสถิติ"),
                     }
                     badge_color, badge_bg, badge_text = badge_map[star]
                     p_text = f"p-value = {p_val:.4f}" if p_val is not None else "ไม่พบค่า p-value"
@@ -5586,17 +5594,18 @@ elif st.session_state.page == "forecast":
                     footer_rows.append(
                         '<div style="display:flex;gap:10px;">'
                         f'<span style="flex:none;color:var(--brand-orange-dark);">{icon("clock", 14, 1.6)}</span>'
-                        '<span><b style="color:var(--brand-navy);">ผลกระทบระยะสั้น (short-run):</b> '
-                        f'สัมประสิทธิ์ = {sr_info["coef"]:.4f} — สะท้อนผลของการเปลี่ยนแปลงตัวแปรนี้ในปีนั้น ๆ '
-                        'ต่อการเปลี่ยนแปลง TFP ในปีเดียวกัน (คนละความหมายกับผลระยะยาวด้านบน)</span>'
+                        '<span><b style="color:var(--brand-navy);">ผลกระทบระยะสั้น:</b> '
+                        f'สัมประสิทธิ์ในสมการระยะสั้นเท่ากับ {sr_info["coef"]:.4f} '
+                        'สะท้อนผลของการเปลี่ยนแปลงตัวแปรต่อการเปลี่ยนแปลงของ TFP '
+                        'ตามรูปแบบผลต่างและช่วงล่าช้าที่กำหนดในสมการ ซึ่งมีความหมายต่างจากผลกระทบระยะยาวข้างต้น</span>'
                         '</div>'
                     )
                 footer_rows.append(
                     '<div style="display:flex;gap:10px;">'
                     f'<span style="flex:none;color:var(--brand-orange-dark);">{icon("info", 14, 1.6)}</span>'
-                    '<span><b style="color:var(--brand-navy);">หมายเหตุ:</b> ตัวเลข % นี้เป็นผลกระทบจากตัวแปรนี้ '
-                    '“ตัวเดียว” โดยสมมติให้ตัวแปรอื่นคงที่ (ceteris paribus) ไม่ใช่การพยากรณ์ TFP จริง '
-                    'ที่มีหลายปัจจัยเปลี่ยนแปลงพร้อมกัน</span>'
+                    '<span><b style="color:var(--brand-navy);">หมายเหตุ:</b> ผลกระทบข้างต้นคำนวณจากการเปลี่ยนแปลง'
+                    'ของตัวแปรนี้เพียงตัวเดียว โดยกำหนดให้ตัวแปรอื่นคงที่ (Ceteris paribus) '
+                    'จึงไม่ใช่ค่าพยากรณ์ TFP ในกรณีที่หลายปัจจัยเปลี่ยนแปลงพร้อมกัน</span>'
                     '</div>'
                 )
                 st.markdown(
@@ -5613,7 +5622,7 @@ elif st.session_state.page == "forecast":
         st.markdown(
             f'<div class="section-card"><div class="section-title">'
             f'<div class="section-num">{icon("bars", 19, 1.8)}</div>'
-            f'<div class="section-title-text"><h3>สัดส่วนอิทธิพลเทียบกันทุกตัวแปร (%)</h3>'
+            f'<div class="section-title-text"><h3>สัดส่วนอิทธิพลเชิงสัมพัทธ์ของตัวแปรในสมการระยะยาว (%)</h3>'
             f'</div></div>',
             unsafe_allow_html=True,
         )
@@ -5622,12 +5631,12 @@ elif st.session_state.page == "forecast":
             if v != "const" and v in lr_raw_map and v in model_df.columns
         ]
         if len(influence_vars) < 2:
-            st.info("ต้องมีตัวแปรอิสระอย่างน้อย 2 ตัวในสมการระยะยาว จึงจะเทียบสัดส่วนอิทธิพลกันได้")
+            st.info("ต้องมีตัวแปรอิสระในสมการระยะยาวอย่างน้อย 2 ตัว จึงจะเปรียบเทียบสัดส่วนอิทธิพลได้")
         else:
             sample_df = model_df[[dep_ln] + influence_vars].dropna()
             y_std = sample_df[dep_ln].std() if not sample_df.empty else None
             if sample_df.empty or len(sample_df) < 3 or not y_std or pd.isna(y_std):
-                st.info("ข้อมูลไม่พอสำหรับคำนวณสัดส่วนอิทธิพล (ต้องการอย่างน้อย 3 ปีที่มีข้อมูลครบทุกตัวแปร)")
+                st.info("ข้อมูลไม่เพียงพอสำหรับคำนวณสัดส่วนอิทธิพล (ต้องมีข้อมูลครบทุกตัวแปรอย่างน้อย 3 ปี)")
             else:
                 rows = []
                 for v in influence_vars:
@@ -5645,12 +5654,12 @@ elif st.session_state.page == "forecast":
                     total_abs = infl_df["abs_beta"].sum()
                     infl_df["สัดส่วน (%)"] = infl_df["abs_beta"] / total_abs * 100
                     infl_df["ทิศทาง"] = infl_df["std_beta"].apply(
-                        lambda x: "หนุนเสริม TFP (+)" if x >= 0 else "ฉุดรั้ง TFP (−)"
+                        lambda x: "ส่งผลเชิงบวก (+)" if x >= 0 else "ส่งผลเชิงลบ (−)"
                     )
                     infl_df = infl_df.sort_values("สัดส่วน (%)", ascending=False).reset_index(drop=True)
 
                     dir_scale = alt.Scale(
-                        domain=["หนุนเสริม TFP (+)", "ฉุดรั้ง TFP (−)"], range=["#16A34A", "#EF4444"],
+                        domain=["ส่งผลเชิงบวก (+)", "ส่งผลเชิงลบ (−)"], range=["#16A34A", "#EF4444"],
                     )
                     y_axis_labels = alt.Axis(domain=False, tickColor="#E9ECF1",
                                               labelColor="#16324A", labelFontSize=12, labelLimit=340)
@@ -5695,13 +5704,13 @@ elif st.session_state.page == "forecast":
                     )
                     st.altair_chart(chart, use_container_width=True)
                     st.caption(
-                        "คำนวณจาก standardized coefficient (สัมประสิทธิ์ × ส่วนเบี่ยงเบนมาตรฐานของตัวแปรนั้น "
-                        "÷ ส่วนเบี่ยงเบนมาตรฐานของ TFP) แล้วนำค่าสัมบูรณ์มาคิดเป็นสัดส่วน % เทียบกันทุกตัวแปร "
-                        "ในสมการระยะยาวชุดปัจจุบัน (รวมกันได้ 100%) — เป็นการเทียบ 'น้ำหนักอิทธิพล' ไม่ใช่ "
-                        "หน่วยดิบของตัวแปร จึงเทียบข้ามตัวแปรที่มีหน่วยต่างกันได้"
+                        "คำนวณจากสัมประสิทธิ์มาตรฐาน (Standardized coefficient) = สัมประสิทธิ์ × (ส่วนเบี่ยงเบนมาตรฐานของตัวแปร "
+                        "÷ ส่วนเบี่ยงเบนมาตรฐานของ TFP) แล้วนำค่าสัมบูรณ์มาคิดเป็นร้อยละของผลรวม (รวมเท่ากับ 100%) "
+                        "เพื่อเปรียบเทียบน้ำหนักอิทธิพลระหว่างตัวแปรที่มีหน่วยต่างกัน "
+                        "ทั้งนี้ ควรตีความด้วยความระมัดระวังเมื่อตัวแปรอิสระมีสหสัมพันธ์กันสูง"
                     )
 
-                    with st.expander("📋 ดูตารางตัวเลข"):
+                    with st.expander("📋 ตารางสัดส่วนอิทธิพล"):
                         table_display = infl_df[["label", "std_beta", "สัดส่วน (%)", "ทิศทาง"]].rename(
                             columns={"label": "ตัวแปร", "std_beta": "Standardized coefficient"}
                         ).round({"Standardized coefficient": 4, "สัดส่วน (%)": 2})
@@ -5741,7 +5750,7 @@ elif st.session_state.page == "forecast":
                     '<div class="exec-cta-eyebrow">' + icon("sparkle", 13, 1.8) +
                     'PRESENTATION DASHBOARD</div>'
                     '<div class="exec-cta-inner">'
-                    '<p>ตั้งค่าช่วงปีพยากรณ์และสมมติฐานตัวแปรด้านบนตามต้องการแล้ว กดปุ่มด้านล่างเพื่อสรุปทุกอย่างไว้ในหน้าเดียวสำหรับนำเสนอ</p></div>',
+                    '<p>เมื่อกำหนดช่วงปีพยากรณ์และสมมติฐานของตัวแปรแล้ว กดปุ่มด้านล่างเพื่อสรุปผลทั้งหมดเป็นหน้าเดียวสำหรับการนำเสนอ</p></div>',
                     unsafe_allow_html=True,
                 )
                 _go_exec_clicked = st.button(
@@ -6085,7 +6094,7 @@ elif st.session_state.page == "exec_dashboard":
             )
 
         if not result_ready:
-            st.info("คลิกเพื่อดึงข้อมูลอัตโนมัติจากแถบด้านซ้ายก่อนเพื่อสร้างแดชบอร์ดสรุปนี้")
+            st.info("กรุณากดปุ่ม \"คลิกดึงข้อมูลอัตโนมัติ\" ที่แถบเมนูด้านซ้ายก่อน เพื่อสร้างแดชบอร์ดสรุป")
         else:
             tfp_series = model_df[DEP_VAR].dropna().sort_index()
             if tfp_series.empty:
@@ -6145,7 +6154,7 @@ elif st.session_state.page == "exec_dashboard":
 
                 st.caption(
                     f"ข้อมูลล่าสุด: {thai_timestamp()} • ปีข้อมูล {tfp_series.index.min()}–{tfp_series.index.max()} "
-                    f"• ช่วงพยากรณ์ {horizon} ปีข้างหน้า (ตั้งค่าจากหน้า \"พยากรณ์ TFP\")"
+                    f"• ช่วงพยากรณ์ {horizon} ปีข้างหน้า (ตั้งค่าจากหน้า \"Dashboard พยากรณ์ TFP\")"
                 )
 
                 # ================= แถว 1: การ์ด KPI สรุป 4 ใบ =================
@@ -6165,7 +6174,7 @@ elif st.session_state.page == "exec_dashboard":
 
                 yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
                 _kpi_item_1 = _exec_kpi(_exec_orange, icon("bars", 18, 1.8), f"{last_val:,.2f}",
-                                         f"TFP ล่าสุด (ปี {last_year}) {yoy_text} เทียบปีก่อน")
+                                         f"TFP ล่าสุด (ปี {last_year}) · เปลี่ยนแปลง {yoy_text} จากปีก่อน")
 
                 if _has_forecast:
                     _kpi_item_2 = _exec_kpi(_exec_navy, icon("clock", 18, 1.8), f"{fc_final:,.2f}",
@@ -6189,7 +6198,7 @@ elif st.session_state.page == "exec_dashboard":
                                              f"{'%' if scenario_var.startswith('ln_') else (' จุดร้อยละ' if scenario_var in _PCT_SCALED_VARS else '')}")
                 else:
                     _kpi_item_4 = _exec_kpi(_exec_navy, icon("bulb", 18, 1.8), f"{n_pass}/{n_pass + n_watch + n_fail}",
-                                             "ผ่านเกณฑ์ข้อสมมติฐาน (ยังไม่ได้ตั้งสมมติฐานตัวแปร)")
+                                             "รายการที่ผ่านการตรวจสอบข้อสมมติของแบบจำลอง")
 
                 st.markdown(
                     '<div class="kpi-strip">' + _kpi_item_1 + _kpi_item_2 + _kpi_item_3 + _kpi_item_4 + '</div>',
@@ -6215,10 +6224,10 @@ elif st.session_state.page == "exec_dashboard":
                             st.markdown(
                                 f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);'
                                 f'line-height:1.5;margin-top:2px;">'
-                                f'💡 ถ้าเป็นไปตามสมมติฐานด้านบน TFP ปี {fc_year} อาจขยับไปที่ราว '
+                                f'💡 ภายใต้สมมติฐานข้างต้น TFP ปี {fc_year} อาจอยู่ที่ประมาณ '
                                 f'<b style="color:var(--brand-navy);">{_scn_final:,.2f}</b> '
-                                f'(เทียบกับพยากรณ์ฐาน {fc_final:,.2f}) — เป็นภาพประกอบเชิงนโยบายอย่างง่าย '
-                                f'จากค่าความยืดหยุ่นของสมการระยะยาว ไม่ใช่การพยากรณ์ร่วมกับแบบจำลองพยากรณ์ฐานโดยตรง</div>',
+                                f'(ค่าพยากรณ์ฐาน {fc_final:,.2f}) ตัวเลขนี้เป็นการประมาณเชิงนโยบายจากสัมประสิทธิ์ '
+                                f'ของสมการระยะยาว ไม่ได้คำนวณร่วมกับแบบจำลองพยากรณ์โดยตรง</div>',
                                 unsafe_allow_html=True,
                             )
                     else:
@@ -6229,10 +6238,9 @@ elif st.session_state.page == "exec_dashboard":
                             f'<div class="exec-chart-footnote" style="font-size:0.78rem;color:var(--brand-navy-soft);'
                             f'line-height:1.6;margin-top:10px;padding-top:10px;'
                             f'border-top:1px dashed var(--card-border);">'
-                            f'เส้นสีส้มแสดงค่า TFP ที่สังเกตได้จริงจนถึงปี {last_year} '
-                            f'({last_val:,.2f}) และเส้นสีน้ำเงินแสดงค่าพยากรณ์แบบ Random walk with drift '
-                            f'จนถึงปี {fc_year}<br>โดยแถบช่วงความเชื่อมั่น 95% แสดงระดับความไม่แน่นอนของค่าพยากรณ์ '
-                            f'ซึ่งเพิ่มขึ้นตามระยะเวลาการพยากรณ์</div>',
+                            f'เส้นสีส้มแสดงค่า TFP จริงจนถึงปี {last_year} ({last_val:,.2f}) '
+                            f'และเส้นสีน้ำเงินแสดงค่าพยากรณ์ด้วยวิธี Random walk with drift จนถึงปี {fc_year}<br>'
+                            f'แถบแรเงาแสดงช่วงความเชื่อมั่น 95% ซึ่งกว้างขึ้นตามระยะเวลาการพยากรณ์</div>',
                             unsafe_allow_html=True,
                         )
                     st.markdown('</div>', unsafe_allow_html=True)
@@ -6300,7 +6308,7 @@ elif st.session_state.page == "exec_dashboard":
                         else:
                             _top_infl = infl_df.head(4)
                             dir_scale = alt.Scale(
-                                domain=["หนุนเสริม TFP (+)", "ฉุดรั้ง TFP (−)"], range=["#16A34A", "#EF4444"],
+                                domain=["ส่งผลเชิงบวก (+)", "ส่งผลเชิงลบ (−)"], range=["#16A34A", "#EF4444"],
                             )
                             bars = alt.Chart(_top_infl).mark_bar(
                                 cornerRadiusTopRight=5, cornerRadiusBottomRight=5, height=16,
@@ -6336,11 +6344,11 @@ elif st.session_state.page == "exec_dashboard":
                             _insight_lines.append(
                                 f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) มีแนวโน้ม"
                                 f"{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}เฉลี่ย {cagr:+.1f}% ต่อปี "
-                                f"คาดแตะ {fc_final:,.2f} ในปี {fc_year} ({growth_total:+.1f}% ในช่วง {horizon} ปี)"
+                                f"และคาดว่าจะอยู่ที่ {fc_final:,.2f} ในปี {fc_year} ({growth_total:+.1f}% ในช่วง {horizon} ปี)"
                             )
                         else:
                             _insight_lines.append(
-                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) — ข้อมูลยังไม่พอสำหรับพยากรณ์"
+                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) ข้อมูลยังไม่เพียงพอสำหรับการพยากรณ์"
                             )
                     else:
                         if _has_forecast:
@@ -6353,7 +6361,7 @@ elif st.session_state.page == "exec_dashboard":
                                 _insight_lines.append(f"'{_top_var_label}' เป็นตัวแปรที่มีอิทธิพลต่อ TFP มากที่สุดในสมการปัจจุบัน")
                             _insight_lines.append(
                                 f"แบบจำลองผ่านเกณฑ์ข้อสมมติฐาน {n_pass} จาก {_n_total} รายการ"
-                                + (" — ควรตีความผลด้วยความระมัดระวัง" if n_fail > 0 else "")
+                                + (" จึงควรตีความผลด้วยความระมัดระวัง" if n_fail > 0 else "")
                             )
                             if scenario_pct_effect is not None:
                                 _insight_lines.append(
@@ -6363,7 +6371,7 @@ elif st.session_state.page == "exec_dashboard":
                                 )
                         else:
                             _insight_lines.append(
-                                "ระบบพยากรณ์ด้วยวิธี Random walk with drift ซึ่งแม่นยำที่สุดจากการทดสอบย้อนหลังกับข้อมูลผลิตภาพของประเทศไทย"
+                                "ระบบพยากรณ์ด้วยวิธี Random walk with drift ซึ่งมีค่าความคลาดเคลื่อน (MAPE) ต่ำที่สุดจากการทดสอบย้อนหลัง"
                             )
                     _insight_card_class = (
                         "section-card section-card-compact" if st.session_state.exec_presentation_mode
