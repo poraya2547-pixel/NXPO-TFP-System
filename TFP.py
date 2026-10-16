@@ -622,7 +622,7 @@ def _cointegration_row(lr_res, resid: pd.Series) -> dict:
         return _diag_row("Cointegration", "Engle-Granger (coint, MacKinnon)", result, status, note)
 
     # fallback: ADF ธรรมดาบน residual (ไม่ใช่ค่าวิกฤต EG ที่ถูกต้อง — first-pass เท่านั้น)
-    adf_stat, adf_p, *_ = adfuller(resid.dropna(), autolag="AIC")
+    adf_stat, adf_p, *_ = adfuller(resid.dropna(), autolag="BIC")
     eg_error = getattr(lr_res, "eg_error", None)
     if eg_error:
         # ทดสอบ EG จริงไม่ได้ -> ไม่ตัดสินว่าผ่าน แม้ ADF ธรรมดาจะผ่าน เพราะค่าวิกฤต ADF หลวมกว่า EG
