@@ -3594,27 +3594,34 @@ def _nice_line_chart(series: pd.Series, color: str = "#F97316", height: int = 34
 @st.cache_data(show_spinner=False)
 def _auto_arima_forecast(series: pd.Series, periods: int,
                           max_p: int = 4, max_d: int = 2, max_q: int = 4):
-    """หาโมเดล ARIMA(p,d,q) ที่เหมาะกับข้อมูลที่สุดด้วยวิธี grid search
-    (ลองทุกชุด p,d,q ในช่วงที่กำหนด แล้วเลือกชุดที่ค่า AIC ต่ำที่สุด — AIC ยิ่งต่ำ
-    ยิ่งหมายถึงโมเดลอธิบายข้อมูลได้ดีโดยไม่ซับซ้อนเกินจำเป็น) จากนั้นพยากรณ์ล่วงหน้า
-    `periods` ปี พร้อมช่วงความเชื่อมั่น 95%
+    """หาโมเดล ARIMA(p,d,q) ที่เหมาะกับข้อมูลที่สุด ตามขั้นตอนในหัวข้อ 2.4.1–2.4.3 ของเล่ม
+    1) หาอันดับผลต่าง d ด้วย ADF (เลือก lag ด้วย SBC และ maxlag ตามสูตร EViews เหมือนหัวข้อ 2.5)
+    2) ประมาณค่าแบบจำลองทุกชุด p, q ในช่วงที่กำหนด โดยมีค่าคงที่ θ0 ในสมการของ Δ^d Y
+       ตามสมการในหัวข้อ 2.4.1 (statsmodels ไม่ใส่ค่าคงที่ให้เองเมื่อ d ≥ 1 จึงต้องระบุ trend)
+    3) ตรวจความเหมาะสม: ค่าคลาดเคลื่อนเป็นตัวรบกวนขาว (Ljung–Box p ≥ 0.05) และ
+       สัมประสิทธิ์ AR/MA ทุกตัวมีนัยสำคัญที่ระดับ 0.05
+    4) เลือกแบบจำลองที่ AIC ต่ำที่สุดจากแบบจำลองที่ผ่านข้อ 3 (ถ้าไม่มีตัวใดผ่านเลย
+       จะเลือกจาก AIC ต่ำที่สุดของทุกแบบจำลอง เพื่อให้ยังพยากรณ์ได้)
+    จากนั้นพยากรณ์ล่วงหน้า `periods` ปี พร้อมช่วงพยากรณ์ 95%
 
     คืนค่า (forecast_df, order) โดย forecast_df มี index เป็นปีในอนาคต และ
     คอลัมน์ mean / lower / upper ส่วน order คือ (p, d, q) ที่เลือกใช้จริง
     ถ้าหาโมเดลที่ fit ได้ไม่สำเร็จเลย จะ fallback เป็น random walk with drift (0,1,0)"""
+    from statsmodels.stats.diagnostic import acorr_ljungbox
     y = series.astype(float).values
+    T = len(y)
 
     # หาลำดับ differencing (d) ที่เหมาะสมก่อนด้วย ADF test (Augmented Dickey-Fuller)
     # แทนที่จะปล่อยให้ AIC เป็นตัวเลือก d เอง เพราะ AIC เปรียบเทียบข้าม d ต่างกัน
-    # ไม่ได้ตรงๆ (ข้อมูลที่มีแนวโน้ม/ไม่ stationary มักได้โมเดล d=0 ที่ AIC ต่ำ
-    # หลอกๆ จากการฟิตแบบ ARMA แต่พอพยากรณ์ระยะยาวค่าจะไหลกลับไปหาค่าเฉลี่ยของ
-    # อนุกรมทั้งหมดแทนที่จะไปตามแนวโน้มจริง ทำให้ค่าพยากรณ์รูดฮวบผิดปกติ)
+    # ไม่ได้ตรงๆ — ใช้ SBC เลือก lag และ maxlag ตามสูตร EViews ให้ตรงกับหัวข้อ 2.4.3 และ 2.5
+    _adf_maxlag = int(min(T / 3, 12) * (T / 100) ** 0.25)
+
     def _select_d(vals, max_diff):
         d = 0
         cur = vals.copy()
         while d < max_diff:
             try:
-                pvalue = adfuller(cur, autolag="AIC")[1]
+                pvalue = adfuller(cur, autolag="BIC", maxlag=_adf_maxlag)[1]
             except Exception:
                 break
             if pvalue < 0.05:
@@ -3623,24 +3630,49 @@ def _auto_arima_forecast(series: pd.Series, periods: int,
             d += 1
         return d
 
-    fixed_d = _select_d(y, max_d)
+    def _trend_for_d(d):
+        # ค่าคงที่ θ0 ในสมการของ Δ^d Y เทียบเท่ากับพจน์แนวโน้มอันดับ d ในข้อมูลระดับ
+        # d=0 → ค่าคงที่ ('c'), d=1 → แนวโน้มเชิงเส้น ('t' = drift), d=2 → แนวโน้มกำลังสอง
+        return {0: "c", 1: "t"}.get(d, [0] * d + [1])
 
-    best_aic = np.inf
-    best_order = None
-    best_fit = None
+    def _passes_diagnostics(fit, p, q, d):
+        try:
+            resid = np.asarray(fit.resid)[d:]  # ตัดค่าคลาดเคลื่อนช่วงแรกที่เกิดจากการหาผลต่าง
+            lb_lag = max(min(10, len(resid) // 5), p + q + 1)
+            if lb_lag >= len(resid):
+                return False
+            lb_p = float(acorr_ljungbox(resid, lags=[lb_lag], model_df=p + q)["lb_pvalue"].iloc[0])
+            if not np.isfinite(lb_p) or lb_p < 0.05:
+                return False
+            names = list(fit.param_names)
+            pvals = np.asarray(fit.pvalues)
+            arma_p = [pv for nm, pv in zip(names, pvals) if nm.startswith(("ar.", "ma."))]
+            return all(np.isfinite(pv) and pv < 0.05 for pv in arma_p)
+        except Exception:
+            return False
+
+    fixed_d = _select_d(y, max_d)
+    trend = _trend_for_d(fixed_d)
+
+    candidates = []  # (aic, order, fit, ผ่านการตรวจสอบหรือไม่)
     for p in range(0, max_p + 1):
         for d in (fixed_d,):
             for q in range(0, max_q + 1):
                 if p == 0 and q == 0:
                     continue
                 try:
-                    fit = ARIMA(y, order=(p, d, q)).fit()
-                    if np.isfinite(fit.aic) and fit.aic < best_aic:
-                        best_aic = fit.aic
-                        best_order = (p, d, q)
-                        best_fit = fit
+                    fit = ARIMA(y, order=(p, d, q), trend=trend).fit()
+                    if np.isfinite(fit.aic):
+                        candidates.append((fit.aic, (p, d, q), fit, _passes_diagnostics(fit, p, q, d)))
                 except Exception:
                     continue
+
+    best_fit = None
+    best_order = None
+    if candidates:
+        passed = [c for c in candidates if c[3]]
+        pool = passed if passed else candidates
+        _, best_order, best_fit, _ = min(pool, key=lambda c: c[0])
 
     if best_fit is None:
         # กันเหนียว: ถ้าไม่มีชุด (p,d,q) ไหน fit ได้เลย ใช้ random walk with
@@ -3676,12 +3708,12 @@ def _drift_forecast(train: pd.Series, h: int) -> float:
 def _drift_forecast_interval(series: pd.Series, periods: int, level: float = 0.95):
     """พยากรณ์ด้วย Random walk with drift พร้อมช่วงความเชื่อมั่นของการพยากรณ์ (กราฟพยากรณ์หลัก)
 
-    เลือกใช้แทน ARIMA เพราะผล rolling backtest พบว่า Drift มี MAPE ต่ำที่สุดในสามวิธี
-    และ Diebold–Mariano test ไม่พบว่าด้อยกว่าวิธีอื่นอย่างมีนัยสำคัญ จึงเลือกวิธีที่ง่ายกว่า
-    ตามหลักความประหยัด (parsimony) ส่วน ARIMA ยังใช้เป็นวิธีเปรียบเทียบใน backtest
+    เป็นวิธีพยากรณ์หลักตามหัวข้อ 2.4.7.1 ของเล่ม เพราะข้อมูล TFP เป็นข้อมูลรายปีที่มีจำนวน
+    ค่าสังเกตน้อยและมีแนวโน้มต่อเนื่อง และวิธีนี้ไม่ต้องประมาณค่าพารามิเตอร์หลายตัว
+    ส่วน ARIMA และ Naive ใช้เป็นเกณฑ์เปรียบเทียบใน backtest และ Diebold–Mariano test
 
     ค่าพยากรณ์ล่วงหน้า h ปี : ŷ(T+h) = y(T) + h × c โดย c = (y(T) − y(1)) / (T − 1)
-    ส่วนเบี่ยงเบนมาตรฐานของค่าพยากรณ์ : σ̂_h = σ̂ × √(h × (1 + h / T))
+    ส่วนเบี่ยงเบนมาตรฐานของค่าพยากรณ์ : σ̂_h = σ̂ × √(h × (1 + h / (T − 1)))
     (σ̂ = ส่วนเบี่ยงเบนมาตรฐานของการเปลี่ยนแปลงรายปี; Hyndman & Athanasopoulos, 2021)
 
     คืนค่า DataFrame ที่มี index เป็นปีในอนาคต และคอลัมน์ mean / lower / upper
@@ -3696,7 +3728,7 @@ def _drift_forecast_interval(series: pd.Series, periods: int, level: float = 0.9
     last_year = int(series.index.max())
     h = np.arange(1, periods + 1)
     mean = y[-1] + h * c
-    se = sigma * np.sqrt(h * (1 + h / T))
+    se = sigma * np.sqrt(h * (1 + h / (T - 1))) if T > 1 else np.zeros(len(h))
     return pd.DataFrame(
         {"mean": mean, "lower": mean - z * se, "upper": mean + z * se},
         index=[last_year + int(i) for i in h],
@@ -3882,6 +3914,7 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
         # Diebold–Mariano: ทดสอบว่าความต่างของความแม่นยำมีนัยสำคัญทางสถิติจริงไหม
         "dm_arima_naive": _diebold_mariano(origins_df["ค่าจริง"], origins_df["ARIMA"], origins_df["Naive"], h=step_ahead),
         "dm_drift_naive": _diebold_mariano(origins_df["ค่าจริง"], origins_df["Drift"], origins_df["Naive"], h=step_ahead),
+        "dm_drift_arima": _diebold_mariano(origins_df["ค่าจริง"], origins_df["Drift"], origins_df["ARIMA"], h=step_ahead),
     }
     # วิธีที่แม่นที่สุดจาก rolling backtest (MAPE ต่ำสุด) — ใช้แสดงเป็นป้ายแนะนำเท่านั้น
     # (กราฟพยากรณ์หลักใช้ Drift ผ่าน _drift_forecast_interval)
@@ -4303,6 +4336,21 @@ if st.session_state.page == "home":
         st.caption(
             f"Adj. R² (สมการระยะยาว) = {adj_r2_lr:.4f}  |  Adj. R² (สมการระยะสั้น) = {adj_r2_sr:.4f}"
         )
+        # สัมประสิทธิ์การปรับตัว (α) และ Half-life ตามหัวข้อ 2.7 ของเล่ม
+        _alpha = float(sr_res.params.get("ECM_lag1", np.nan))
+        if np.isfinite(_alpha):
+            if -1 < _alpha < 0:
+                _hl = math.log(0.5) / math.log(1 + _alpha)
+                st.caption(
+                    f"สัมประสิทธิ์การปรับตัว (α) = {_alpha:.4f} อยู่ในช่วง −1 < α < 0 "
+                    f"→ ปรับตัวลดความเบี่ยงเบนจากดุลยภาพประมาณร้อยละ {abs(_alpha) * 100:.1f} ต่อปี "
+                    f"| Half-life = ln(0.5) / ln(1 + α) ≈ {_hl:.2f} ปี"
+                )
+            else:
+                st.caption(
+                    f"สัมประสิทธิ์การปรับตัว (α) = {_alpha:.4f} ไม่อยู่ในช่วง −1 < α < 0 "
+                    f"จึงไม่สามารถคำนวณ Half-life ได้"
+                )
         st.caption(
             'หมายเหตุ: ***, **, * หมายถึง นัยสำคัญทางสถิติที่ระดับความเชื่อมั่น 99%, 95%, 90% '
             'ตามลำดับ | "-" หมายถึงตัวแปรที่ไม่ได้อยู่ในสมการนี้ | Δ และ Δ² หมายถึงผลต่างลำดับที่ 1 '
@@ -4861,8 +4909,8 @@ elif st.session_state.page == "forecast":
                              "ช่วงความเชื่อมั่นจึงกว้างขึ้นตามระยะเวลาการพยากรณ์",
                     )
 
-                # กราฟพยากรณ์หลักใช้ Random walk with drift (เลือกจากผล rolling backtest
-                # ด้านล่าง: MAPE ต่ำสุดและไม่ด้อยกว่าวิธีอื่นอย่างมีนัยสำคัญตาม DM test)
+                # กราฟพยากรณ์หลักใช้ Random walk with drift ตามหัวข้อ 2.4.7.1 ของเล่ม
+                # (ARIMA และ Naive เป็นเกณฑ์เปรียบเทียบใน rolling backtest และ DM test ด้านล่าง)
                 forecast_df = _drift_forecast_interval(tfp_series, horizon)
                 _drift_slope = (float(tfp_series.iloc[-1]) - float(tfp_series.iloc[0])) / (len(tfp_series) - 1)
                 last_fc_year = forecast_df.index.max()
@@ -4954,7 +5002,8 @@ elif st.session_state.page == "forecast":
                         f'color:var(--brand-navy-soft);line-height:1.5;margin-bottom:6px;">'
                         f'{icon("info", 14, 1.8)}'
                         f'<span>พยากรณ์ด้วยวิธี Random walk with drift (ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี) '
-                        f'ซึ่งมีค่า MAPE ต่ำที่สุดจากการทดสอบย้อนหลังด้านล่าง</span>'
+                        f'ซึ่งเหมาะกับข้อมูลรายปีที่มีจำนวนน้อยและมีแนวโน้มต่อเนื่อง '
+                        f'ผลการเปรียบเทียบกับวิธีอื่นแสดงในการทดสอบย้อนหลังด้านล่าง</span>'
                         f'</div>',
                         unsafe_allow_html=True,
                     )
@@ -5033,6 +5082,7 @@ elif st.session_state.page == "forecast":
                         _best = roll_metrics["best_model"]
                         _dm_an = roll_metrics.get("dm_arima_naive")
                         _dm_dn = roll_metrics.get("dm_drift_naive")
+                        _dm_da = roll_metrics.get("dm_drift_arima")
 
                         def _dm_row(dm, m1, m2):
                             """หนึ่งแถวของตาราง DM: คู่ที่เทียบ | MAPE | DM* | p | ผลสรุปสั้น ๆ"""
@@ -5059,7 +5109,7 @@ elif st.session_state.page == "forecast":
                             f'การทดสอบ Diebold–Mariano: ความแม่นยำแตกต่างกันอย่างมีนัยสำคัญหรือไม่</p>'
                             f'<div style="overflow-x:auto;"><table class="tfp-table-cream" style="width:100%;font-size:0.8rem;">'
                             f'<thead><tr><th>คู่ที่เทียบ</th><th>MAPE</th><th>DM*</th><th>p-value</th><th>ผลการทดสอบ (α = 0.05)</th></tr></thead>'
-                            f'<tbody>{_dm_row(_dm_an, "ARIMA", "Naive")}{_dm_row(_dm_dn, "Drift", "Naive")}</tbody>'
+                            f'<tbody>{_dm_row(_dm_an, "ARIMA", "Naive")}{_dm_row(_dm_dn, "Drift", "Naive")}{_dm_row(_dm_da, "Drift", "ARIMA")}</tbody>'
                             f'</table></div>'
                             f'<p style="font-size:0.72rem;color:var(--brand-navy-soft);margin:6px 2px 0;line-height:1.6;">'
                             f'H₀: ความแม่นยำของทั้งสองวิธีไม่แตกต่างกัน · ปฏิเสธ H₀ เมื่อ p-value &lt; 0.05 · '
@@ -5495,7 +5545,7 @@ elif st.session_state.page == "forecast":
                     with st.container(border=True, key="shock_input_box"):
                         if is_log:
                             shock = st.number_input(
-                                f"สมมติให้{full_name}เปลี่ยนแปลง (%)",
+                                f"สมมติให้ {full_name} เปลี่ยนแปลง (%)",
                                 min_value=-50.0, max_value=50.0, value=1.0, step=0.5,
                                 key=f"impact_shock_{chosen_var}",
                             )
@@ -5509,27 +5559,27 @@ elif st.session_state.page == "forecast":
                             # จึงให้ผู้ใช้กรอกเป็น "จุดร้อยละ" แล้วหาร 100 ก่อนคูณสัมประสิทธิ์
                             # (กรอก 1 = สัดส่วนต่อ GDP เพิ่ม 1 จุดร้อยละ เช่น 2% → 3%)
                             shock = st.number_input(
-                                f"สมมติให้{full_name}เปลี่ยนแปลง (จุดร้อยละของ GDP)",
+                                f"สมมติให้ {full_name} เปลี่ยนแปลง (จุดร้อยละของ GDP)",
                                 min_value=-20.0, max_value=20.0, value=1.0, step=0.5,
                                 key=f"impact_shock_{chosen_var}",
                             )
                             pct_effect = (math.exp(coef * shock / 100) - 1) * 100
                             formula_text = (
                                 f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
-                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นกึ่งหนึ่ง หรือ Semi-elasticity)</div>'
+                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นแบบกึ่ง (Semi-elasticity))</div>'
                                 f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
                                 f'(e^({coef:.4f}×{shock:g}/100) − 1) × 100%</div>'
                             )
                         else:
                             shock = st.number_input(
-                                f"สมมติให้{full_name}เปลี่ยนแปลง (หน่วยของดัชนี)",
+                                f"สมมติให้ {full_name} เปลี่ยนแปลง (หน่วยของดัชนี)",
                                 value=0.1, step=0.05,
                                 key=f"impact_shock_{chosen_var}",
                             )
                             pct_effect = (math.exp(coef * shock) - 1) * 100
                             formula_text = (
                                 f'<div>สัมประสิทธิ์จากสมการระยะยาว = {coef:.4f} '
-                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นกึ่งหนึ่ง หรือ Semi-elasticity)</div>'
+                                f'(ตัวแปรไม่อยู่ในรูปลอการิทึม จึงตีความเป็นค่าความยืดหยุ่นแบบกึ่ง (Semi-elasticity))</div>'
                                 f'<div style="margin-top:6px;">→ TFP เปลี่ยนแปลง ≈ '
                                 f'(e^({coef:.4f}×{shock:g}) − 1) × 100%</div>'
                             )
@@ -5676,7 +5726,7 @@ elif st.session_state.page == "forecast":
                         cornerRadiusTopRight=6, cornerRadiusBottomRight=6, height=18,
                     ).encode(
                         x=alt.X("สัดส่วน (%):Q", title=None, axis=x_axis, scale=pct_scale),
-                        y=alt.Y("label:N", sort="-x", title=None, axis=y_axis_labels),
+                        y=alt.Y("label:N", sort=infl_df["label"].tolist(), title=None, axis=y_axis_labels),
                         color=alt.Color("ทิศทาง:N", scale=dir_scale,
                                          legend=alt.Legend(title=None, orient="bottom")),
                         tooltip=[
@@ -5688,7 +5738,7 @@ elif st.session_state.page == "forecast":
                     )
                     text = alt.Chart(infl_df).mark_text(align="left", dx=5, color="#5B6B7C", fontSize=11).encode(
                         x=alt.X("สัดส่วน (%):Q", scale=pct_scale),
-                        y=alt.Y("label:N", sort="-x"),
+                        y=alt.Y("label:N", sort=infl_df["label"].tolist()),
                         text=alt.Text("สัดส่วน (%):Q", format=".1f"),
                     )
                     chart = (
@@ -6315,7 +6365,7 @@ elif st.session_state.page == "exec_dashboard":
                             ).encode(
                                 x=alt.X("สัดส่วน (%):Q", title=None, axis=alt.Axis(grid=False, domain=False,
                                                                                     labelFontSize=10, labelColor="#5B6B7C")),
-                                y=alt.Y("label:N", sort="-x", title=None,
+                                y=alt.Y("label:N", sort=_top_infl["label"].tolist(), title=None,
                                         axis=alt.Axis(domain=False, labelFontSize=11, labelColor="#16324A", labelLimit=220)),
                                 color=alt.Color("ทิศทาง:N", scale=dir_scale, legend=None),
                                 tooltip=[alt.Tooltip("label:N", title="ตัวแปร"),
@@ -6371,7 +6421,7 @@ elif st.session_state.page == "exec_dashboard":
                                 )
                         else:
                             _insight_lines.append(
-                                "ระบบพยากรณ์ด้วยวิธี Random walk with drift ซึ่งมีค่าความคลาดเคลื่อน (MAPE) ต่ำที่สุดจากการทดสอบย้อนหลัง"
+                                "ระบบพยากรณ์ด้วยวิธี Random walk with drift ซึ่งเหมาะกับข้อมูลรายปีที่มีจำนวนน้อยและมีแนวโน้มต่อเนื่อง"
                             )
                     _insight_card_class = (
                         "section-card section-card-compact" if st.session_state.exec_presentation_mode
@@ -6837,7 +6887,7 @@ elif st.session_state.page == "manual":
         ]),
         ("settings", "แบบจำลองและสมการ", [
             ("Random walk with drift",
-             "วิธีพยากรณ์หลักของระบบ: ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี เลือกใช้เพราะแม่นที่สุดจากการทดสอบย้อนหลัง"),
+             "วิธีพยากรณ์หลักของระบบ: ค่าปีล่าสุดบวกการเปลี่ยนแปลงเฉลี่ยต่อปี เหมาะกับข้อมูลรายปีที่มีจำนวนน้อยและมีแนวโน้มต่อเนื่อง"),
             ("ARIMA",
              "แบบจำลองที่ใช้ค่าในอดีตของตัวแปรเองมาพยากรณ์อนาคต ใช้เป็นวิธีเปรียบเทียบในการทดสอบย้อนหลัง"),
             ("พจน์ปรับตัวของสมการ (ECM)",
