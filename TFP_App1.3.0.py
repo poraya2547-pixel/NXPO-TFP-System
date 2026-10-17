@@ -3829,7 +3829,7 @@ def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5
 
 
 def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead: int = 1,
-                           max_windows: int = 40, crisis_years: tuple = None):
+                           max_windows: Optional[int] = None, crisis_years: tuple = None):
     """ทดสอบย้อนหลังแบบ rolling-origin (expanding window) — ต่อยอดจาก _run_backtest
     ด้านบนซึ่งซ่อนข้อมูลไว้แค่ช่วงเดียว (holdout ก้อนเดียวท้ายอนุกรม) จุดอ่อนของ
     วิธีนั้นคือถ้าช่วงที่ซ่อนไว้บังเอิญมีเหตุการณ์พิเศษปนอยู่ (เช่น โควิด-19 ที่ทำให้
@@ -3849,8 +3849,8 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
 
     หมายเหตุ: เพื่อไม่ให้ต้องรัน ARIMA grid search ซ้ำมากเกินไปจนช้า (แต่ละ origin
     ต้องหา (p,d,q) ที่ดีที่สุดใหม่) จึงจำกัดกริดให้แคบกว่า _auto_arima_forecast
-    เล็กน้อย (max_p=3, max_q=3) และถ้าจำนวนจุดทดสอบที่เป็นไปได้มากกว่า max_windows
-    จะสุ่มเลือกจุดแบบเว้นระยะเท่าๆ กันแทนการทดสอบทุกจุด
+    เล็กน้อย (max_p=3, max_q=3) ค่าเริ่มต้นทดสอบครบทุกจุด ถ้าระบุ max_windows และจำนวน
+    จุดทดสอบมากกว่านั้น จะเลือกจุดแบบเว้นระยะเท่า ๆ กันแทนการทดสอบทุกจุด
 
     คืนค่า (origins_df, metrics, None) หรือ (None, None, ข้อความเหตุผล) ถ้าทำไม่ได้"""
     n = len(tfp_series)
@@ -3862,8 +3862,9 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
         )
 
     train_sizes = list(range(min_train, last_train_size + 1))
-    # จำกัดจำนวนจุดทดสอบไม่ให้เกิน max_windows จุด (เว้นระยะเท่าๆ กัน) เพื่อความเร็ว
-    if len(train_sizes) > max_windows:
+    # ค่าเริ่มต้นทดสอบทุกจุดเริ่มพยากรณ์ (เลื่อนทีละ 1 ปี ตามหัวข้อ 2.4.6.2 ของเล่ม)
+    # ถ้าระบุ max_windows จะเลือกจุดแบบเว้นระยะเท่า ๆ กันไม่เกินจำนวนนั้น เพื่อความเร็ว
+    if max_windows and len(train_sizes) > max_windows:
         idx = np.linspace(0, len(train_sizes) - 1, max_windows).round().astype(int)
         train_sizes = sorted(set(train_sizes[i] for i in idx))
 
