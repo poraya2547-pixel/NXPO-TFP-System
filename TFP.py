@@ -967,14 +967,19 @@ def render_target_style_table_html(table: pd.DataFrame, title: str = "") -> str:
 def build_tfpi_yoy_summary(model_df: pd.DataFrame, dep_ln: str) -> str:
     """สรุปการเปลี่ยนแปลงของ TFPI (ตัวแปรตาม) ปีล่าสุดเทียบปีก่อนหน้า เป็นข้อความ
     ธรรมดา ให้ LLM ใช้ประกอบ 'ส่วนที่ 2: เปรียบเทียบกับปีที่แล้ว'"""
-    series = model_df[dep_ln].dropna()
+    # ส่งค่าดัชนีระดับปกติ (ไม่ใช่ log) ให้ LLM เพื่อให้ตัวเลขในบทสรุปตรงกับที่แสดงบนแดชบอร์ด
+    level_col = dep_ln[3:] if dep_ln.startswith("ln_") else dep_ln
+    if level_col in model_df.columns:
+        series = model_df[level_col].dropna()
+    else:
+        series = np.exp(model_df[dep_ln].dropna())
     if len(series) < 2:
         return "ข้อมูลไม่พอสำหรับเปรียบเทียบปีต่อปี"
     last_year, prev_year = series.index[-1], series.index[-2]
-    pct_change = (series.iloc[-1] - series.iloc[-2]) * 100  # log-diff ≈ % change
-    return (f"TFPI (log) ปี {prev_year} = {series.iloc[-2]:.4f}, "
-            f"ปี {last_year} = {series.iloc[-1]:.4f} "
-            f"(เปลี่ยนแปลงประมาณ {pct_change:+.2f}%)")
+    pct_change = (series.iloc[-1] / series.iloc[-2] - 1) * 100
+    return (f"ดัชนี TFP (TFPI, ปีฐาน = 100) ปี {prev_year} = {series.iloc[-2]:.2f}, "
+            f"ปี {last_year} = {series.iloc[-1]:.2f} "
+            f"(เปลี่ยนแปลง {pct_change:+.2f}%) — ตัวเลขนี้เป็นดัชนี ไม่ใช่ค่าที่มีหน่วย")
 
 
 # ------------------------------------------------------------------------------
