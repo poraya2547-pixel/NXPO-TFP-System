@@ -3957,7 +3957,10 @@ _BT_CACHE_FILE = os.path.join(APP_DIR, "backtest_cache.pkl")
 
 def _bt_cache_key(kind: str, series: pd.Series, **params) -> str:
     import hashlib
-    h = hashlib.md5(pd.util.hash_pandas_object(series.astype(float), index=True).values.tobytes())
+    # ปัดทศนิยม 6 ตำแหน่ง และแปลงปีเป็นจำนวนเต็ม กันค่า hash เปลี่ยนจากความต่างเล็กน้อยของการอ่านข้อมูล
+    # (เช่น อ่านจาก Google Sheets กับอ่านจากไฟล์ Excel ได้ทศนิยมท้าย ๆ ไม่ตรงกัน)
+    _s = pd.Series(series.astype(float).round(6).values, index=pd.Index(series.index).astype(int))
+    h = hashlib.md5(pd.util.hash_pandas_object(_s, index=True).values.tobytes())
     h.update(repr(sorted(params.items())).encode())
     return f"{kind}:{h.hexdigest()}"
 
@@ -3983,15 +3986,36 @@ def _bt_cache_save(key: str, value) -> None:
         pass  # บันทึกไม่ได้ (เช่น โฟลเดอร์อ่านอย่างเดียว) ก็ยังแสดงผลได้ตามปกติ
 
 
+def _bt_pack(result):
+    """แปลง DataFrame เป็น dict ธรรมดาก่อนบันทึก เพื่อให้อ่านไฟล์ได้แม้ pandas คนละเวอร์ชัน"""
+    df, metrics, err = result
+    packed_df = None
+    if isinstance(df, pd.DataFrame):
+        packed_df = {"split": df.to_dict(orient="split"), "index_name": df.index.name}
+    return {"df": packed_df, "metrics": metrics, "err": err}
+
+
+def _bt_unpack(packed):
+    df = None
+    if packed.get("df"):
+        sp = packed["df"]["split"]
+        df = pd.DataFrame(sp["data"], index=sp["index"], columns=sp["columns"])
+        df.index.name = packed["df"].get("index_name")
+    return df, packed.get("metrics"), packed.get("err")
+
+
 def _backtest_with_file_cache(kind: str, func, series: pd.Series, **params):
     """คืนผลจากไฟล์ถ้ามี ไม่มีก็คำนวณแล้วบันทึกลงไฟล์ (คืน (ผลลัพธ์, มาจากไฟล์หรือไม่))"""
     key = _bt_cache_key(kind, series, **params)
     cached = _bt_cache_load().get(key)
     if cached is not None:
-        return cached, True
+        try:
+            return _bt_unpack(cached), True
+        except Exception:
+            pass  # ไฟล์เสียหรือรูปแบบไม่ตรง → คำนวณใหม่
     result = func(series, **params)
     if result[2] is None:  # บันทึกเฉพาะผลที่คำนวณสำเร็จ
-        _bt_cache_save(key, result)
+        _bt_cache_save(key, _bt_pack(result))
     return result, False
 
 
