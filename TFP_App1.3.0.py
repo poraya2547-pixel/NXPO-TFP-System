@@ -3945,6 +3945,60 @@ def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead:
     return origins_df, metrics, None
 
 
+# ------------------------------------------------------------------------------
+# ผลการทดสอบย้อนหลังที่คำนวณไว้ล่วงหน้า (backtest_cache.pkl)
+# ------------------------------------------------------------------------------
+# การทดสอบย้อนหลังต้องประมาณค่า ARIMA หลายร้อยครั้ง บนเซิร์ฟเวอร์ที่ CPU จำกัด
+# (เช่น Streamlit Community Cloud) อาจใช้เวลาหลายนาที จึงบันทึกผลลงไฟล์หลังคำนวณเสร็จ
+# แล้วนำไฟล์นี้ขึ้น GitHub ไปพร้อมโค้ด ครั้งต่อไประบบอ่านผลจากไฟล์ได้ทันที
+# ผลผูกกับ "ข้อมูลชุดเดิม" ด้วยค่า hash ถ้าข้อมูล TFPI เปลี่ยน ระบบจะคำนวณใหม่เอง
+_BT_CACHE_FILE = os.path.join(APP_DIR, "backtest_cache.pkl")
+
+
+def _bt_cache_key(kind: str, series: pd.Series, **params) -> str:
+    import hashlib
+    h = hashlib.md5(pd.util.hash_pandas_object(series.astype(float), index=True).values.tobytes())
+    h.update(repr(sorted(params.items())).encode())
+    return f"{kind}:{h.hexdigest()}"
+
+
+def _bt_cache_load() -> dict:
+    import pickle
+    try:
+        with open(_BT_CACHE_FILE, "rb") as f:
+            data = pickle.load(f)
+        return data if isinstance(data, dict) else {}
+    except Exception:
+        return {}
+
+
+def _bt_cache_save(key: str, value) -> None:
+    import pickle
+    try:
+        data = _bt_cache_load()
+        data[key] = value
+        with open(_BT_CACHE_FILE, "wb") as f:
+            pickle.dump(data, f)
+    except Exception:
+        pass  # บันทึกไม่ได้ (เช่น โฟลเดอร์อ่านอย่างเดียว) ก็ยังแสดงผลได้ตามปกติ
+
+
+def _backtest_with_file_cache(kind: str, func, series: pd.Series, **params):
+    """คืนผลจากไฟล์ถ้ามี ไม่มีก็คำนวณแล้วบันทึกลงไฟล์ (คืน (ผลลัพธ์, มาจากไฟล์หรือไม่))"""
+    key = _bt_cache_key(kind, series, **params)
+    cached = _bt_cache_load().get(key)
+    if cached is not None:
+        return cached, True
+    result = func(series, **params)
+    if result[2] is None:  # บันทึกเฉพาะผลที่คำนวณสำเร็จ
+        _bt_cache_save(key, result)
+    return result, False
+
+
+def _bt_cache_has(kind: str, series: pd.Series, **params) -> bool:
+    return _bt_cache_key(kind, series, **params) in _bt_cache_load()
+
+
 def _mape_threshold_chart(roll_df: pd.DataFrame, height: int = 300):
     """สร้างกราฟเส้นเทียบ MAPE ของ ARIMA vs Naive ที่เปลี่ยนไปตามเกณฑ์ตัดจุดทดสอบ
     (จำนวนปีฝึกขั้นต่ำ) ทุกค่าพร้อมกันในกราฟเดียว แทนที่จะต้องเลื่อนสไลเดอร์ดูทีละจุด
@@ -5062,19 +5116,21 @@ elif st.session_state.page == "forecast":
                     )
                     # คำนวณเมื่อผู้ใช้กดปุ่มเท่านั้น (ใช้เวลาประมาณ 1 นาทีในครั้งแรก) หน้าเว็บจึงเปิดได้ทันที
                     # ผลถูกเก็บใน cache ร่วมกันทุกผู้ใช้ ครั้งต่อไปจึงแสดงผลได้ทันที
+                    _roll_params = dict(min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1, crisis_years=(2020, 2022))
+                    # มีผลที่คำนวณไว้ในไฟล์แล้ว → แสดงทันทีโดยไม่ต้องกดปุ่ม
+                    if _bt_cache_has("rolling", tfp_series, **_roll_params):
+                        st.session_state.run_backtests = True
                     if not st.session_state.get("run_backtests"):
                         if st.button("▶ เริ่มการทดสอบย้อนหลัง", key="btn_run_rolling_bt",
-                                     help="ครั้งแรกหลังเปิดระบบใช้เวลาประมาณ 1 นาที ครั้งต่อไปแสดงผลได้ทันที"):
+                                     help="ครั้งแรกอาจใช้เวลาหลายนาที เมื่อคำนวณเสร็จระบบจะบันทึกผลไว้ ครั้งต่อไปแสดงผลได้ทันที"):
                             st.session_state.run_backtests = True
                             st.rerun()
                         roll_df, roll_metrics = None, None
                         roll_err = "กดปุ่ม \"เริ่มการทดสอบย้อนหลัง\" เพื่อแสดงผลการทดสอบ"
                     else:
-                        with st.spinner("กำลังทดสอบย้อนหลังแบบ Rolling-origin..."):
-                            roll_df, roll_metrics, roll_err = _run_rolling_backtest(
-                                tfp_series, min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1,
-                                crisis_years=(2020, 2022),
-                            )
+                        with st.spinner("กำลังทดสอบย้อนหลังแบบ Rolling-origin (ครั้งแรกอาจใช้เวลาหลายนาที)..."):
+                            (roll_df, roll_metrics, roll_err), _ = _backtest_with_file_cache(
+                                "rolling", _run_rolling_backtest, tfp_series, **_roll_params)
                     if roll_err:
                         st.info(roll_err)
                     else:
@@ -5269,7 +5325,8 @@ elif st.session_state.page == "forecast":
                         bt_err = "กดปุ่ม \"เริ่มการทดสอบย้อนหลัง\" เพื่อแสดงผลการทดสอบ"
                     else:
                         with st.spinner("กำลังทดสอบย้อนหลังแบบ Hold-out..."):
-                            bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
+                            (bt_df, bt_metrics, bt_err), _ = _backtest_with_file_cache(
+                                "holdout", _run_backtest, tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
                     if bt_err:
                         st.info(bt_err)
                     else:
