@@ -4914,6 +4914,7 @@ elif st.session_state.page == "forecast":
                 # (ARIMA และ Naive เป็นเกณฑ์เปรียบเทียบใน rolling backtest และ DM test ด้านล่าง)
                 forecast_df = _drift_forecast_interval(tfp_series, horizon)
                 _drift_slope = (float(tfp_series.iloc[-1]) - float(tfp_series.iloc[0])) / (len(tfp_series) - 1)
+                _avg_log_growth = (np.log(float(tfp_series.iloc[-1])) - np.log(float(tfp_series.iloc[0]))) / (len(tfp_series) - 1) * 100
                 last_fc_year = forecast_df.index.max()
                 _main_forecast_available = True
 
@@ -4943,7 +4944,7 @@ elif st.session_state.page == "forecast":
                     + _kpi_strip_item(
                         _kpi_navy, icon("trend-up", 21, 1.8),
                         f"{tfp_series.iloc[-1]:.4f}",
-                        f"ค่า TFP ล่าสุด (ปี {tfp_series.index.max()})",
+                        f"ดัชนี TFP ล่าสุด (ปี {tfp_series.index.max()})",
                     )
                     + _kpi_strip_item(
                         _kpi_orange, icon("clock", 21, 1.8),
@@ -4954,7 +4955,7 @@ elif st.session_state.page == "forecast":
                     + _kpi_strip_item(
                         _kpi_navy, icon("check", 21, 2),
                         f"{_drift_slope:+.3f}",
-                        "การเปลี่ยนแปลงเฉลี่ยต่อปี<br>(ค่า Drift ที่ใช้พยากรณ์)",
+                        f"จุดดัชนีต่อปี (ค่า Drift)<br>≈ {_avg_log_growth:+.2f}% ต่อปี",
                     )
                     + '</div>',
                     unsafe_allow_html=True,
@@ -5347,7 +5348,7 @@ elif st.session_state.page == "forecast":
             st.markdown(
                 f'<div class="nxpo-summary-card">'
                 f'<div class="label">{icon("sparkle", 14, 2)} ภาพรวมผลการพยากรณ์</div>'
-                f'<div class="value-sub">TFP ปี {last_fc_year} (พยากรณ์)</div>'
+                f'<div class="value-sub">ดัชนี TFP ปี {last_fc_year} (พยากรณ์)</div>'
                 f'<div class="value">{fc_final:,.2f}'
                 f'<span class="growth-badge">{icon(_trend_icon, 13, 2)} {growth_total:+.1f}%</span></div>'
                 f'<div class="from-label">จากปี {base_year} ({base_val:,.2f})</div>'
@@ -6225,11 +6226,11 @@ elif st.session_state.page == "exec_dashboard":
 
                 yoy_text = f"{yoy:+.1f}%" if yoy is not None else "-"
                 _kpi_item_1 = _exec_kpi(_exec_orange, icon("bars", 18, 1.8), f"{last_val:,.2f}",
-                                         f"TFP ล่าสุด (ปี {last_year}) · เปลี่ยนแปลง {yoy_text} จากปีก่อน")
+                                         f"ดัชนี TFP ล่าสุด (ปี {last_year}) · เปลี่ยนแปลง {yoy_text} จากปีก่อน")
 
                 if _has_forecast:
                     _kpi_item_2 = _exec_kpi(_exec_navy, icon("clock", 18, 1.8), f"{fc_final:,.2f}",
-                                             f"ค่าพยากรณ์ TFP (ปี {fc_year})")
+                                             f"ค่าพยากรณ์ดัชนี TFP (ปี {fc_year})")
                 else:
                     _kpi_item_2 = _exec_kpi(_exec_navy, icon("clock", 18, 1.8), "-",
                                              "ข้อมูลยังไม่พอสำหรับพยากรณ์")
@@ -6275,7 +6276,7 @@ elif st.session_state.page == "exec_dashboard":
                             st.markdown(
                                 f'<div style="font-size:0.78rem;color:var(--brand-navy-soft);'
                                 f'line-height:1.5;margin-top:2px;">'
-                                f'💡 ภายใต้สมมติฐานข้างต้น TFP ปี {fc_year} อาจอยู่ที่ประมาณ '
+                                f'💡 ภายใต้สมมติฐานข้างต้น ดัชนี TFP ปี {fc_year} อาจอยู่ที่ประมาณ '
                                 f'<b style="color:var(--brand-navy);">{_scn_final:,.2f}</b> '
                                 f'(ค่าพยากรณ์ฐาน {fc_final:,.2f}) ตัวเลขนี้เป็นการประมาณเชิงนโยบายจากสัมประสิทธิ์ '
                                 f'ของสมการระยะยาว ไม่ได้คำนวณร่วมกับแบบจำลองพยากรณ์โดยตรง</div>',
@@ -6289,7 +6290,7 @@ elif st.session_state.page == "exec_dashboard":
                             f'<div class="exec-chart-footnote" style="font-size:0.78rem;color:var(--brand-navy-soft);'
                             f'line-height:1.6;margin-top:10px;padding-top:10px;'
                             f'border-top:1px dashed var(--card-border);">'
-                            f'เส้นสีส้มแสดงค่า TFP จริงจนถึงปี {last_year} ({last_val:,.2f}) '
+                            f'เส้นสีส้มแสดงค่าดัชนี TFP จริงจนถึงปี {last_year} ({last_val:,.2f}) '
                             f'และเส้นสีน้ำเงินแสดงค่าพยากรณ์ด้วยวิธี Random walk with drift จนถึงปี {fc_year}<br>'
                             f'แถบแรเงาแสดงช่วงพยากรณ์ 95% ซึ่งกว้างขึ้นตามระยะเวลาการพยากรณ์</div>',
                             unsafe_allow_html=True,
@@ -6393,13 +6394,13 @@ elif st.session_state.page == "exec_dashboard":
                         # เพื่อให้เนื้อหาทั้งหน้าพอดีจอเดียว ไม่ต้องเลื่อน -----
                         if _has_forecast:
                             _insight_lines.append(
-                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) มีแนวโน้ม"
+                                f"ดัชนี TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) มีแนวโน้ม"
                                 f"{'เพิ่มขึ้น' if growth_total >= 0 else 'ลดลง'}เฉลี่ย {cagr:+.1f}% ต่อปี "
                                 f"และคาดว่าจะอยู่ที่ {fc_final:,.2f} ในปี {fc_year} ({growth_total:+.1f}% ในช่วง {horizon} ปี)"
                             )
                         else:
                             _insight_lines.append(
-                                f"TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) ข้อมูลยังไม่เพียงพอสำหรับการพยากรณ์"
+                                f"ดัชนี TFP ล่าสุด {last_val:,.2f} (ปี {last_year}) ข้อมูลยังไม่เพียงพอสำหรับการพยากรณ์"
                             )
                     else:
                         if _has_forecast:
@@ -6884,7 +6885,7 @@ elif st.session_state.page == "manual":
     _glossary_groups = [
         ("trend-up", "ตัวชี้วัดหลัก", [
             ("TFP (Total Factor Productivity)",
-             "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม"),
+             "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม ในระบบนี้แสดงเป็นดัชนีเทียบกับปีฐาน (ปีฐาน = 100) ใช้ดูการเปลี่ยนแปลง ไม่ใช่ค่าที่มีหน่วยในตัวเอง"),
         ]),
         ("settings", "แบบจำลองและสมการ", [
             ("Random walk with drift",
