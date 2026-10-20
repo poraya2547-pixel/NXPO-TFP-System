@@ -5060,11 +5060,21 @@ elif st.session_state.page == "forecast":
                         'ผลการทดสอบส่วนนี้ใช้เป็นเกณฑ์หลักในการเลือกวิธีพยากรณ์ของระบบ</p></div>',
                         unsafe_allow_html=True,
                     )
-                    with st.spinner("กำลังทดสอบย้อนหลังแบบ Rolling-origin..."):
-                        roll_df, roll_metrics, roll_err = _run_rolling_backtest(
-                            tfp_series, min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1,
-                            crisis_years=(2020, 2022),
-                        )
+                    # คำนวณเมื่อผู้ใช้กดปุ่มเท่านั้น (ใช้เวลาประมาณ 1 นาทีในครั้งแรก) หน้าเว็บจึงเปิดได้ทันที
+                    # ผลถูกเก็บใน cache ร่วมกันทุกผู้ใช้ ครั้งต่อไปจึงแสดงผลได้ทันที
+                    if not st.session_state.get("run_backtests"):
+                        if st.button("▶ เริ่มการทดสอบย้อนหลัง", key="btn_run_rolling_bt",
+                                     help="ครั้งแรกหลังเปิดระบบใช้เวลาประมาณ 1 นาที ครั้งต่อไปแสดงผลได้ทันที"):
+                            st.session_state.run_backtests = True
+                            st.rerun()
+                        roll_df, roll_metrics = None, None
+                        roll_err = "กดปุ่ม \"เริ่มการทดสอบย้อนหลัง\" เพื่อแสดงผลการทดสอบ"
+                    else:
+                        with st.spinner("กำลังทดสอบย้อนหลังแบบ Rolling-origin..."):
+                            roll_df, roll_metrics, roll_err = _run_rolling_backtest(
+                                tfp_series, min_train=MIN_POINTS_FOR_ARIMA, step_ahead=1,
+                                crisis_years=(2020, 2022),
+                            )
                     if roll_err:
                         st.info(roll_err)
                     else:
@@ -5251,7 +5261,15 @@ elif st.session_state.page == "forecast":
                         'ส่วนการเลือกวิธีพยากรณ์อ้างอิงจากการทดสอบแบบ Rolling-origin ด้านบน</p></div>',
                         unsafe_allow_html=True,
                     )
-                    bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
+                    if not st.session_state.get("run_backtests"):
+                        if st.button("▶ เริ่มการทดสอบย้อนหลัง", key="btn_run_holdout_bt"):
+                            st.session_state.run_backtests = True
+                            st.rerun()
+                        bt_df, bt_metrics = None, None
+                        bt_err = "กดปุ่ม \"เริ่มการทดสอบย้อนหลัง\" เพื่อแสดงผลการทดสอบ"
+                    else:
+                        with st.spinner("กำลังทดสอบย้อนหลังแบบ Hold-out..."):
+                            bt_df, bt_metrics, bt_err = _run_backtest(tfp_series, min_train=MIN_POINTS_FOR_ARIMA)
                     if bt_err:
                         st.info(bt_err)
                     else:
