@@ -977,7 +977,7 @@ def build_tfpi_yoy_summary(model_df: pd.DataFrame, dep_ln: str) -> str:
         return "ข้อมูลไม่พอสำหรับเปรียบเทียบปีต่อปี"
     last_year, prev_year = series.index[-1], series.index[-2]
     pct_change = (series.iloc[-1] / series.iloc[-2] - 1) * 100
-    return (f"ดัชนี TFP (TFPI, ปีฐาน = 100) ปี {prev_year} = {series.iloc[-2]:.2f}, "
+    return (f"ดัชนี TFP (TFPI) ปี {prev_year} = {series.iloc[-2]:.2f}, "
             f"ปี {last_year} = {series.iloc[-1]:.2f} "
             f"(เปลี่ยนแปลง {pct_change:+.2f}%) — ตัวเลขนี้เป็นดัชนี ไม่ใช่ค่าที่มีหน่วย")
 
