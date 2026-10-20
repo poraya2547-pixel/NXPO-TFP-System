@@ -124,6 +124,7 @@ FONT_DIR = os.path.join(APP_DIR, "fonts")
 FONT_FAMILY = "Prompt"  # <-- เปลี่ยนชื่อฟอนต์ตรงนี้ที่เดียวถ้าอยากเปลี่ยนฟอนต์ทั้งเว็บ
 
 
+@st.cache_data(show_spinner=False)
 def _font_b64(filename: str) -> str:
     with open(os.path.join(FONT_DIR, filename), "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -1332,6 +1333,7 @@ st.markdown(
 import base64
 
 
+@st.cache_data(show_spinner=False)
 def img_to_base64(path):
     with open(path, "rb") as f:
         return base64.b64encode(f.read()).decode()
@@ -3779,6 +3781,7 @@ _PCT_SCALED_VARS = {"FDI_GDP", "FEE_GDP", "RDG_GDP", "RDP_GDP", "TRADE_GDP", "IN
 _MODEL_LABELS = {"ARIMA": "ARIMA", "Naive": "Naive", "Drift": "Random walk with drift"}
 
 
+@st.cache_data(show_spinner=False)
 def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5):
     """ทดสอบความแม่นยำของแบบจำลองย้อนหลัง (holdout backtest) — ไม่ใช้ทฤษฎีใหม่
     เพิ่มเติมจากที่มีอยู่แล้วเลย แค่เรียก _auto_arima_forecast ตัวเดิมซ้ำ โดย:
@@ -3828,6 +3831,7 @@ def _run_backtest(tfp_series: pd.Series, min_train: int = 8, test_years: int = 5
     return bt_df, metrics, None
 
 
+@st.cache_data(show_spinner=False)
 def _run_rolling_backtest(tfp_series: pd.Series, min_train: int = 8, step_ahead: int = 1,
                            max_windows: Optional[int] = None, crisis_years: tuple = None):
     """ทดสอบย้อนหลังแบบ rolling-origin (expanding window) — ต่อยอดจาก _run_backtest
@@ -4914,7 +4918,9 @@ elif st.session_state.page == "forecast":
                 # (ARIMA และ Naive เป็นเกณฑ์เปรียบเทียบใน rolling backtest และ DM test ด้านล่าง)
                 forecast_df = _drift_forecast_interval(tfp_series, horizon)
                 _drift_slope = (float(tfp_series.iloc[-1]) - float(tfp_series.iloc[0])) / (len(tfp_series) - 1)
-                _avg_log_growth = (np.log(float(tfp_series.iloc[-1])) - np.log(float(tfp_series.iloc[0]))) / (len(tfp_series) - 1) * 100
+                # Drift คิดเป็นร้อยละของค่าล่าสุด = อัตราที่ค่าพยากรณ์ปีถัดไปเพิ่มจากปีล่าสุดจริง
+                # (ไม่ใช้อัตราเติบโตเฉลี่ยแบบ log ในอดีต เพราะ Drift บวกเป็นจำนวนจุดคงที่ ไม่ใช่ร้อยละคงที่)
+                _drift_pct_of_last = _drift_slope / float(tfp_series.iloc[-1]) * 100
                 last_fc_year = forecast_df.index.max()
                 _main_forecast_available = True
 
@@ -4955,7 +4961,7 @@ elif st.session_state.page == "forecast":
                     + _kpi_strip_item(
                         _kpi_navy, icon("check", 21, 2),
                         f"{_drift_slope:+.3f}",
-                        f"จุดดัชนีต่อปี (ค่า Drift)<br>≈ {_avg_log_growth:+.2f}% ต่อปี",
+                        f"จุดดัชนีต่อปี (ค่า Drift)<br>≈ {_drift_pct_of_last:+.2f}% ของค่าล่าสุด",
                     )
                     + '</div>',
                     unsafe_allow_html=True,
@@ -6885,7 +6891,7 @@ elif st.session_state.page == "manual":
     _glossary_groups = [
         ("trend-up", "ตัวชี้วัดหลัก", [
             ("TFP (Total Factor Productivity)",
-             "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม ในระบบนี้แสดงเป็นดัชนีเทียบกับปีฐาน (ปีฐาน = 100) ใช้ดูการเปลี่ยนแปลง ไม่ใช่ค่าที่มีหน่วยในตัวเอง"),
+             "ผลิตภาพการผลิตรวม — ผลิตได้มากขึ้นแค่ไหนจากแรงงานและทุนเท่าเดิม สะท้อนเทคโนโลยีและนวัตกรรม ในระบบนี้แสดงเป็นดัชนี (TFPI) ใช้ดูการเปลี่ยนแปลง ไม่ใช่ค่าที่มีหน่วยในตัวเอง"),
         ]),
         ("settings", "แบบจำลองและสมการ", [
             ("Random walk with drift",
