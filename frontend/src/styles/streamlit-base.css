@@ -1,0 +1,478 @@
+/* สไตล์พื้นฐานแบบ Streamlit 1.64 (ธีมสว่าง) — ค่าอ่านจาก CSS ที่ streamlit==1.64.0 สร้างจริงในแอปเดิม
+   (selector ของ Streamlit เป็นคลาส emotion ที่สุ่ม จึงแปลงเป็น data-testid/คลาสของ DOM ฝั่งนี้)
+   CSS ของหน้าเดิม (มาจาก backend ใน <style>) ทับค่าเหล่านี้แบบเดียวกับในแอปเดิม */
+/* ฟอนต์ชุดเดียวกับที่ Streamlit 1.64 ฝากับแอป (static/css/index.C1034Gkq.css) — ที่มาและสัญญาอนุญาตใน assets/fonts/README.md */
+@font-face { font-family: "Source Sans"; font-weight: 100 900; font-style: normal;
+             src: url("../assets/fonts/SourceSansVF-Upright.woff2") format("woff2"); }
+@font-face { font-family: "Source Sans"; font-weight: 100 900; font-style: italic;
+             src: url("../assets/fonts/SourceSansVF-Italic.woff2") format("woff2"); }
+@font-face { font-family: "Material Symbols Rounded"; font-style: normal; font-weight: 400; font-display: block;
+             src: url("../assets/fonts/MaterialSymbols-Rounded.woff2") format("woff2"); }
+:root {
+  --st-font: "Source Sans", sans-serif;
+  --st-text: rgb(49, 51, 63);
+  --st-bg: rgb(255, 255, 255);
+  --st-bg2: rgb(240, 242, 246);
+  --st-border: rgba(49, 51, 63, 0.2);
+  --st-border-soft: rgba(49, 51, 63, 0.1);
+  --st-soft: rgba(49, 51, 63, 0.6);
+  --st-disabled: rgba(49, 51, 63, 0.4);
+  --st-hover: rgba(151, 166, 195, 0.15);
+  --st-active: rgba(151, 166, 195, 0.25);
+  --st-btn-bg: rgb(255, 255, 255);
+  --st-link: rgb(0, 84, 163);
+  --st-invalid: rgb(189, 64, 67);
+  --st-primary: rgb(255, 75, 75);
+  --st-primary-hover: rgb(255, 0, 0);
+  --st-focus: rgba(255, 75, 75, 0.5);
+  --st-info-bg: rgba(28, 131, 255, 0.1);
+  --st-info-fg: rgb(0, 84, 163);
+  --st-success-bg: rgba(33, 195, 84, 0.1);
+  --st-success-fg: rgb(21, 130, 55);
+  --st-warning-bg: rgba(255, 255, 18, 0.1);
+  --st-warning-fg: rgb(146, 108, 5);
+  --st-error-bg: rgba(255, 43, 43, 0.1);
+  --st-error-fg: rgb(189, 64, 67);
+  --st-scroll: rgba(49, 51, 63, 0.4);
+  --st-exp-open: rgb(248, 249, 251);
+  --st-tooltip-bg: rgba(255, 255, 255, 0.95);
+  --st-switch-thumb: rgb(255, 255, 255);
+  --st-switch-thumb-disabled: rgb(128, 132, 149);
+  --st-tooltip-shadow: 0px 1px 4px rgba(0, 0, 0, 0.16);
+  --st-popover-border: rgb(255, 255, 255);
+  --st-popover-shadow: rgba(0, 0, 0, 0.16) 0px 4px 16px 0px;
+  color-scheme: light;
+}
+/* ล็อกธีมสว่างเสมอ (ไม่ตามธีมมืดของเครื่อง): CSS หน้าเดิมบังคับพื้นการ์ดสว่างแต่ไม่กำหนดสีตัวอักษร
+   ธีมมืดของ Streamlit จึงได้ตัวอักษรขาวบนพื้นครีม/ขาว (STEP_06 หัวข้อ 9 ข้อ 1) — ผู้ใช้อนุมัติ 12 ต.ค. 2569; ตรวจด้วย tools/refactor/contrast_check.py */
+
+/* ----- global ของ Streamlit ----- */
+html { font-size: 16px; }
+*, ::before, ::after { box-sizing: border-box; }
+body { margin: 0; font-family: var(--st-font); font-weight: 400; line-height: 1.6; color: var(--st-text);
+       background-color: var(--st-bg); text-size-adjust: 100%; -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+       -webkit-font-smoothing: auto; }
+p, ol, ul, dl { margin: 0 0 1rem; padding: 0; font-size: 1rem; font-weight: 400; }
+ol ol, ul ul, ol ul, ul ol { margin-bottom: 0; }
+img, svg { vertical-align: middle; }
+input, button, select, optgroup, textarea { margin: 0; font-family: inherit; line-height: inherit; font-size: inherit; }
+button, input { overflow: visible; }
+button:not(:disabled), [role="button"]:not(:disabled) { cursor: pointer; }
+[hidden] { display: none !important; }
+@supports (scrollbar-color: transparent transparent) {
+  * { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  :hover { scrollbar-color: var(--st-scroll) transparent; }
+}
+#root { height: 100%; }
+
+/* ----- โครงแอป ----- */
+.stApp { position: absolute; inset: 0; background: var(--st-bg); color: var(--st-text); overflow: hidden; }
+.stAppViewContainer { display: flex; flex-direction: row; place-content: flex-start; align-items: stretch;
+                      position: absolute; inset: 0; overflow: hidden; }
+.stSidebar { position: relative; top: 0; flex: 0 0 auto; width: 300px; min-width: 200px; max-width: 600px; height: 100%;
+             background-color: var(--st-bg2); color: var(--st-text); z-index: 999991; }
+.stSidebar.tfp-collapsed { display: none; }
+/* padding ซ้าย/ขวาตั้งใน App.tsx = max(ความกว้าง scrollbar, 1.25rem − ความกว้าง scrollbar) แบบ Streamlit 1.64 */
+[data-testid="stSidebarContent"] { position: relative; height: 100%; width: 100%; overflow: auto;
+                                   scrollbar-gutter: stable both-edges; }
+[data-testid="stSidebarHeader"] { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+                                  height: 3.75rem; }
+[data-testid="stSidebarUserContent"] { padding-top: 0; padding-bottom: 6rem; }
+.stMain { position: relative; display: flex; flex-direction: column; width: 100%; overflow: auto; align-items: center;
+          height: 100dvh; min-width: 0; }
+.stAppHeader { position: absolute; top: 0; left: 0; right: 0; display: flex; align-items: center;
+               height: 3.75rem; min-height: 3.75rem; width: 100%; background: var(--st-bg); z-index: 999990;
+               font-size: 0.875rem; }
+/* แถบหัวตาม Streamlit 1.64 (ค่าจาก computed style ของแอปเดิม) */
+.stAppToolbar { position: relative; display: flex; align-items: center; height: 3.75rem; width: 100%; z-index: 999990; }
+.tfp-toolbar { display: flex; flex: 0 0 auto; align-items: center; justify-content: space-between; width: 100%; height: 30px; }
+.tfp-toolbar-left { display: flex; flex: 0 0 auto; align-items: center; height: 1.75rem; min-width: 3rem; }
+.tfp-toolbar-right { display: flex; flex: 0 0 auto; align-items: center; justify-content: flex-end; min-width: 12.5rem;
+                     margin-right: 1rem; height: 30px; }
+/* Keep only the menu control above scrolling content; the full header must not intercept page clicks. */
+.tfp-expand-sidebar { position: fixed; top: 1rem; left: 1rem; display: flex; align-items: center; justify-content: center;
+                      width: 2rem; height: 1.75rem; background: var(--st-bg2); border-radius: 0.5rem; }
+.tfp-header-btn { display: flex; align-items: center; justify-content: center; margin: 0 0.125rem; padding: 0;
+                  min-width: 1.75rem; min-height: 1.75rem; width: 1.75rem; height: 1.75rem; border: none; border-radius: 0.5rem;
+                  background-color: transparent; color: var(--st-text); font-size: 0.875rem; line-height: 1; cursor: pointer; }
+.tfp-header-btn:focus { outline: none; }
+.tfp-header-btn:hover { background-color: var(--st-hover); }
+.tfp-header-btn:active { background-color: var(--st-active); }
+.tfp-header-icon { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 1.5rem; height: 1.5rem; }
+.tfp-header-icon [data-testid="stIconMaterial"] { width: 1.5rem; height: 1.5rem; font-size: 1.5rem; line-height: 1.5rem;
+                                                 color: var(--st-soft); }
+.block-container { width: 100%; padding: 6rem 1rem 10rem; max-width: initial; min-width: auto; }
+@media (min-width: calc(736px + 8rem)) { .block-container { padding-left: 5rem; padding-right: 5rem; } }
+.tfp-icon-btn { background: transparent; border: none; cursor: pointer; padding: 4px; border-radius: 0.5rem;
+                color: var(--st-soft); display: inline-flex; }
+.tfp-icon-btn:hover { background: var(--st-hover); }
+.tfp-running { font-size: 0.875rem; color: var(--st-soft); }
+.tfp-api-error { margin: 0 0 1rem; padding: 1rem; border-radius: 0.5rem; background: var(--st-error-bg); color: var(--st-error-fg); }
+.tfp-loading { color: var(--st-soft); }
+
+/* ----- กล่อง ----- */
+.stVerticalBlock { display: flex; gap: 1rem; width: 100%; max-width: 100%; height: auto; min-width: 1rem; flex-flow: column;
+                   flex: 1 1 0%; align-items: stretch; justify-content: start; }
+.stVerticalBlock.tfp-border { align-items: start; border: 1px solid var(--st-border); border-radius: 0.5rem;
+                              padding: calc(-1px + 1rem); overflow: visible; }
+.stVerticalBlock.tfp-border > * { width: 100%; }
+[data-testid="stLayoutWrapper"] { display: flex; flex-direction: column; width: 100%; max-width: 100%; min-width: 1rem; height: auto; }
+.stHorizontalBlock { display: flex; gap: 1rem; width: 100%; max-width: 100%; height: auto; min-width: 1rem; flex-flow: wrap;
+                     flex: 1 1 0%; align-items: stretch; justify-content: start; overflow: visible; }
+.stVerticalBlock.tfp-fill { height: 100%; }
+/* การจัดแนวตั้งของคอลัมน์ (Streamlit em) */
+.stColumn.tfp-col-valign-center { margin-top: auto; margin-bottom: auto; }
+.stColumn.tfp-col-valign-bottom { margin-top: auto; }
+.stColumn.tfp-col-valign-bottom > .stVerticalBlock > .stElementContainer:last-of-type > .stCheckbox { margin-bottom: 0.5rem; }
+.stColumn.tfp-col-valign-top > .stVerticalBlock > .stElementContainer:first-of-type > .stCheckbox { margin-top: 0.5rem; }
+@media (max-width: 640px) { .stColumn { min-width: calc(100% - 1.5rem); } }
+.stElementContainer { width: 100%; height: auto; text-align: left; max-width: 100%; min-width: 1rem; position: relative;
+                      overflow: visible; }
+.stForm { border: 1px solid var(--st-border); border-radius: 0.5rem; padding: calc(-1px + 1rem); margin: 0; }
+
+/* ----- markdown / caption / หัวข้อ ----- */
+[data-testid="stMarkdownContainer"], [data-testid="stCaptionContainer"] {
+  font-family: var(--st-font); margin-bottom: -1rem; color: inherit; max-width: 100%; width: 100%; overflow-wrap: break-word; }
+[data-testid="stMarkdownContainer"] { font-size: 1rem; }
+[data-testid="stCaptionContainer"] { font-size: 0.875rem; opacity: 0.6; }
+/* Streamlit StyledStreamlitMarkdown: ย่อหน้า/รายการใช้ขนาดตัวอักษรของกล่อง markdown (ทับกฎทั่วไป p { font-size: 1rem }) */
+[data-testid="stMarkdownContainer"] :is(p, ol, ul, dl, li),
+[data-testid="stCaptionContainer"] :is(p, ol, ul, dl, li) { font-size: inherit; }
+.tfp-md a, .tfp-caption a, [data-testid="stHeadingWithActionElements"] a { color: var(--st-link); text-decoration: underline; }
+.tfp-md h1, .tfp-md h2, .tfp-md h3, .tfp-md h4, .tfp-md h5, .tfp-md h6,
+.tfp-caption h1, .tfp-caption h2, .tfp-caption h3, .tfp-caption h4, .tfp-caption h5, .tfp-caption h6 {
+  font-family: var(--st-font); line-height: 1.2; margin: 0; color: inherit; }
+.tfp-md h1 { font-size: 2.75rem; font-weight: 700; padding: 1.25rem 0 1rem; }
+.tfp-md h1 b, .tfp-md h1 strong { font-weight: 700; }
+.tfp-md h2, .tfp-md h3 { letter-spacing: -0.005em; }
+.tfp-md h2 { font-size: 2.25rem; font-weight: 600; padding: 1rem 0; }
+.tfp-md h3 { font-size: 1.75rem; font-weight: 600; padding: 0.75rem 0 1rem; }
+.tfp-md h4 { font-size: 1.5rem; font-weight: 600; padding: 0.5rem 0 1rem; }
+.tfp-md h5 { font-size: 1.25rem; font-weight: 600; padding: 0.375rem 0 1rem; }
+.tfp-md h6 { font-size: 1rem; font-weight: 600; padding: 0.25rem 0 1rem; }
+.tfp-md p, .tfp-caption p { word-break: break-word; margin-top: 0; margin-left: 0; margin-right: 0; }
+.tfp-md img { max-width: 100%; vertical-align: middle; object-fit: scale-down; }
+.tfp-md li { margin: 0.2em 0 0.2em 1.15em; padding: 0 0 0 0.3em; }
+.tfp-md blockquote { margin: 1em 0; padding: 0 0 0 0.75em; border-left: 0.15em solid var(--st-border); opacity: 0.6; }
+.tfp-md b, .tfp-md strong { font-weight: 600; }
+.tfp-md hr, .tfp-caption hr { margin: 2em 0; padding: 0; color: inherit; background-color: transparent; border: none;
+                              border-bottom: 1px solid var(--st-border); height: 1px; }
+.tfp-md table { display: table; border-collapse: collapse; margin-bottom: 1rem; }
+.tfp-md tr { border-top: 1px solid var(--st-border-soft); }
+.tfp-md th { text-align: inherit; }
+.tfp-md th, .tfp-md td { padding: 0.375rem 0.75rem; border: 1px solid var(--st-border-soft); }
+.tfp-md p, .tfp-md ol, .tfp-md ul, .tfp-md dl, .tfp-md li { font-size: inherit; }
+.tfp-md > ul, .tfp-md > ol { text-align: left; }
+[data-testid="stHeadingWithActionElements"] { word-break: break-word; text-wrap: pretty; }
+[data-testid="stHeadingWithActionElements"] h1, [data-testid="stHeadingWithActionElements"] h2,
+[data-testid="stHeadingWithActionElements"] h3, [data-testid="stHeadingWithActionElements"] h4,
+[data-testid="stHeadingWithActionElements"] h5, [data-testid="stHeadingWithActionElements"] h6,
+[data-testid="stHeadingWithActionElements"] span { scroll-margin-top: 3.75rem; }
+/* ลิงก์หัวข้อ (Streamlit lp/op): โปร่งใสจน hover หรือโฟกัส */
+[data-testid="stHeaderActionElements"] { margin-left: 0.5rem; display: inline-flex; gap: 0.5rem; flex-shrink: 0;
+                                        vertical-align: middle; }
+[data-testid="stHeaderActionElements"] > * { margin-left: 0 !important; }
+[data-testid="stHeaderActionElements"] a { line-height: 0; display: inline-flex; align-items: center; justify-content: center;
+                                          opacity: 0; pointer-events: none; transition: opacity 150ms ease-in-out; }
+[data-testid="stHeaderActionElements"] a svg { stroke: var(--st-soft); stroke-width: 2.25; }
+[data-testid="stHeaderActionElements"] a:hover svg { stroke: var(--st-text); }
+[data-testid="stHeaderActionElements"] a:focus-visible,
+[data-testid="stHeadingWithActionElements"]:hover [data-testid="stHeaderActionElements"] a,
+[data-testid="stHeadingWithActionElements"]:focus-within [data-testid="stHeaderActionElements"] a { opacity: 1; pointer-events: auto; }
+
+/* ----- alert ----- */
+.stAlertContainer { font-weight: 400; margin: 0; border-radius: 0.5rem; padding: 1rem; line-height: 1.5; }
+.stAlertContainer [data-testid^="stAlertContent"] { display: flex; gap: 0.5rem; align-items: flex-start; }
+.stAlertContainer a { color: inherit; text-decoration: underline; }
+.tfp-alert-info { background-color: var(--st-info-bg); color: var(--st-info-fg); }
+.tfp-alert-success { background-color: var(--st-success-bg); color: var(--st-success-fg); }
+.tfp-alert-warning { background-color: var(--st-warning-bg); color: var(--st-warning-fg); }
+.tfp-alert-error { background-color: var(--st-error-bg); color: var(--st-error-fg); }
+
+/* ----- ปุ่ม ----- */
+.stButton, .stFormSubmitButton { width: 100%; }
+.tfp-btn { display: inline-flex; align-items: center; justify-content: center; font-weight: 400; padding: 0.25rem 0.75rem;
+           border-radius: 0.5rem; min-height: 2.5rem; margin: 0; line-height: 1.6; text-transform: none; font-size: inherit;
+           font-family: inherit; color: inherit; width: auto; cursor: pointer; user-select: none;
+           background-color: var(--st-btn-bg); border: 1px solid var(--st-border); }
+.tfp-btn.tfp-stretch { width: 100%; }
+.tfp-btn:focus { outline: none; }
+.tfp-btn:focus-visible { box-shadow: var(--st-focus) 0 0 0 0.2rem; }
+.tfp-btn-secondary:hover, .tfp-btn-secondary:focus-visible { background-color: var(--st-hover); }
+.tfp-btn-secondary:active { background-color: var(--st-active); }
+.tfp-btn-primary { background-color: var(--st-primary); color: rgb(255, 255, 255); border: 1px solid var(--st-primary); }
+.tfp-btn-primary:hover, .tfp-btn-primary:focus-visible { background-color: var(--st-primary-hover); border-color: var(--st-primary-hover); }
+.tfp-btn:disabled, .tfp-btn:disabled:hover, .tfp-btn:disabled:active { border-color: var(--st-border); background-color: transparent;
+                                                                         color: var(--st-disabled); cursor: not-allowed; }
+.tfp-btn-inner { display: flex; align-items: center; justify-content: center; width: 100%; }
+.tfp-btn-inner > span { display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; min-width: 0; }
+.tfp-btn [data-testid="stMarkdownContainer"] { margin-bottom: 0; font-size: 0.875rem; }
+.tfp-btn [data-testid="stMarkdownContainer"] p { margin: 0; font-size: inherit; display: inline; }
+.material-symbols-rounded, [data-testid="stIconMaterial"] {
+  display: inline-flex; align-items: center; justify-content: center; color: inherit; font-family: "Material Symbols Rounded";
+  font-weight: 400; font-style: normal; line-height: 1; letter-spacing: normal; text-transform: none; white-space: nowrap;
+  overflow-wrap: normal; direction: ltr; -webkit-font-smoothing: antialiased; user-select: none; }
+.tfp-icon-wrap { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; width: 1rem; height: 1rem; }
+.tfp-icon-wrap [data-testid="stIconMaterial"] { width: 1rem; height: 1rem; font-size: 1rem; line-height: 1rem; }
+
+/* ----- widget ----- */
+[data-testid="stWidgetLabel"] { font-size: 0.875rem; color: var(--st-text); display: flex; visibility: visible;
+                                margin-bottom: 0.25rem; height: auto; min-height: 1.5rem; vertical-align: middle;
+                                flex-direction: row; align-items: center; }
+[data-testid="stWidgetLabel"] [data-testid="stMarkdownContainer"] { margin-bottom: 0; font-size: 0.875rem; }
+[data-testid="stWidgetLabel"] p { margin: 0; font-size: inherit; }
+[data-testid="stWidgetLabel"].tfp-hidden { visibility: hidden; }
+/* ไอคอนช่วยเหลือ (Streamlit 1.64): div ยืดเต็มแถว label ชิดขวา > stTooltipIcon > ปุ่ม svg 16px */
+.tfp-label-help { display: flex; flex: 1 1 0%; justify-content: flex-end; }
+.stTooltipIcon { display: flex; align-items: center; }
+.tfp-tooltip-target { position: relative; display: flex; flex-direction: row; justify-content: flex-end; width: auto; }
+.tfp-help-btn { display: flex; align-items: center; justify-content: center; width: 1rem; height: 1rem; padding: 0; margin: 0;
+                border: none; background: transparent; color: var(--st-text); cursor: pointer; }
+.tfp-help-btn svg { display: block; }
+.tfp-tooltip { display: none; position: absolute; top: calc(100% + 0.5rem); right: 0; z-index: 1000060; width: max-content;
+               max-width: 30rem; padding: 0.375rem 0.75rem; border: 1px solid var(--st-border); border-radius: 0.5rem;
+               background-color: var(--st-tooltip-bg); box-shadow: var(--st-tooltip-shadow); color: var(--st-text);
+               font-size: 0.875rem; font-weight: 400; cursor: default; }
+.tfp-tooltip [data-testid="stMarkdownContainer"] p { margin: 0; }
+.tfp-tooltip-target:hover .tfp-tooltip, .tfp-tooltip-target:focus-within .tfp-tooltip { display: block; }
+.tfp-field { display: flex; flex-direction: row; align-items: stretch; width: 100%; height: 2.5rem; overflow: hidden;
+             border: 1px solid var(--st-bg2); border-radius: 0.5rem; background-color: var(--st-bg2); }
+.tfp-field:focus-within { border-color: var(--st-primary); }
+/* width: 100% — select ไม่ดันความกว้างขั้นต่ำของคอลัมน์ตามตัวเลือกที่ยาวที่สุด (Streamlit ใช้ <input> ที่กว้างตาม size ไม่ใช่ตัวเลือก) */
+.tfp-field select { flex: 1 1 auto; width: 100%; min-width: 0.125rem; padding: 0.5rem; border: none; outline: none; background: transparent;
+                    font-size: 0.875rem; line-height: 1.4; font-weight: 400; color: var(--st-text); appearance: none; }
+/* selectbox: ลูกศรแบบปุ่ม "Open" ของ Streamlit (กว้าง 32px ทับขอบขวา, คลิกทะลุถึง select) */
+.tfp-select { position: relative; }
+.tfp-select select { padding-right: calc(0.5rem + 2rem); }
+.tfp-select-chevron { position: absolute; top: 0; right: 0; bottom: 0; width: 2rem; display: flex; align-items: center;
+                      justify-content: center; padding: 1px 0.5rem 1px 0.25rem; color: var(--st-text); pointer-events: none; }
+.tfp-select-chevron svg { display: block; }
+.tfp-field select option { color: initial; }
+.tfp-field input, .tfp-field textarea { flex: 1 1 0%; min-width: 0; border: none; background: transparent; outline: none;
+                                         color: var(--st-text); font-family: var(--st-font); font-size: 0.875rem; font-weight: 400;
+                                         line-height: 1.4; padding: 0.5rem 0.5rem 0.5rem 0.75rem; }
+.tfp-field input::placeholder, .tfp-field textarea::placeholder { color: var(--st-soft); }
+.tfp-field input:disabled, .tfp-field textarea:disabled, .tfp-field select:disabled { cursor: not-allowed; color: var(--st-disabled); }
+/* st.text_area แบบ Streamlit 1.64 (TextArea.*.js x/S/C; วัดจากแอป harvest: ช่อง 92px, min 68px, padding 12px, ตัวอักษร 14px/1.4) */
+.stTextArea { display: flex; flex-direction: column; }
+[data-testid="stTextAreaRootElement"] { flex-grow: 1; border: 1px solid var(--st-bg2); border-radius: 0.5rem; background-color: var(--st-bg2); }
+[data-testid="stTextAreaRootElement"]:focus-within { border-color: var(--st-primary); }
+[data-testid="stTextAreaRootElement"] textarea { display: block; box-sizing: border-box; width: 100%;
+  min-height: 68px; padding: 0.75rem; border: none; outline: none; background-color: transparent; color: inherit;
+  font-family: inherit; font-size: 0.875rem; font-weight: 400; line-height: 1.4; resize: vertical; overflow-y: auto; }
+[data-testid="stTextAreaRootElement"] textarea::placeholder { color: var(--st-soft); }
+[data-testid="stTextAreaRootElement"] textarea:disabled { cursor: not-allowed; color: var(--st-disabled); -webkit-text-fill-color: var(--st-disabled); }
+/* text_input แบบ Streamlit 1.64 (react-aria): กล่องจัดกลางแนวตั้ง, input สูงตามบรรทัด, ไอคอนท้ายช่อง (ปุ่มดูรหัสผ่าน) */
+.stTextInput { position: relative; }
+/* ข้อความแนะนำใต้ช่องกรอก (Streamlit 1.64 InputInstructions e1kt9bl72 ในกล่องห่อ TextInput eqy66r58 / NumberInput e1rv0tzo7;
+   text_area ไม่มีกล่องห่อ) — ค่าจาก bundle และวัดจากแอปทดสอบ (private/verification/step6-input-instructions/) */
+.tfp-instr-wrap { position: absolute; bottom: 0; left: 0; right: 0; }
+.tfp-instr-number { bottom: auto; right: calc(2rem * 2); margin-right: 0.25rem; }
+.tfp-instructions { position: absolute; bottom: 0.125rem; right: calc(1.125rem * 0.5); margin: 0; font-size: 0.75rem;
+                    color: var(--st-soft); text-align: right; }
+[data-testid="stTextInputRootElement"] { align-items: center; }
+[data-testid="stTextInputRootElement"] input { height: auto; cursor: text; }
+.tfp-input-icons { display: flex; flex: 0 0 auto; align-items: center; }
+.tfp-pw-toggle { display: flex; flex: 0 0 auto; align-items: center; height: 1rem; padding: 0 0.5rem; margin: 0; border: none;
+                 background: transparent; color: var(--st-text); cursor: pointer; }
+.tfp-submit-wrap { display: flex; }
+.tfp-number input::-webkit-inner-spin-button, .tfp-number input::-webkit-outer-spin-button { appearance: none; margin: 0; }
+.tfp-number input { -moz-appearance: textfield; }
+.tfp-steps { display: flex; height: 100%; }
+.tfp-steps button { margin: 0; border: none; height: 100%; display: flex; align-items: center; width: 2rem; justify-content: center;
+                    color: var(--st-text); background-color: transparent; font-size: 1.1rem; }
+.tfp-steps button:hover:enabled, .tfp-steps button:focus:enabled { color: rgb(255, 255, 255); background-color: var(--st-primary); outline: none; }
+.tfp-steps button:disabled { cursor: not-allowed; color: var(--st-disabled); }
+/* ไอคอน −/+ แบบ Streamlit 1.64: SVG 8×8 (ปุ่ม padding 1px 6px) */
+.tfp-steps button { padding: 1px 6px; }
+.tfp-steps button svg { display: flex; flex: 0 0 auto; width: 0.5rem; height: 0.5rem; }
+/* multiselect แบบ Streamlit 1.64 (Multiselect.*.js: react-aria ComboBox; ค่าจาก computed style ของแอป harvest — private/verification/step6-harvest/) */
+.tfp-ms { position: relative; }
+.tfp-ms-field { display: flex; align-items: stretch; min-height: 2.5rem; max-height: 155.5px; border: 1px solid var(--st-bg2);
+  border-radius: 0.5rem; background-color: var(--st-bg2); }
+.tfp-ms-field:focus-within { border-color: var(--st-primary); }
+[data-testid="stMultiSelectTagsContainer"] { display: flex; flex: 1 1 auto; flex-wrap: wrap; align-items: center; min-width: 0;
+  padding: 5px 0 0 5px; overflow: hidden auto; cursor: text; }
+.tfp-ms-values { display: contents; }
+.tfp-ms-tag { display: flex; align-items: center; height: 28px; margin: 0 4px 5px 0; padding: 0 8px; border-radius: 6px;
+  background-color: var(--st-primary); color: rgb(255, 255, 255); font-size: 0.875rem; line-height: 1.6; overflow: hidden;
+  white-space: nowrap; cursor: default; max-width: 100%; }
+.tfp-ms-tag-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tfp-ms-tag button { display: flex; flex: 0 0 auto; align-items: center; justify-content: center; padding: 0 0 0 8px; border: none;
+  background: transparent; color: inherit; cursor: pointer; }
+.tfp-ms-tag button svg { display: block; }
+.tfp-ms-input { flex: 1 1 0%; min-width: 2rem; height: 28px; margin: 0 0 5px; padding: 0 4px; border: none; outline: none;
+  background: transparent; color: inherit; font-size: 0.875rem; line-height: 1.4; cursor: text; }
+.tfp-ms-input::placeholder { color: var(--st-soft); }
+.tfp-ms-clear { display: flex; flex: 0 0 auto; align-self: center; align-items: center; justify-content: center; width: 24px; height: 24px;
+  padding: 2px; border: none; border-radius: 0.5rem; background: transparent; color: var(--st-soft); cursor: pointer; }
+.tfp-ms-open { display: flex; flex: 0 0 auto; align-self: center; align-items: center; justify-content: center; width: 32px; height: 22px;
+  padding: 1px 8px 1px 4px; border: none; background: transparent; color: inherit; cursor: pointer; }
+.tfp-ms-clear svg, .tfp-ms-open svg { display: block; }
+[data-testid="stMultiSelectDropdown"] { position: absolute; z-index: 100000; left: 0; right: 0; top: calc(100% + 4px); max-height: 300px;
+  overflow: hidden; border: 1px solid var(--st-popover-border); border-radius: 0.5rem; background-color: var(--st-bg);
+  box-shadow: var(--st-popover-shadow); }
+.tfp-ms-list { max-height: 300px; overflow: hidden auto; }
+.tfp-ms-option { display: flex; align-items: center; height: 40px; padding: 0 5px; font-size: 0.875rem; line-height: 1.6; cursor: pointer; }
+.tfp-ms-option > div { display: flex; align-items: center; width: 100%; height: 28px; padding: 0 8px; border-radius: 6px;
+  overflow: hidden; white-space: nowrap; }
+.tfp-ms-option[data-focused] > div, .tfp-ms-option:hover > div { background-color: var(--st-hover); }
+/* ปิดใช้งาน: ป้ายสีจาง ตัวอักษร fadedText40 ช่องพิมพ์ cursor not-allowed (วัดจาก Streamlit 1.64) */
+.tfp-ms-field[data-disabled] .tfp-ms-tag { background-color: var(--st-border); color: var(--st-disabled); }
+.tfp-ms-field[data-disabled] .tfp-ms-input { color: var(--st-disabled); cursor: not-allowed; }
+.tfp-ms-field[data-disabled] .tfp-ms-open { color: var(--st-disabled); cursor: not-allowed; }
+.tfp-ms-empty { display: flex; align-items: center; height: 40px; padding: 0 13px; font-size: 0.875rem; color: var(--st-soft); }
+.stSlider { position: relative; }
+/* st.slider ตาม Streamlit 1.64 (Slider ve/ye/be/Ce/xe/Se/we) */
+.stSlider { position: relative; }
+.stSlider:focus-within:has(:focus-visible) { --slider-focused: 1; }
+.tfp-slider { position: relative; width: 100%; padding-left: calc(0.75rem / 2); padding-right: calc(0.75rem / 2); }
+.tfp-slider-track { position: relative; touch-action: none; padding-top: calc(2.5rem / 2); padding-bottom: calc(2.5rem / 2); }
+.tfp-slider-fill { position: absolute; height: 0.25rem; left: 0; right: 0; top: 50%; transform: translateY(-50%);
+                   pointer-events: none; }
+.tfp-slider-fill.tfp-disabled { background: var(--st-active); }
+.tfp-slider-thumb { position: absolute; top: 50%; transform: translate(-50%, -50%); touch-action: none; display: flex;
+                    align-items: center; justify-content: center; width: 0.75rem; height: 0.75rem; border: none;
+                    border-radius: 100%; background-color: var(--st-primary); box-shadow: none; }
+.tfp-slider-thumb.tfp-disabled { background-color: rgb(163, 168, 184); }
+.tfp-slider:has(.tfp-slider-input:focus-visible) .tfp-slider-thumb,
+.tfp-slider:has(.tfp-slider-input:active) .tfp-slider-thumb { box-shadow: var(--st-focus) 0 0 0 0.2rem; }
+.tfp-thumb-value { position: absolute; top: -1.6em; font-family: var(--st-font); font-size: 0.875rem; line-height: 1.6;
+                   font-weight: 400; color: var(--st-primary); white-space: nowrap; background-color: transparent;
+                   pointer-events: none; }
+.tfp-slider-thumb.tfp-disabled .tfp-thumb-value { color: rgb(163, 168, 184); }
+[data-testid="stSliderTickBar"] { position: absolute; left: 0; right: 0; top: 100%; display: flex; justify-content: space-between;
+                                  pointer-events: none; margin-top: -0.75rem; font-size: 0.875rem; line-height: 1.6;
+                                  font-weight: 400; color: var(--st-soft); opacity: var(--slider-focused, 0);
+                                  transition: opacity 300ms 200ms; }
+.stSlider:hover [data-testid="stSliderTickBar"] { opacity: 1; transition: none; }
+.stSlider:has(.tfp-slider-input:disabled) [data-testid="stSliderTickBar"] { color: var(--st-disabled); }
+.tfp-thumb-value [data-testid="stMarkdownContainer"], [data-testid="stSliderTickBar"] [data-testid="stMarkdownContainer"] {
+  width: auto; margin-bottom: 0; font-size: inherit; }
+.tfp-thumb-value p, [data-testid="stSliderTickBar"] p { margin: 0; }
+/* input range โปร่งใสทับทั้งกลุ่ม: ปุ่ม 12px → ตำแหน่งค่า 6px..(กว้าง-6px) ตรงกับปุ่มที่วาด */
+.tfp-slider-input { position: absolute; left: 0; right: 0; top: 0; width: 100%; height: 100%; margin: 0; padding: 0;
+                    opacity: 0; cursor: pointer; -webkit-appearance: none; appearance: none; background: transparent; }
+.tfp-slider-input:disabled { cursor: not-allowed; }
+.tfp-slider-input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 0.75rem; height: 0.75rem; }
+.tfp-slider-input::-moz-range-thumb { width: 0.75rem; height: 0.75rem; border: none; }
+/* st.toggle ตาม Streamlit 1.64 (Checkbox Q/$/me/he/le) */
+.stCheckbox { display: flex; align-items: center; min-height: 1.5rem; }
+.tfp-toggle { display: flex; align-items: flex-start; gap: 0.5rem; margin: 0; cursor: pointer; position: relative; }
+.tfp-toggle.tfp-disabled { cursor: not-allowed; color: var(--st-disabled); }
+.tfp-toggle:has(input:focus-visible) { background-color: var(--st-active); }
+.tfp-switch { display: flex; flex-shrink: 0; align-items: center; margin-top: calc((1.5 * 0.875rem - 1rem) / 2); width: 2rem;
+              height: 1rem; padding-left: 0.125rem; padding-right: 0.125rem; border-radius: 9999px;
+              background-color: var(--st-border); transition: background-color 150ms ease; }
+.tfp-toggle:hover .tfp-switch { background-color: var(--st-hover); }
+.tfp-switch.on, .tfp-toggle:hover .tfp-switch.on { background-color: var(--st-primary); }
+.tfp-toggle.tfp-disabled .tfp-switch { background-color: var(--st-border); }
+.tfp-switch > div { flex-shrink: 0; width: 0.75rem; height: 0.75rem; border-radius: 9999px; background-color: var(--st-switch-thumb);
+                    transform: translateX(0); transition: transform 150ms ease; }
+.tfp-switch.on > div { transform: translateX(1rem); }
+.tfp-toggle.tfp-disabled .tfp-switch > div { background-color: var(--st-switch-thumb-disabled); }
+.tfp-toggle [data-testid="stWidgetLabel"] { display: flex; visibility: visible; vertical-align: middle; flex-direction: row;
+                                           align-items: center; line-height: 1.5; margin-bottom: 0; min-height: 0; }
+.tfp-toggle [data-testid="stWidgetLabel"][visibility="2"] { display: none; }
+.tfp-toggle [data-testid="stWidgetLabel"][visibility="1"] { visibility: hidden; }
+.tfp-toggle-title { display: flex; align-items: center; min-width: 0; }
+
+/* ----- expander ----- */
+.stExpander { width: 100%; }
+.stExpander details { margin: 0; width: 100%; border: 1px solid var(--st-border); border-radius: 0.5rem; }
+.stExpander summary { position: relative; display: flex; width: 100%; min-width: 0; overflow: hidden; font-size: inherit;
+                      align-items: center; cursor: pointer; list-style-type: none; padding: 0.25rem 0.75rem;
+                      min-height: calc(-2px + 2.5rem); background-color: transparent; border-radius: 0.5rem;
+                      transition: border-radius 200ms cubic-bezier(0.23, 1, 0.32, 1) 300ms, background-color 150ms; }
+.stExpander summary:focus { outline: none; }
+.stExpander summary:focus-visible { box-shadow: var(--st-focus) 0 0 0 0.2rem; }
+.stExpander summary::-webkit-details-marker { display: none; }
+.stExpander summary:hover, .stExpander summary:focus-visible { background-color: var(--st-hover); }
+.stExpander summary:active { background-color: var(--st-active); }
+.stExpander details[open] > summary { background-color: var(--st-exp-open); border-radius: 0.5rem 0.5rem 0 0; }
+.stExpander summary > span { display: flex; align-items: center; flex-grow: 1; min-width: 0; width: 100%; max-width: 100%;
+                             overflow: hidden; gap: 0.5rem; }
+/* หัว expander ตาม computed style ของ Streamlit 1.64: กล่องไอคอน 16px แบบ flex, กล่องข้อความ flex, ข้อความ 14px */
+.stExpander summary > span > span { display: flex; flex: 0 0 auto; align-items: center; justify-content: center;
+                                   width: 1rem; height: 1rem; }
+.stExpander summary > span > div { display: flex; flex: 1 1 auto; }
+.stExpander summary [data-testid="stIconMaterial"] { display: flex; font-size: 1rem; width: 1rem; height: 1rem; line-height: 1rem; }
+.stExpander summary [data-testid="stMarkdownContainer"] { margin-bottom: 0; font-size: 0.875rem; line-height: 1.6; }
+.stExpander summary [data-testid="stMarkdownContainer"] p { margin: 0; }
+[data-testid="stExpanderDetails"] { padding: 1rem; border-top: 1px solid var(--st-border); }
+
+/* ----- ตาราง/กราฟ/สถานะ ----- */
+[data-testid="stFullScreenFrame"] { width: 100%; height: 100%; }
+/* โครงกราฟตาม Streamlit 1.64 (styled-components Wue + ตัวห่อ max-width 100%) */
+.tfp-chart-frame { position: relative; max-width: 100%; }
+.stVegaLiteChart { width: auto; height: auto; }
+/* use_container_width: กว้างเต็มช่อง — contain: inline-size กันไม่ให้ความกว้าง svg เดิมดันคอลัมน์ให้ตกบรรทัด
+   ระหว่างเปลี่ยนขนาด (ใน Streamlit เป็นจังหวะ race) ผลเมื่อขนาดนิ่งเท่ากับ Streamlit */
+.stVegaLiteChart.tfp-container-width { width: 100%; contain: inline-size; }
+.stVegaLiteChart.vega-embed { position: relative; display: inline-block; box-sizing: border-box; }
+.stVegaLiteChart.vega-embed.fit-x { width: 100%; }
+.stVegaLiteChart.vega-embed.fit-y { height: 100%; }
+.stVegaLiteChart.vega-embed svg.marks g.role-scope path.background,
+.stVegaLiteChart.vega-embed svg.marks g.role-scope path.foreground { pointer-events: auto; }
+/* tooltip ของกราฟ (Streamlit Uue) */
+#vg-tooltip-element { visibility: hidden; position: fixed; font-family: var(--st-font); color: var(--st-text);
+                      border: 1px solid var(--st-border); background-color: var(--st-tooltip-bg); font-size: 0.75rem;
+                      box-shadow: var(--st-tooltip-shadow); max-width: 30rem; padding: 0.375rem 0.75rem;
+                      border-radius: 0.5rem; z-index: 1000060; }
+#vg-tooltip-element.visible { visibility: visible; }
+#vg-tooltip-element h2 { margin-top: 0; margin-bottom: 0.5rem; font-size: 0.875rem; }
+#vg-tooltip-element td { border: none; }
+#vg-tooltip-element table { border-spacing: 0; }
+#vg-tooltip-element table tr { border: none; }
+#vg-tooltip-element table tr td { overflow: hidden; text-overflow: ellipsis; padding-top: 0.125rem; padding-bottom: 0.125rem; }
+#vg-tooltip-element table tr td.key { max-width: calc((30rem - 2 * 0.75rem) * 0.4); text-align: right; color: var(--st-soft);
+                                      white-space: nowrap; padding-right: 0.25rem; }
+#vg-tooltip-element table tr td.value { max-width: calc((30rem - 2 * 0.75rem) * 0.6); text-align: left; display: -webkit-box;
+                                        -webkit-line-clamp: 5; -webkit-box-orient: vertical; line-clamp: 5;
+                                        word-wrap: break-word; }
+/* st.dataframe: Streamlit 1.64 วาดด้วย canvas (Glide Data Grid) — ระบบใหม่ใช้ตาราง HTML ตามค่าธีมของ Glide (DataFrame.*.js:
+   แถว/หัว 35px, padding แนวนอน 8px, เส้นตาราง dataframeBorderColor, หัวตาราง fadedText60 บนพื้น bgMix, ตัวอักษร 14px;
+   สีวัดจากภาพของแอป harvest: private/verification/step6-harvest/dataframe/) */
+/* โครงเดียวกับ Streamlit 1.64: stDataFrame > stDataFrameResizable (กรอบ 1px มุม 8px) > พื้นที่ Glide (เริ่มที่ (1,1) มุม 8px
+   พื้นเซลล์) — ความสูงตั้งใน DataFrameEl; พื้นที่ Glide ที่สูงกว่าเนื้อหากรอบ 2px ยื่นทับขอบล่างและเลยกรอบลงไป (กรอบ overflow visible) */
+.tfp-df-frame { box-sizing: border-box; border: 1px solid var(--st-border-soft); border-radius: 0.5rem; }
+.tfp-df-scroll { overflow: auto; border-radius: 0.5rem; background-color: var(--st-bg); }
+.tfp-dataframe table { border-collapse: separate; border-spacing: 0; font-size: 0.875rem; line-height: 1.6; table-layout: fixed; }
+.tfp-dataframe.tfp-stretch table { width: 100%; }
+/* padding บน 2px: ข้อความต่ำกว่ากึ่งกลางแถว 1px เท่าตำแหน่งที่ Glide วาด (เทียบ pixel กับแอปจำลอง) */
+.tfp-dataframe th, .tfp-dataframe td { box-sizing: border-box; height: 35px; max-width: 500px; padding: 2px 8px 0; text-align: left;
+  vertical-align: middle; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: clip; }
+/* เส้นตารางแบบ Glide: วาดที่ pixel แรกของคอลัมน์/แถวถัดไป และไม่กินที่ (ข้อความเริ่มที่ขอบคอลัมน์ + 8px) */
+.tfp-dataframe tr > :not(:first-child) { box-shadow: inset 1px 0 0 var(--st-border-soft); }
+.tfp-dataframe tbody tr > :first-child { box-shadow: inset 0 1px 0 var(--st-border-soft); }
+.tfp-dataframe tbody tr > :not(:first-child) { box-shadow: inset 1px 0 0 var(--st-border-soft), inset 0 1px 0 var(--st-border-soft); }
+/* เส้นหลังแถวสุดท้าย (Glide วาดเส้นทุกขอบแถว) — เงาไม่เพิ่มพื้นที่เลื่อน ตารางยาวจึงไม่เห็นเหมือน Glide */
+.tfp-dataframe tbody tr:last-child > :first-child { box-shadow: inset 0 1px 0 var(--st-border-soft), 0 1px 0 var(--st-border-soft); }
+.tfp-dataframe tbody tr:last-child > :not(:first-child) { box-shadow: inset 1px 0 0 var(--st-border-soft), inset 0 1px 0 var(--st-border-soft),
+  0 1px 0 var(--st-border-soft); }
+/* canvas ของ Glide ใช้ฟอนต์ธีม ไม่โดน CSS ฟอนต์ของหน้าเดิม (html, body, * { font-family: 'Prompt' … !important }) */
+.tfp-dataframe th, .tfp-dataframe td { font-family: var(--st-font) !important; }
+.tfp-dataframe thead th { position: sticky; top: 0; background-color: var(--st-exp-open); color: var(--st-soft); }
+.tfp-dataframe tbody th { background-color: var(--st-exp-open); color: var(--st-soft); }
+.tfp-dataframe td { background-color: var(--st-bg); color: var(--st-text); }
+/* Glide วาดข้อความเซลล์ที่ขอบ + padding + 0.5px (DataFrame.*.js fillText ใน no(); หัวตารางไม่บวก) */
+.tfp-dataframe tbody > tr > * { padding-left: 8.5px; }
+.tfp-dataframe td.tfp-num { text-align: right; padding-left: 8px; padding-right: 8.5px; }
+.tfp-spinner { display: inline-flex; align-items: center; gap: 0.5rem; font-size: 0.875rem; }
+.tfp-spinner [data-testid="stMarkdownContainer"] { margin-bottom: 0; }
+.tfp-spinner p { margin: 0; }
+.tfp-spinner i { width: 1.25rem; height: 1.25rem; border-radius: 50%; border: 3px solid var(--st-border);
+                 border-top-color: var(--st-primary); animation: tfp-spin 0.8s linear infinite; }
+@keyframes tfp-spin { to { transform: rotate(360deg); } }
+
+/* ----- จอแคบ: Streamlit ให้ sidebar ลอยทับเนื้อหา (≤ 768px) ----- */
+@media (max-width: 768px) {
+  .stSidebar { position: absolute; top: 0; left: 0; bottom: 0; box-shadow: rgba(0, 0, 0, 0.16) -2rem 0 2rem 2rem; }
+  .stMain { position: absolute; inset: 0; height: 100dvh; }
+}
+
+/* Mobile: the legacy backtest note contains an inline nowrap span wider than the viewport.
+   Keep all text and table values; allow only this prose to wrap. */
+@media (max-width: 768px) {
+  .stApp .bt-desc-box span { white-space: normal !important; overflow-wrap: anywhere; }
+}

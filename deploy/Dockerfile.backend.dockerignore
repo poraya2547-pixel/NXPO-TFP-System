@@ -1,0 +1,6 @@
+*
+!backend/requirements.lock
+!backend/app/**
+!backend/migrations/**
+**/__pycache__
+**/*.pyc

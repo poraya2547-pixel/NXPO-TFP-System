@@ -1,0 +1,12 @@
+# Step 1C: image เฉพาะส่วนคำนวณ ใช้พิสูจน์ว่าตัวเลขบน Linux ตรง baseline ของ Mac (ไม่ใช่ image ที่ส่งมอบ)
+# ไม่มี snapshot หรือคีย์ใน image: snapshot ส่งเข้าแบบอ่านอย่างเดียวตอนรัน และรันโดยปิด network
+FROM python:3.11.15-slim
+ENV PYTHONDONTWRITEBYTECODE=1 PYTHONHASHSEED=0 PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+# เวอร์ชันเดียวกับ env idntwww (docs/baseline/environment/pip-freeze.txt) ติดตั้งจาก wheel เท่านั้น
+RUN pip install --only-binary=:all: \
+        numpy==2.4.6 pandas==3.0.3 scipy==1.17.1 statsmodels==0.15.0 patsy==1.0.3 \
+        reportlab==5.0.1 gspread==6.2.1 google-auth==2.58.1 streamlit==1.64.0
+WORKDIR /work
+COPY TFP.py TFP_App1.3.0.py data_loader.py ./
+COPY tools/baseline/oracle.py tools/baseline/replay.py tools/baseline/fingerprint.py tools/baseline/safe_io.py tools/baseline/
+RUN mkdir -p private/baseline

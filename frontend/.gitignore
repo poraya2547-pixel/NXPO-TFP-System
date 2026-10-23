@@ -1,0 +1,5 @@
+# ไฟล์ที่เครื่องมือสร้าง ไม่ใช่ source
+node_modules/
+dist/
+*.tsbuildinfo
+.DS_Store
