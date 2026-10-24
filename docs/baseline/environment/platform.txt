@@ -1,0 +1,12 @@
+captured_at: 2026-09-27 23:48:10 +0700
+os: macOS 26.6.2 (25G83)
+arch: arm64
+cpu: Apple M3
+logical_cpus: 8
+memory_bytes: 17179869184
+python: Python 3.11.15
+python_path: /opt/anaconda3/envs/idntwww/bin/python
+OMP_NUM_THREADS: unset
+OPENBLAS_NUM_THREADS: unset
+MKL_NUM_THREADS: unset
+VECLIB_MAXIMUM_THREADS: unset

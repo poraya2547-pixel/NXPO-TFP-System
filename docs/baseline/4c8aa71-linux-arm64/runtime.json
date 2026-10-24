@@ -1,0 +1,85 @@
+{
+ "note": "runtime ที่ reference ชุดนี้ผูกอยู่ ผลจาก runtime อื่นใช้เทียบกับชุดนี้ไม่ได้ (ตรวจโดย compare_runs.py)",
+ "name": "4c8aa71-linux-arm64",
+ "created_from_run": "4c8aa71-linux-arm64-1",
+ "declared_image": "sha256:37424b8dfa971dc0313209a49cd916ed67cc4c9742d751300e304e9447de86f4",
+ "identity": {
+  "system": "Linux",
+  "machine": "aarch64",
+  "python_build": "3.11.15 (main, Aug  5 2026, 01:17:15) [GCC 14.2.0]",
+  "libc": [
+   "glibc",
+   "2.41"
+  ],
+  "packages": {
+   "numpy": "2.4.6",
+   "pandas": "3.0.3",
+   "scipy": "1.17.1",
+   "statsmodels": "0.15.0",
+   "patsy": "1.0.3"
+  },
+  "package_record_sha256": {
+   "numpy": "391142fcb50bb172b409a22676637e4b91786e0eaaa382891f429bfaa4407fd6",
+   "pandas": "f5ec1f0abc9aa0682e9595f4eb83129bf7affb7f79479af1170c0c8cdc5da9e3",
+   "scipy": "7dcf878fe023d2c345e88a572a2e20578e1f41a95691ff7224dbc5c9ef70b690",
+   "statsmodels": "84a7b37acf04684b3ed4b6e1205ad3b5ecb6a4a377dcd469c7cf54733e1736b3",
+   "patsy": "576f600f783993b950243058397cd76dad95355d9c5907b6785b67a58e436a23"
+  },
+  "blas_lapack": {
+   "numpy": {
+    "blas": {
+     "name": "scipy-openblas",
+     "found": true,
+     "version": "0.3.31.188.0",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include",
+     "lib directory": "/opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib",
+     "openblas configuration": "OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY neoversev2 MAX_THREADS=64",
+     "pc file directory": "/project/.openblas"
+    },
+    "lapack": {
+     "name": "scipy-openblas",
+     "found": true,
+     "version": "0.3.31.188.0",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/include",
+     "lib directory": "/opt/_internal/cpython-3.11.14/lib/python3.11/site-packages/scipy_openblas64/lib",
+     "openblas configuration": "OpenBLAS 0.3.31.188.0  USE64BITINT DYNAMIC_ARCH NO_AFFINITY neoversev2 MAX_THREADS=64",
+     "pc file directory": "/project/.openblas"
+    }
+   },
+   "scipy": {
+    "blas": {
+     "name": "scipy-openblas",
+     "found": true,
+     "version": "0.3.30",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/_internal/cpython-3.11.13/lib/python3.11/site-packages/scipy_openblas32/include",
+     "lib directory": "/opt/_internal/cpython-3.11.13/lib/python3.11/site-packages/scipy_openblas32/lib",
+     "openblas configuration": "OpenBLAS 0.3.30 DYNAMIC_ARCH NO_AFFINITY neoversev2 MAX_THREADS=64",
+     "pc file directory": "/project/",
+     "has ilp64": false
+    },
+    "lapack": {
+     "name": "scipy-openblas",
+     "found": true,
+     "version": "0.3.30",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/_internal/cpython-3.11.13/lib/python3.11/site-packages/scipy_openblas32/include",
+     "lib directory": "/opt/_internal/cpython-3.11.13/lib/python3.11/site-packages/scipy_openblas32/lib",
+     "openblas configuration": "OpenBLAS 0.3.30 DYNAMIC_ARCH NO_AFFINITY neoversev2 MAX_THREADS=64",
+     "pc file directory": "/project/",
+     "has ilp64": false
+    }
+   }
+  },
+  "compute_env": {
+   "PYTHONHASHSEED": "0",
+   "OPENBLAS_NUM_THREADS": null,
+   "OMP_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null,
+   "OPENBLAS_CORETYPE": null
+  }
+ }
+}

@@ -1,0 +1,74 @@
+# ระบบ TFP: web (React + nginx) · api (FastAPI) · worker (Python 1 process) · db (Postgres)
+# ค่าตั้งอยู่ใน deploy/.env (คัดลอกจาก .env.example — ไม่ขึ้น git) ไฟล์ค่าลับเดิมส่งเข้าแบบอ่านอย่างเดียวผ่าน secrets
+#   docker compose -f deploy/compose.yaml --env-file deploy/.env up -d --build
+name: tfp
+services:
+  db:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_USER: tfp
+      POSTGRES_DB: tfp
+      POSTGRES_PASSWORD: ${TFP_DB_PASSWORD:?ตั้ง TFP_DB_PASSWORD ใน deploy/.env}
+    volumes: [db-data:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tfp -d tfp"]
+      interval: 5s
+      retries: 20
+    restart: unless-stopped
+    networks: [backend]
+
+  api:
+    build: {context: .., dockerfile: deploy/Dockerfile.backend, target: app}
+    image: tfp-backend:${TFP_VERSION:-local}
+    environment: &backend-env
+      TFP_DATABASE_URL: postgresql://tfp:${TFP_DB_PASSWORD}@db:5432/tfp
+      TFP_SECRETS_FILE: /run/secrets/tfp_secrets
+      TFP_COOKIE_SECURE: ${TFP_COOKIE_SECURE:-1}
+      TFP_ALLOWED_ORIGINS: ${TFP_ALLOWED_ORIGINS:?ตั้ง TFP_ALLOWED_ORIGINS (เช่น https://tfp.example.go.th)}
+      TFP_TRUST_PROXY: "1"
+      TFP_SHEETS_FIXTURE: ${TFP_SHEETS_FIXTURE:-}
+      # โหมดทดสอบของ Gemini (คำตอบจากไฟล์ ไม่เรียก Gemini จริง) — ระบบที่ใช้งานจริงต้องเว้นว่าง
+      TFP_GEMINI_FIXTURE: ${TFP_GEMINI_FIXTURE:-}
+      MPLCONFIGDIR: /tmp/matplotlib   # แคชฟอนต์ของ matplotlib (กราฟในไฟล์ Word) — โฟลเดอร์บ้านใน image เขียนไม่ได้
+      TFP_SESSION_IDLE_MINUTES: ${TFP_SESSION_IDLE_MINUTES:-240}
+      TFP_SESSION_MAX_HOURS: ${TFP_SESSION_MAX_HOURS:-24}
+    secrets: [tfp_secrets]
+    volumes: ["${TFP_FIXTURE_MOUNT:-./empty:/fixtures:ro}"]
+    depends_on: {db: {condition: service_healthy}}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import json,urllib.request; assert json.load(urllib.request.urlopen('http://127.0.0.1:8000/api/v1/health', timeout=3))['status'] == 'ok'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+    networks: [backend]
+
+  worker:
+    image: tfp-backend:${TFP_VERSION:-local}
+    command: ["python", "-m", "app.worker"]
+    environment: *backend-env
+    secrets: [tfp_secrets]
+    volumes: ["${TFP_FIXTURE_MOUNT:-./empty:/fixtures:ro}", "${TFP_GEMINI_FIXTURE_MOUNT:-./empty:/gemini-fixtures:ro}"]
+    depends_on: {db: {condition: service_healthy}, api: {condition: service_started}}
+    restart: unless-stopped
+    networks: [backend, egress]   # worker ต่อ Google Sheets / Gemini ได้ (api และ db ไม่ออกอินเทอร์เน็ต)
+
+  web:
+    build: {context: .., dockerfile: deploy/Dockerfile.web}
+    image: tfp-web:${TFP_VERSION:-local}
+    ports: ["${TFP_WEB_BIND:-127.0.0.1}:${TFP_WEB_PORT:-8080}:8080"]
+    depends_on: {api: {condition: service_started}}
+    restart: unless-stopped
+    networks: [backend, edge]
+
+secrets:
+  tfp_secrets:
+    file: ${TFP_SECRETS_PATH:?ระบุ path ของไฟล์ค่าลับรูปแบบ secrets.toml เดิม}
+
+volumes:
+  db-data:
+
+networks:
+  backend: {internal: true}
+  egress: {}
+  edge: {}

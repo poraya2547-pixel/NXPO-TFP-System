@@ -1,0 +1,186 @@
+Build Dependencies:
+  blas:
+    detection method: pkgconfig
+    found: true
+    include directory: /opt/anaconda3/envs/idntwww/include
+    lib directory: /opt/anaconda3/envs/idntwww/lib
+    name: openblas
+    openblas configuration: USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS=
+      NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128
+    pc file directory: /opt/anaconda3/envs/idntwww/lib/pkgconfig
+    version: 0.3.31
+  lapack:
+    detection method: pkgconfig
+    found: true
+    include directory: /opt/anaconda3/envs/idntwww/include
+    lib directory: /opt/anaconda3/envs/idntwww/lib
+    name: openblas
+    openblas configuration: USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS=
+      NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128
+    pc file directory: /opt/anaconda3/envs/idntwww/lib/pkgconfig
+    version: 0.3.31
+Compilers:
+  c:
+    args: -ftree-vectorize, -fPIC, -fstack-protector-strong, -O2, -pipe, -isystem,
+      /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/numpy_and_numpy_base_1780345816396/work=/usr/local/src/conda/numpy-base-2.4.6,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -mmacosx-version-min=12.1
+    commands: arm64-apple-darwin20.0.0-clang
+    linker: ld64
+    linker args: -Wl,-headerpad_max_install_names, -Wl,-dead_strip_dylibs, -Wl,-rpath,/opt/anaconda3/envs/idntwww/lib,
+      -L/opt/anaconda3/envs/idntwww/lib, -ftree-vectorize, -fPIC, -fstack-protector-strong,
+      -O2, -pipe, -isystem, /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/numpy_and_numpy_base_1780345816396/work=/usr/local/src/conda/numpy-base-2.4.6,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -mmacosx-version-min=12.1
+    name: clang
+    version: 17.0.6
+  c++:
+    args: -ftree-vectorize, -fPIC, -fstack-protector-strong, -O2, -pipe, -stdlib=libc++,
+      -fvisibility-inlines-hidden, -fmessage-length=0, -isystem, /opt/anaconda3/envs/idntwww/include,
+      -fdebug-prefix-map=/Users/ec2-user/croot/numpy_and_numpy_base_1780345816396/work=/usr/local/src/conda/numpy-base-2.4.6,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -mmacosx-version-min=12.1
+    commands: arm64-apple-darwin20.0.0-clang++
+    linker: ld64
+    linker args: -Wl,-headerpad_max_install_names, -Wl,-dead_strip_dylibs, -Wl,-rpath,/opt/anaconda3/envs/idntwww/lib,
+      -L/opt/anaconda3/envs/idntwww/lib, -ftree-vectorize, -fPIC, -fstack-protector-strong,
+      -O2, -pipe, -stdlib=libc++, -fvisibility-inlines-hidden, -fmessage-length=0,
+      -isystem, /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/numpy_and_numpy_base_1780345816396/work=/usr/local/src/conda/numpy-base-2.4.6,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -mmacosx-version-min=12.1
+    name: clang
+    version: 17.0.6
+  cython:
+    commands: cython
+    linker: cython
+    name: cython
+    version: 3.2.4
+Machine Information:
+  build:
+    cpu: aarch64
+    endian: little
+    family: aarch64
+    system: darwin
+  host:
+    cpu: aarch64
+    endian: little
+    family: aarch64
+    system: darwin
+Python Information:
+  path: /opt/anaconda3/envs/idntwww/bin/python
+  version: '3.11'
+SIMD Extensions:
+  baseline:
+  - NEON
+  - NEON_FP16
+  - NEON_VFPV4
+  - ASIMD
+  found:
+  - ASIMDHP
+  - ASIMDDP
+  not found:
+  - ASIMDFHM
+
+--- scipy
+Build Dependencies:
+  blas:
+    detection method: pkgconfig
+    found: true
+    has ilp64: false
+    include directory: /opt/anaconda3/envs/idntwww/include
+    lib directory: /opt/anaconda3/envs/idntwww/lib
+    name: openblas
+    openblas configuration: USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS=
+      NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128
+    pc file directory: /opt/anaconda3/envs/idntwww/lib/pkgconfig
+    version: 0.3.31
+  lapack:
+    detection method: pkgconfig
+    found: true
+    has ilp64: false
+    include directory: /opt/anaconda3/envs/idntwww/include
+    lib directory: /opt/anaconda3/envs/idntwww/lib
+    name: openblas
+    openblas configuration: USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS=
+      NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128
+    pc file directory: /opt/anaconda3/envs/idntwww/lib/pkgconfig
+    version: 0.3.31
+  pybind11:
+    detection method: pkgconfig
+    include directory: /opt/anaconda3/envs/idntwww/include
+    name: pybind11
+    version: 2.13.6
+Compilers:
+  c:
+    args: -ftree-vectorize, -fPIC, -fPIE, -fstack-protector-strong, -O2, -pipe, -isystem,
+      /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -D_FORTIFY_SOURCE=2, -isystem, /opt/anaconda3/envs/idntwww/include, -mmacosx-version-min=12.1,
+      -mmacosx-version-min=12.1
+    commands: arm64-apple-darwin20.0.0-clang
+    linker: ld64
+    linker args: -Wl,-pie, -Wl,-headerpad_max_install_names, -Wl,-dead_strip_dylibs,
+      -Wl,-rpath,/opt/anaconda3/envs/idntwww/lib, -L/opt/anaconda3/envs/idntwww/lib,
+      -ftree-vectorize, -fPIC, -fPIE, -fstack-protector-strong, -O2, -pipe, -isystem,
+      /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -D_FORTIFY_SOURCE=2, -isystem, /opt/anaconda3/envs/idntwww/include, -mmacosx-version-min=12.1,
+      -mmacosx-version-min=12.1
+    name: clang
+    version: 17.0.6
+  c++:
+    args: -ftree-vectorize, -fPIC, -fPIE, -fstack-protector-strong, -O2, -pipe, -stdlib=libc++,
+      -fvisibility-inlines-hidden, -fmessage-length=0, -isystem, /opt/anaconda3/envs/idntwww/include,
+      -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -D_FORTIFY_SOURCE=2, -isystem, /opt/anaconda3/envs/idntwww/include, -mmacosx-version-min=12.1,
+      -mmacosx-version-min=12.1
+    commands: arm64-apple-darwin20.0.0-clang++
+    linker: ld64
+    linker args: -Wl,-pie, -Wl,-headerpad_max_install_names, -Wl,-dead_strip_dylibs,
+      -Wl,-rpath,/opt/anaconda3/envs/idntwww/lib, -L/opt/anaconda3/envs/idntwww/lib,
+      -ftree-vectorize, -fPIC, -fPIE, -fstack-protector-strong, -O2, -pipe, -stdlib=libc++,
+      -fvisibility-inlines-hidden, -fmessage-length=0, -isystem, /opt/anaconda3/envs/idntwww/include,
+      -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix,
+      -D_FORTIFY_SOURCE=2, -isystem, /opt/anaconda3/envs/idntwww/include, -mmacosx-version-min=12.1,
+      -mmacosx-version-min=12.1
+    name: clang
+    version: 17.0.6
+  cython:
+    commands: cython
+    linker: cython
+    name: cython
+    version: 3.2.4
+  fortran:
+    args: -march=armv8-a, -ftree-vectorize, -fPIC, -fno-stack-protector, -O2, -pipe,
+      -isystem, /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix
+    commands: /Users/ec2-user/croot/scipy_1776277869911/_build_env/bin/arm64-apple-darwin20.0.0-gfortran
+    linker: ld64
+    linker args: -Wl,-pie, -Wl,-headerpad_max_install_names, -Wl,-dead_strip_dylibs,
+      -Wl,-rpath,/opt/anaconda3/envs/idntwww/lib, -L/opt/anaconda3/envs/idntwww/lib,
+      -march=armv8-a, -ftree-vectorize, -fPIC, -fno-stack-protector, -O2, -pipe, -isystem,
+      /opt/anaconda3/envs/idntwww/include, -fdebug-prefix-map=/Users/ec2-user/croot/scipy_1776277869911/work=/usr/local/src/conda/scipy-1.17.1,
+      -fdebug-prefix-map=/opt/anaconda3/envs/idntwww=/usr/local/src/conda-prefix
+    name: gcc
+    version: 14.3.0
+  pythran:
+    include directory: ../../_h_env_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placehold_placeh/lib/python3.11/site-packages/pythran
+    version: 0.16.1
+Machine Information:
+  build:
+    cpu: aarch64
+    endian: little
+    family: aarch64
+    system: darwin
+  cross-compiled: false
+  host:
+    cpu: aarch64
+    endian: little
+    family: aarch64
+    system: darwin
+Python Information:
+  path: /opt/anaconda3/envs/idntwww/bin/python
+  version: '3.11'
+

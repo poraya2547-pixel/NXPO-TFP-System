@@ -1,0 +1,19 @@
+# ระบบเว็บใหม่: บังคับบรรทัดแบบ LF ทุกระบบปฏิบัติการ (Windows ที่ตั้ง core.autocrlf=true จะไม่แปลงเป็น CRLF)
+# เหตุผล: build หน้าเว็บเทียบ frontend/src/api/schema.d.ts กับไฟล์ที่สร้างใหม่ (LF) และสคริปต์ .sh ต้องเป็น LF เพื่อรันใน Linux
+# ไฟล์ต้นฉบับของ Streamlit ที่ root (TFP.py, TFP_App1.3.0.py, data_loader.py) ไม่ได้กำหนด — คงการเก็บแบบเดิม
+frontend/** text=auto eol=lf
+deploy/** text=auto eol=lf
+tools/** text=auto eol=lf
+docs/** text=auto eol=lf
+*.sh text eol=lf
+# สำเนา TFP.py แบบ byte ต่อ byte (ตรวจด้วย test) — ห้ามแปลงบรรทัด
+backend/app/modeling/tfp.py -text
+# ไฟล์ไบนารี
+*.png binary
+*.jpg binary
+*.ttf binary
+*.woff binary
+*.woff2 binary
+*.pkl binary
+*.docx binary
+*.pptx binary

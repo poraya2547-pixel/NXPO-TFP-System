@@ -1,0 +1,2114 @@
+{
+ "components": {
+  "schemas": {
+   "Alert": {
+    "additionalProperties": false,
+    "properties": {
+     "body": {
+      "title": "Body",
+      "type": "string"
+     },
+     "icon": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icon"
+     },
+     "kind": {
+      "enum": [
+       "info",
+       "success",
+       "warning",
+       "error"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "type": {
+      "const": "alert",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "kind",
+     "body"
+    ],
+    "title": "Alert",
+    "type": "object"
+   },
+   "Button": {
+    "additionalProperties": false,
+    "properties": {
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "icon": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icon"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "is_form_submitter": {
+      "default": false,
+      "title": "Is Form Submitter",
+      "type": "boolean"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "type": {
+      "const": "button",
+      "title": "Type",
+      "type": "string"
+     },
+     "use_container_width": {
+      "title": "Use Container Width",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "kind",
+     "disabled",
+     "use_container_width"
+    ],
+    "title": "Button",
+    "type": "object"
+   },
+   "Column": {
+    "additionalProperties": false,
+    "properties": {
+     "children": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "alert": "#/components/schemas/Alert",
+         "button": "#/components/schemas/Button",
+         "columns": "#/components/schemas/Columns",
+         "container": "#/components/schemas/Container",
+         "dataframe": "#/components/schemas/DataFrame",
+         "download_button": "#/components/schemas/DownloadButton",
+         "exception": "#/components/schemas/ExceptionEl",
+         "expander": "#/components/schemas/Expander",
+         "form": "#/components/schemas/Form",
+         "markdown": "#/components/schemas/Markdown",
+         "multiselect": "#/components/schemas/Multiselect",
+         "number_input": "#/components/schemas/NumberInput",
+         "selectbox": "#/components/schemas/Selectbox",
+         "slider": "#/components/schemas/Slider",
+         "spinner": "#/components/schemas/Spinner",
+         "text_area": "#/components/schemas/TextArea",
+         "text_input": "#/components/schemas/TextInput",
+         "toggle": "#/components/schemas/Toggle",
+         "vega_lite_chart": "#/components/schemas/VegaLiteChart"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/Markdown"
+        },
+        {
+         "$ref": "#/components/schemas/Alert"
+        },
+        {
+         "$ref": "#/components/schemas/Button"
+        },
+        {
+         "$ref": "#/components/schemas/DownloadButton"
+        },
+        {
+         "$ref": "#/components/schemas/Selectbox"
+        },
+        {
+         "$ref": "#/components/schemas/Multiselect"
+        },
+        {
+         "$ref": "#/components/schemas/NumberInput"
+        },
+        {
+         "$ref": "#/components/schemas/Slider"
+        },
+        {
+         "$ref": "#/components/schemas/Toggle"
+        },
+        {
+         "$ref": "#/components/schemas/TextInput"
+        },
+        {
+         "$ref": "#/components/schemas/TextArea"
+        },
+        {
+         "$ref": "#/components/schemas/VegaLiteChart"
+        },
+        {
+         "$ref": "#/components/schemas/DataFrame"
+        },
+        {
+         "$ref": "#/components/schemas/Spinner"
+        },
+        {
+         "$ref": "#/components/schemas/ExceptionEl"
+        },
+        {
+         "$ref": "#/components/schemas/Container"
+        },
+        {
+         "$ref": "#/components/schemas/Columns"
+        },
+        {
+         "$ref": "#/components/schemas/Expander"
+        },
+        {
+         "$ref": "#/components/schemas/Form"
+        }
+       ]
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "type": {
+      "const": "column",
+      "title": "Type",
+      "type": "string"
+     },
+     "weight": {
+      "title": "Weight",
+      "type": "number"
+     }
+    },
+    "required": [
+     "type",
+     "weight",
+     "children"
+    ],
+    "title": "Column",
+    "type": "object"
+   },
+   "Columns": {
+    "additionalProperties": false,
+    "properties": {
+     "border": {
+      "title": "Border",
+      "type": "boolean"
+     },
+     "children": {
+      "items": {
+       "$ref": "#/components/schemas/Column"
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "gap": {
+      "title": "Gap",
+      "type": "string"
+     },
+     "type": {
+      "const": "columns",
+      "title": "Type",
+      "type": "string"
+     },
+     "vertical_alignment": {
+      "title": "Vertical Alignment",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "gap",
+     "vertical_alignment",
+     "border",
+     "children"
+    ],
+    "title": "Columns",
+    "type": "object"
+   },
+   "Container": {
+    "additionalProperties": false,
+    "properties": {
+     "border": {
+      "title": "Border",
+      "type": "boolean"
+     },
+     "children": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "alert": "#/components/schemas/Alert",
+         "button": "#/components/schemas/Button",
+         "columns": "#/components/schemas/Columns",
+         "container": "#/components/schemas/Container",
+         "dataframe": "#/components/schemas/DataFrame",
+         "download_button": "#/components/schemas/DownloadButton",
+         "exception": "#/components/schemas/ExceptionEl",
+         "expander": "#/components/schemas/Expander",
+         "form": "#/components/schemas/Form",
+         "markdown": "#/components/schemas/Markdown",
+         "multiselect": "#/components/schemas/Multiselect",
+         "number_input": "#/components/schemas/NumberInput",
+         "selectbox": "#/components/schemas/Selectbox",
+         "slider": "#/components/schemas/Slider",
+         "spinner": "#/components/schemas/Spinner",
+         "text_area": "#/components/schemas/TextArea",
+         "text_input": "#/components/schemas/TextInput",
+         "toggle": "#/components/schemas/Toggle",
+         "vega_lite_chart": "#/components/schemas/VegaLiteChart"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/Markdown"
+        },
+        {
+         "$ref": "#/components/schemas/Alert"
+        },
+        {
+         "$ref": "#/components/schemas/Button"
+        },
+        {
+         "$ref": "#/components/schemas/DownloadButton"
+        },
+        {
+         "$ref": "#/components/schemas/Selectbox"
+        },
+        {
+         "$ref": "#/components/schemas/Multiselect"
+        },
+        {
+         "$ref": "#/components/schemas/NumberInput"
+        },
+        {
+         "$ref": "#/components/schemas/Slider"
+        },
+        {
+         "$ref": "#/components/schemas/Toggle"
+        },
+        {
+         "$ref": "#/components/schemas/TextInput"
+        },
+        {
+         "$ref": "#/components/schemas/TextArea"
+        },
+        {
+         "$ref": "#/components/schemas/VegaLiteChart"
+        },
+        {
+         "$ref": "#/components/schemas/DataFrame"
+        },
+        {
+         "$ref": "#/components/schemas/Spinner"
+        },
+        {
+         "$ref": "#/components/schemas/ExceptionEl"
+        },
+        {
+         "$ref": "#/components/schemas/Container"
+        },
+        {
+         "$ref": "#/components/schemas/Columns"
+        },
+        {
+         "$ref": "#/components/schemas/Expander"
+        },
+        {
+         "$ref": "#/components/schemas/Form"
+        }
+       ]
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Key"
+     },
+     "type": {
+      "const": "container",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "border",
+     "children"
+    ],
+    "title": "Container",
+    "type": "object"
+   },
+   "DataFrame": {
+    "additionalProperties": false,
+    "properties": {
+     "columns": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Columns",
+      "type": "array"
+     },
+     "index": {
+      "anyOf": [
+       {
+        "items": {},
+        "type": "array"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Index"
+     },
+     "rows": {
+      "items": {
+       "items": {},
+       "type": "array"
+      },
+      "title": "Rows",
+      "type": "array"
+     },
+     "type": {
+      "const": "dataframe",
+      "title": "Type",
+      "type": "string"
+     },
+     "use_container_width": {
+      "title": "Use Container Width",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "type",
+     "columns",
+     "rows",
+     "use_container_width"
+    ],
+    "title": "DataFrame",
+    "type": "object"
+   },
+   "DownloadButton": {
+    "additionalProperties": false,
+    "properties": {
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "file_name": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "File Name"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "icon": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icon"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "kind": {
+      "title": "Kind",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "mime": {
+      "title": "Mime",
+      "type": "string"
+     },
+     "ref": {
+      "title": "Ref",
+      "type": "string"
+     },
+     "type": {
+      "const": "download_button",
+      "title": "Type",
+      "type": "string"
+     },
+     "url": {
+      "title": "Url",
+      "type": "string"
+     },
+     "use_container_width": {
+      "title": "Use Container Width",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "mime",
+     "ref",
+     "url",
+     "kind",
+     "disabled",
+     "use_container_width"
+    ],
+    "title": "DownloadButton",
+    "type": "object"
+   },
+   "Event": {
+    "additionalProperties": false,
+    "properties": {
+     "resume": {
+      "default": false,
+      "description": "รันหน้าต่อหลัง job ที่รออยู่เสร็จ",
+      "title": "Resume",
+      "type": "boolean"
+     },
+     "trigger": {
+      "anyOf": [
+       {
+        "maxLength": 400,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "id ของปุ่มที่กด",
+      "title": "Trigger"
+     },
+     "values": {
+      "additionalProperties": {
+       "anyOf": [
+        {
+         "type": "boolean"
+        },
+        {
+         "type": "integer"
+        },
+        {
+         "type": "number"
+        },
+        {
+         "type": "string"
+        },
+        {
+         "items": {
+          "type": "integer"
+         },
+         "type": "array"
+        },
+        {
+         "type": "null"
+        }
+       ]
+      },
+      "description": "ค่าใหม่ของช่องต่าง ๆ ตาม id",
+      "title": "Values",
+      "type": "object"
+     }
+    },
+    "title": "Event",
+    "type": "object"
+   },
+   "ExceptionEl": {
+    "additionalProperties": false,
+    "properties": {
+     "ref": {
+      "title": "Ref",
+      "type": "string"
+     },
+     "type": {
+      "const": "exception",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "ref"
+    ],
+    "title": "ExceptionEl",
+    "type": "object"
+   },
+   "Expander": {
+    "additionalProperties": false,
+    "properties": {
+     "children": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "alert": "#/components/schemas/Alert",
+         "button": "#/components/schemas/Button",
+         "columns": "#/components/schemas/Columns",
+         "container": "#/components/schemas/Container",
+         "dataframe": "#/components/schemas/DataFrame",
+         "download_button": "#/components/schemas/DownloadButton",
+         "exception": "#/components/schemas/ExceptionEl",
+         "expander": "#/components/schemas/Expander",
+         "form": "#/components/schemas/Form",
+         "markdown": "#/components/schemas/Markdown",
+         "multiselect": "#/components/schemas/Multiselect",
+         "number_input": "#/components/schemas/NumberInput",
+         "selectbox": "#/components/schemas/Selectbox",
+         "slider": "#/components/schemas/Slider",
+         "spinner": "#/components/schemas/Spinner",
+         "text_area": "#/components/schemas/TextArea",
+         "text_input": "#/components/schemas/TextInput",
+         "toggle": "#/components/schemas/Toggle",
+         "vega_lite_chart": "#/components/schemas/VegaLiteChart"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/Markdown"
+        },
+        {
+         "$ref": "#/components/schemas/Alert"
+        },
+        {
+         "$ref": "#/components/schemas/Button"
+        },
+        {
+         "$ref": "#/components/schemas/DownloadButton"
+        },
+        {
+         "$ref": "#/components/schemas/Selectbox"
+        },
+        {
+         "$ref": "#/components/schemas/Multiselect"
+        },
+        {
+         "$ref": "#/components/schemas/NumberInput"
+        },
+        {
+         "$ref": "#/components/schemas/Slider"
+        },
+        {
+         "$ref": "#/components/schemas/Toggle"
+        },
+        {
+         "$ref": "#/components/schemas/TextInput"
+        },
+        {
+         "$ref": "#/components/schemas/TextArea"
+        },
+        {
+         "$ref": "#/components/schemas/VegaLiteChart"
+        },
+        {
+         "$ref": "#/components/schemas/DataFrame"
+        },
+        {
+         "$ref": "#/components/schemas/Spinner"
+        },
+        {
+         "$ref": "#/components/schemas/ExceptionEl"
+        },
+        {
+         "$ref": "#/components/schemas/Container"
+        },
+        {
+         "$ref": "#/components/schemas/Columns"
+        },
+        {
+         "$ref": "#/components/schemas/Expander"
+        },
+        {
+         "$ref": "#/components/schemas/Form"
+        }
+       ]
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "expanded": {
+      "title": "Expanded",
+      "type": "boolean"
+     },
+     "icon": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Icon"
+     },
+     "key": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Key"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "type": {
+      "const": "expander",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "label",
+     "expanded",
+     "children"
+    ],
+    "title": "Expander",
+    "type": "object"
+   },
+   "Form": {
+    "additionalProperties": false,
+    "properties": {
+     "border": {
+      "title": "Border",
+      "type": "boolean"
+     },
+     "children": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "alert": "#/components/schemas/Alert",
+         "button": "#/components/schemas/Button",
+         "columns": "#/components/schemas/Columns",
+         "container": "#/components/schemas/Container",
+         "dataframe": "#/components/schemas/DataFrame",
+         "download_button": "#/components/schemas/DownloadButton",
+         "exception": "#/components/schemas/ExceptionEl",
+         "expander": "#/components/schemas/Expander",
+         "form": "#/components/schemas/Form",
+         "markdown": "#/components/schemas/Markdown",
+         "multiselect": "#/components/schemas/Multiselect",
+         "number_input": "#/components/schemas/NumberInput",
+         "selectbox": "#/components/schemas/Selectbox",
+         "slider": "#/components/schemas/Slider",
+         "spinner": "#/components/schemas/Spinner",
+         "text_area": "#/components/schemas/TextArea",
+         "text_input": "#/components/schemas/TextInput",
+         "toggle": "#/components/schemas/Toggle",
+         "vega_lite_chart": "#/components/schemas/VegaLiteChart"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/Markdown"
+        },
+        {
+         "$ref": "#/components/schemas/Alert"
+        },
+        {
+         "$ref": "#/components/schemas/Button"
+        },
+        {
+         "$ref": "#/components/schemas/DownloadButton"
+        },
+        {
+         "$ref": "#/components/schemas/Selectbox"
+        },
+        {
+         "$ref": "#/components/schemas/Multiselect"
+        },
+        {
+         "$ref": "#/components/schemas/NumberInput"
+        },
+        {
+         "$ref": "#/components/schemas/Slider"
+        },
+        {
+         "$ref": "#/components/schemas/Toggle"
+        },
+        {
+         "$ref": "#/components/schemas/TextInput"
+        },
+        {
+         "$ref": "#/components/schemas/TextArea"
+        },
+        {
+         "$ref": "#/components/schemas/VegaLiteChart"
+        },
+        {
+         "$ref": "#/components/schemas/DataFrame"
+        },
+        {
+         "$ref": "#/components/schemas/Spinner"
+        },
+        {
+         "$ref": "#/components/schemas/ExceptionEl"
+        },
+        {
+         "$ref": "#/components/schemas/Container"
+        },
+        {
+         "$ref": "#/components/schemas/Columns"
+        },
+        {
+         "$ref": "#/components/schemas/Expander"
+        },
+        {
+         "$ref": "#/components/schemas/Form"
+        }
+       ]
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "form_id": {
+      "title": "Form Id",
+      "type": "string"
+     },
+     "type": {
+      "const": "form",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "form_id",
+     "border",
+     "children"
+    ],
+    "title": "Form",
+    "type": "object"
+   },
+   "HTTPValidationError": {
+    "properties": {
+     "detail": {
+      "items": {
+       "$ref": "#/components/schemas/ValidationError"
+      },
+      "title": "Detail",
+      "type": "array"
+     }
+    },
+    "title": "HTTPValidationError",
+    "type": "object"
+   },
+   "Health": {
+    "additionalProperties": false,
+    "properties": {
+     "database": {
+      "title": "Database",
+      "type": "boolean"
+     },
+     "status": {
+      "enum": [
+       "ok",
+       "degraded"
+      ],
+      "title": "Status",
+      "type": "string"
+     },
+     "worker_seen_seconds_ago": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Worker Seen Seconds Ago"
+     }
+    },
+    "required": [
+     "status",
+     "database"
+    ],
+    "title": "Health",
+    "type": "object"
+   },
+   "Markdown": {
+    "additionalProperties": false,
+    "properties": {
+     "allow_html": {
+      "title": "Allow Html",
+      "type": "boolean"
+     },
+     "body": {
+      "title": "Body",
+      "type": "string"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "kind": {
+      "enum": [
+       "markdown",
+       "caption"
+      ],
+      "title": "Kind",
+      "type": "string"
+     },
+     "type": {
+      "const": "markdown",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "kind",
+     "body",
+     "allow_html"
+    ],
+    "title": "Markdown",
+    "type": "object"
+   },
+   "Multiselect": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Default",
+      "type": "array"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "options": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Options",
+      "type": "array"
+     },
+     "placeholder": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Placeholder"
+     },
+     "type": {
+      "const": "multiselect",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "items": {
+       "type": "integer"
+      },
+      "title": "Value",
+      "type": "array"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "options",
+     "value",
+     "default",
+     "disabled",
+     "label_visibility"
+    ],
+    "title": "Multiselect",
+    "type": "object"
+   },
+   "NumberInput": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "format": {
+      "title": "Format",
+      "type": "string"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "int": {
+      "title": "Int",
+      "type": "boolean"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "max": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max"
+     },
+     "min": {
+      "anyOf": [
+       {
+        "type": "number"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Min"
+     },
+     "placeholder": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Placeholder"
+     },
+     "step": {
+      "title": "Step",
+      "type": "number"
+     },
+     "type": {
+      "const": "number_input",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "value",
+     "step",
+     "format",
+     "int",
+     "disabled",
+     "label_visibility"
+    ],
+    "title": "NumberInput",
+    "type": "object"
+   },
+   "PendingStatus": {
+    "additionalProperties": false,
+    "properties": {
+     "pending": {
+      "title": "Pending",
+      "type": "boolean"
+     },
+     "status": {
+      "anyOf": [
+       {
+        "enum": [
+         "queued",
+         "running",
+         "succeeded",
+         "failed"
+        ],
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Status"
+     }
+    },
+    "required": [
+     "pending"
+    ],
+    "title": "PendingStatus",
+    "type": "object"
+   },
+   "Root": {
+    "additionalProperties": false,
+    "properties": {
+     "children": {
+      "items": {
+       "discriminator": {
+        "mapping": {
+         "alert": "#/components/schemas/Alert",
+         "button": "#/components/schemas/Button",
+         "columns": "#/components/schemas/Columns",
+         "container": "#/components/schemas/Container",
+         "dataframe": "#/components/schemas/DataFrame",
+         "download_button": "#/components/schemas/DownloadButton",
+         "exception": "#/components/schemas/ExceptionEl",
+         "expander": "#/components/schemas/Expander",
+         "form": "#/components/schemas/Form",
+         "markdown": "#/components/schemas/Markdown",
+         "multiselect": "#/components/schemas/Multiselect",
+         "number_input": "#/components/schemas/NumberInput",
+         "selectbox": "#/components/schemas/Selectbox",
+         "slider": "#/components/schemas/Slider",
+         "spinner": "#/components/schemas/Spinner",
+         "text_area": "#/components/schemas/TextArea",
+         "text_input": "#/components/schemas/TextInput",
+         "toggle": "#/components/schemas/Toggle",
+         "vega_lite_chart": "#/components/schemas/VegaLiteChart"
+        },
+        "propertyName": "type"
+       },
+       "oneOf": [
+        {
+         "$ref": "#/components/schemas/Markdown"
+        },
+        {
+         "$ref": "#/components/schemas/Alert"
+        },
+        {
+         "$ref": "#/components/schemas/Button"
+        },
+        {
+         "$ref": "#/components/schemas/DownloadButton"
+        },
+        {
+         "$ref": "#/components/schemas/Selectbox"
+        },
+        {
+         "$ref": "#/components/schemas/Multiselect"
+        },
+        {
+         "$ref": "#/components/schemas/NumberInput"
+        },
+        {
+         "$ref": "#/components/schemas/Slider"
+        },
+        {
+         "$ref": "#/components/schemas/Toggle"
+        },
+        {
+         "$ref": "#/components/schemas/TextInput"
+        },
+        {
+         "$ref": "#/components/schemas/TextArea"
+        },
+        {
+         "$ref": "#/components/schemas/VegaLiteChart"
+        },
+        {
+         "$ref": "#/components/schemas/DataFrame"
+        },
+        {
+         "$ref": "#/components/schemas/Spinner"
+        },
+        {
+         "$ref": "#/components/schemas/ExceptionEl"
+        },
+        {
+         "$ref": "#/components/schemas/Container"
+        },
+        {
+         "$ref": "#/components/schemas/Columns"
+        },
+        {
+         "$ref": "#/components/schemas/Expander"
+        },
+        {
+         "$ref": "#/components/schemas/Form"
+        }
+       ]
+      },
+      "title": "Children",
+      "type": "array"
+     },
+     "type": {
+      "enum": [
+       "main",
+       "sidebar"
+      ],
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "children"
+    ],
+    "title": "Root",
+    "type": "object"
+   },
+   "Selectbox": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Default"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "index": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Index"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "options": {
+      "items": {
+       "type": "string"
+      },
+      "title": "Options",
+      "type": "array"
+     },
+     "placeholder": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Placeholder"
+     },
+     "type": {
+      "const": "selectbox",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "options",
+     "disabled",
+     "label_visibility"
+    ],
+    "title": "Selectbox",
+    "type": "object"
+   },
+   "Slider": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "title": "Default",
+      "type": "number"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "format": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Format"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "int": {
+      "title": "Int",
+      "type": "boolean"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "max": {
+      "title": "Max",
+      "type": "number"
+     },
+     "min": {
+      "title": "Min",
+      "type": "number"
+     },
+     "step": {
+      "title": "Step",
+      "type": "number"
+     },
+     "type": {
+      "const": "slider",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "number"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "value",
+     "default",
+     "min",
+     "max",
+     "step",
+     "int",
+     "disabled",
+     "label_visibility"
+    ],
+    "title": "Slider",
+    "type": "object"
+   },
+   "Spinner": {
+    "additionalProperties": false,
+    "properties": {
+     "text": {
+      "title": "Text",
+      "type": "string"
+     },
+     "type": {
+      "const": "spinner",
+      "title": "Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "type",
+     "text"
+    ],
+    "title": "Spinner",
+    "type": "object"
+   },
+   "TextArea": {
+    "additionalProperties": false,
+    "properties": {
+     "autocomplete": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Autocomplete"
+     },
+     "default": {
+      "title": "Default",
+      "type": "string"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "input_type": {
+      "title": "Input Type",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "max_chars": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Chars"
+     },
+     "placeholder": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Placeholder"
+     },
+     "type": {
+      "const": "text_area",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "value",
+     "default",
+     "input_type",
+     "label_visibility",
+     "disabled",
+     "type"
+    ],
+    "title": "TextArea",
+    "type": "object"
+   },
+   "TextInput": {
+    "additionalProperties": false,
+    "properties": {
+     "autocomplete": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Autocomplete"
+     },
+     "default": {
+      "title": "Default",
+      "type": "string"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "height": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Height"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "input_type": {
+      "title": "Input Type",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "max_chars": {
+      "anyOf": [
+       {
+        "type": "integer"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Max Chars"
+     },
+     "placeholder": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Placeholder"
+     },
+     "type": {
+      "const": "text_input",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "string"
+     }
+    },
+    "required": [
+     "id",
+     "label",
+     "value",
+     "default",
+     "input_type",
+     "label_visibility",
+     "disabled",
+     "type"
+    ],
+    "title": "TextInput",
+    "type": "object"
+   },
+   "Toggle": {
+    "additionalProperties": false,
+    "properties": {
+     "default": {
+      "title": "Default",
+      "type": "boolean"
+     },
+     "disabled": {
+      "title": "Disabled",
+      "type": "boolean"
+     },
+     "form_id": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Form Id"
+     },
+     "help": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Help"
+     },
+     "id": {
+      "title": "Id",
+      "type": "string"
+     },
+     "label": {
+      "title": "Label",
+      "type": "string"
+     },
+     "label_visibility": {
+      "title": "Label Visibility",
+      "type": "string"
+     },
+     "type": {
+      "const": "toggle",
+      "title": "Type",
+      "type": "string"
+     },
+     "value": {
+      "title": "Value",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "type",
+     "id",
+     "label",
+     "value",
+     "default",
+     "disabled",
+     "label_visibility"
+    ],
+    "title": "Toggle",
+    "type": "object"
+   },
+   "ValidationError": {
+    "properties": {
+     "ctx": {
+      "title": "Context",
+      "type": "object"
+     },
+     "input": {
+      "title": "Input"
+     },
+     "loc": {
+      "items": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "integer"
+        }
+       ]
+      },
+      "title": "Location",
+      "type": "array"
+     },
+     "msg": {
+      "title": "Message",
+      "type": "string"
+     },
+     "type": {
+      "title": "Error Type",
+      "type": "string"
+     }
+    },
+    "required": [
+     "loc",
+     "msg",
+     "type"
+    ],
+    "title": "ValidationError",
+    "type": "object"
+   },
+   "VegaLiteChart": {
+    "additionalProperties": false,
+    "properties": {
+     "spec": {
+      "additionalProperties": true,
+      "title": "Spec",
+      "type": "object"
+     },
+     "theme": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "title": "Theme"
+     },
+     "type": {
+      "const": "vega_lite_chart",
+      "title": "Type",
+      "type": "string"
+     },
+     "use_container_width": {
+      "title": "Use Container Width",
+      "type": "boolean"
+     }
+    },
+    "required": [
+     "type",
+     "spec",
+     "use_container_width"
+    ],
+    "title": "VegaLiteChart",
+    "type": "object"
+   },
+   "View": {
+    "additionalProperties": false,
+    "properties": {
+     "csrf_token": {
+      "title": "Csrf Token",
+      "type": "string"
+     },
+     "main": {
+      "$ref": "#/components/schemas/Root"
+     },
+     "page_config": {
+      "additionalProperties": true,
+      "title": "Page Config",
+      "type": "object"
+     },
+     "pending": {
+      "description": "หน้ากำลังรอ job ของ worker — ถาม /pending แล้วส่ง resume เมื่อเสร็จ",
+      "title": "Pending",
+      "type": "boolean"
+     },
+     "sidebar": {
+      "$ref": "#/components/schemas/Root"
+     }
+    },
+    "required": [
+     "main",
+     "sidebar",
+     "page_config",
+     "pending",
+     "csrf_token"
+    ],
+    "title": "View",
+    "type": "object"
+   }
+  }
+ },
+ "info": {
+  "title": "TFP API",
+  "version": "1.0"
+ },
+ "openapi": "3.1.0",
+ "paths": {
+  "/api/v1/assets/{sha}": {
+   "get": {
+    "operationId": "get_asset_api_v1_assets__sha__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "sha",
+      "required": true,
+      "schema": {
+       "title": "Sha",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Asset"
+   }
+  },
+  "/api/v1/downloads/{ref}": {
+   "get": {
+    "operationId": "get_download_api_v1_downloads__ref__get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "ref",
+      "required": true,
+      "schema": {
+       "title": "Ref",
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Get Download"
+   }
+  },
+  "/api/v1/events": {
+   "post": {
+    "operationId": "post_event_api_v1_events_post",
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/Event"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/View"
+        }
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Post Event"
+   }
+  },
+  "/api/v1/health": {
+   "get": {
+    "operationId": "health_api_v1_health_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/Health"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Health"
+   }
+  },
+  "/api/v1/pending": {
+   "get": {
+    "operationId": "get_pending_api_v1_pending_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/PendingStatus"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Get Pending"
+   }
+  },
+  "/api/v1/view": {
+   "get": {
+    "operationId": "get_view_api_v1_view_get",
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/View"
+        }
+       }
+      },
+      "description": "Successful Response"
+     }
+    },
+    "summary": "Get View"
+   }
+  }
+ }
+}

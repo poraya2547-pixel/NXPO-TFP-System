@@ -1,0 +1,148 @@
+{
+ "note": "เงื่อนไข baseline หน้าจอ ชุดที่ไม่ผ่านเงื่อนไขเหล่านี้ใช้เทียบไม่ได้ (ตรวจโดย ui_compare.py)",
+ "source": {
+  "repo": "https://github.com/poraya2547-pixel/NXPO-TFP-System",
+  "commit": "acc64eea69d0e0eb870572eef140c051aa331275",
+  "app_file": "TFP_App1.3.0.py"
+ },
+ "reference": {
+  "run": "ui-acc64ee-mac-idntwww-1",
+  "manifest_sha256": "0c710e18b7316ae3dc746749c3cdf0ea40065c8e129b0ac1f46d343abac5296f"
+ },
+ "states": [
+  "v01_landing",
+  "v02_forecast_before_fetch",
+  "v03_forecast_h5_default",
+  "v04_forecast_h3",
+  "v04_forecast_h10",
+  "v04_forecast_h15",
+  "v05_forecast_h5_again",
+  "v06_rolling_threshold_min",
+  "v06_rolling_threshold_max",
+  "v06_rolling_threshold_default",
+  "v07_scenario_FDI_GDP_shock1",
+  "v07_scenario_FDI_GDP_shock5_0",
+  "v07_scenario_FDI_GDP_shockm2_5",
+  "v07_scenario_FEE_GDP_shock1",
+  "v07_scenario_FEE_GDP_shock5_0",
+  "v07_scenario_FEE_GDP_shockm2_5",
+  "v07_scenario_ln_HDI_shock1",
+  "v07_scenario_ln_HDI_shock5_0",
+  "v07_scenario_ln_HDI_shockm2_5",
+  "v07_scenario_ln_JOUR_GDP_shock1",
+  "v07_scenario_ln_JOUR_GDP_shock5_0",
+  "v07_scenario_ln_JOUR_GDP_shockm2_5",
+  "v07_scenario_MKTCOM_shock1",
+  "v07_scenario_MKTCOM_shock5_0",
+  "v07_scenario_MKTCOM_shockm2_5",
+  "v08_exec_visitor",
+  "v09_exec_visitor_presentation",
+  "v10_exec_visitor_dark",
+  "v11_exec_visitor_toggles_off",
+  "v12_back_to_forecast",
+  "v13_data_vars",
+  "v14_manual",
+  "r01_landing",
+  "r02_login_form",
+  "r03_login_wrong",
+  "r04_home",
+  "r05a_vars_remove_mktcom_selected",
+  "r05b_vars_reason_and_phrase",
+  "r06_vars_confirmed",
+  "r07_forecast_custom_vars",
+  "r08_home_custom_vars",
+  "r09_vars_reset",
+  "r10_data_admin",
+  "r11_settings",
+  "r12_forecast",
+  "r13_scenario_ln_HDI_shock5",
+  "r14_scenario_ln_HDI_shock5_set",
+  "r15_exec_research",
+  "r16_exec_research_presentation",
+  "r17_data_vars",
+  "r18_data_vars_page",
+  "r19_logout"
+ ],
+ "hash_seed": "0",
+ "fixed_loaded_at": "2026-09-27T23:50:09",
+ "fetch_log_sha256": "cdba734b71c943aaeae23969d61d57e9efad535e1d96b0aaa563c237feb43526",
+ "runtime_identity": {
+  "system": "Darwin",
+  "machine": "arm64",
+  "python_build": "3.11.15 (main, Mar 11 2026, 17:14:47) [Clang 20.1.8 ]",
+  "libc": [
+   "",
+   ""
+  ],
+  "packages": {
+   "numpy": "2.4.6",
+   "pandas": "3.0.3",
+   "scipy": "1.17.1",
+   "statsmodels": "0.15.0",
+   "patsy": "1.0.3"
+  },
+  "package_record_sha256": {
+   "numpy": "fb12870496664ad518f9e3e5345d193c48fa4e7173c4391b265c612a5e8146dd",
+   "pandas": "d8f9cccc575817ed808ef786f38a2e8e2f2b8cf8ea41e720bc92529af7fa6ca7",
+   "scipy": "39b07e52e503feef4e9f61d845a2ca363c1060d7f3d628e90ff24ff690d90071",
+   "statsmodels": "132d49a636c893d9110817fcdf6ad796985ffc72d8ad2bbc574c2a408454a631",
+   "patsy": "f584e65330c482bdbd3e2a011d2f968cad6d279d4ec9faafcd38b8b403b6dcec"
+  },
+  "blas_lapack": {
+   "numpy": {
+    "blas": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig"
+    },
+    "lapack": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig"
+    }
+   },
+   "scipy": {
+    "blas": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig",
+     "has ilp64": false
+    },
+    "lapack": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig",
+     "has ilp64": false
+    }
+   }
+  },
+  "compute_env": {
+   "PYTHONHASHSEED": "0",
+   "OPENBLAS_NUM_THREADS": null,
+   "OMP_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null,
+   "OPENBLAS_CORETYPE": null
+  }
+ }
+}

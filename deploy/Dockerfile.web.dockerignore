@@ -1,0 +1,10 @@
+*
+!frontend/package.json
+!frontend/package-lock.json
+!frontend/.npmrc
+!frontend/index.html
+!frontend/tsconfig.json
+!frontend/vite.config.ts
+!frontend/src/**
+!docs/contracts/openapi.json
+!deploy/web.conf

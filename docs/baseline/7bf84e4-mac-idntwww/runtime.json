@@ -1,0 +1,85 @@
+{
+ "note": "runtime ที่ reference ชุดนี้ผูกอยู่ ผลจาก runtime อื่นใช้เทียบกับชุดนี้ไม่ได้ (ตรวจโดย compare_runs.py)",
+ "name": "7bf84e4-mac-idntwww",
+ "created_from_run": "7bf84e4-mac-1",
+ "declared_image": null,
+ "identity": {
+  "system": "Darwin",
+  "machine": "arm64",
+  "python_build": "3.11.15 (main, Mar 11 2026, 17:14:47) [Clang 20.1.8 ]",
+  "libc": [
+   "",
+   ""
+  ],
+  "packages": {
+   "numpy": "2.4.6",
+   "pandas": "3.0.3",
+   "scipy": "1.17.1",
+   "statsmodels": "0.15.0",
+   "patsy": "1.0.3"
+  },
+  "package_record_sha256": {
+   "numpy": "fb12870496664ad518f9e3e5345d193c48fa4e7173c4391b265c612a5e8146dd",
+   "pandas": "d8f9cccc575817ed808ef786f38a2e8e2f2b8cf8ea41e720bc92529af7fa6ca7",
+   "scipy": "39b07e52e503feef4e9f61d845a2ca363c1060d7f3d628e90ff24ff690d90071",
+   "statsmodels": "132d49a636c893d9110817fcdf6ad796985ffc72d8ad2bbc574c2a408454a631",
+   "patsy": "f584e65330c482bdbd3e2a011d2f968cad6d279d4ec9faafcd38b8b403b6dcec"
+  },
+  "blas_lapack": {
+   "numpy": {
+    "blas": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig"
+    },
+    "lapack": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig"
+    }
+   },
+   "scipy": {
+    "blas": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig",
+     "has ilp64": false
+    },
+    "lapack": {
+     "name": "openblas",
+     "found": true,
+     "version": "0.3.31",
+     "detection method": "pkgconfig",
+     "include directory": "/opt/anaconda3/envs/idntwww/include",
+     "lib directory": "/opt/anaconda3/envs/idntwww/lib",
+     "openblas configuration": "USE_64BITINT=0 DYNAMIC_ARCH=1 DYNAMIC_OLDER= NO_CBLAS= NO_LAPACK=0 NO_LAPACKE= NO_AFFINITY=1 USE_OPENMP=0 VORTEX MAX_THREADS=128",
+     "pc file directory": "/opt/anaconda3/envs/idntwww/lib/pkgconfig",
+     "has ilp64": false
+    }
+   }
+  },
+  "compute_env": {
+   "PYTHONHASHSEED": "0",
+   "OPENBLAS_NUM_THREADS": null,
+   "OMP_NUM_THREADS": null,
+   "MKL_NUM_THREADS": null,
+   "VECLIB_MAXIMUM_THREADS": null,
+   "OPENBLAS_CORETYPE": null
+  }
+ }
+}

@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- เพิ่มในชุดส่งมอบ: ห้าม commit ข้อมูลจริง ค่าลับ และผลทดสอบ ---
+private/
+.env
+deploy/.env
+secrets.toml
+.streamlit/secrets.toml
+credentials*.json
+*.dump
+node_modules/
+frontend/dist/

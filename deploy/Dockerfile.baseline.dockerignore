@@ -1,0 +1,9 @@
+# ส่งเข้า build context เฉพาะไฟล์ที่ image 1C ใช้ (กัน private/ ไฟล์ลับ และไฟล์อื่น)
+*
+!TFP.py
+!TFP_App1.3.0.py
+!data_loader.py
+!tools/baseline/oracle.py
+!tools/baseline/replay.py
+!tools/baseline/fingerprint.py
+!tools/baseline/safe_io.py
