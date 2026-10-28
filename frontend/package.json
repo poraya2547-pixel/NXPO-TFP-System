@@ -1,0 +1,39 @@
+{
+  "name": "tfp-web",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "หน้าเว็บ TFP: แสดง element tree ที่ API สร้างจากโค้ดหน้าเดิม (React + Vite)",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b",
+    "gen:api": "openapi-typescript ../docs/contracts/openapi.json --default-non-nullable false -o src/api/schema.d.ts",
+    "check:api": "openapi-typescript ../docs/contracts/openapi.json --default-non-nullable false -o /tmp/tfp-schema-check.d.ts && diff -q /tmp/tfp-schema-check.d.ts src/api/schema.d.ts",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sindresorhus/slugify": "3.0.1",
+    "dompurify": "3.4.16",
+    "marked": "18.0.14",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "vega": "6.4.0",
+    "vega-embed": "7.3.0",
+    "vega-interpreter": "2.3.2",
+    "vega-lite": "6.4.3"
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.1",
+    "jsdom": "30.1.1",
+    "openapi-typescript": "7.13.0",
+    "typescript": "5.9.3",
+    "vite": "8.3.1",
+    "vitest": "5.0.1"
+  },
+  "overrides": {
+    "@sindresorhus/transliterate": "2.0.0"
+  }
+}

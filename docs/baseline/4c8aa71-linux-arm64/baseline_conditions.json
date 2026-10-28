@@ -1,0 +1,66 @@
+{
+ "note": "เงื่อนไขที่ baseline ผูกอยู่ ผลที่ไม่ผ่านเงื่อนไขเหล่านี้ใช้เทียบไม่ได้ (ตรวจโดย compare_runs.py)",
+ "source": {
+  "repo": "https://github.com/poraya2547-pixel/NXPO-TFP-System",
+  "commit": "4c8aa71a2cec89208f40d13e19f75eb520b75aac",
+  "app_file": "TFP_App1.3.0.py"
+ },
+ "hash_seed": "0",
+ "python": "3.11.15",
+ "packages": {
+  "numpy": "2.4.6",
+  "pandas": "3.0.3",
+  "scipy": "1.17.1",
+  "statsmodels": "0.15.0",
+  "patsy": "1.0.3"
+ },
+ "snapshot_sha256": "2a8d1636e32da4eddbe8f6b81e0e2a96f4273dc2859bcdf0fd37dbe607395b97",
+ "horizons": [
+  "3",
+  "5",
+  "10",
+  "15"
+ ],
+ "output_keys": [
+  "adf_detail",
+  "adj_r2",
+  "combined_table",
+  "diag_counts",
+  "diag_display",
+  "diag_table",
+  "forecast.h10",
+  "forecast.h15",
+  "forecast.h3",
+  "forecast.h5",
+  "holdout",
+  "influence",
+  "lr.bse",
+  "lr.eg",
+  "lr.nobs",
+  "lr.params",
+  "lr.pvalues",
+  "lr.resid",
+  "lr.rsquared",
+  "lr.sample_index",
+  "lr.tvalues",
+  "lr_raw_map",
+  "lr_table",
+  "model_df",
+  "raw_df",
+  "rolling",
+  "sr.bse",
+  "sr.nobs",
+  "sr.params",
+  "sr.pvalues",
+  "sr.rsquared",
+  "sr.sample_index",
+  "sr.tvalues",
+  "sr_raw_map",
+  "sr_table",
+  "tfp_series"
+ ],
+ "required_flags": {
+  "slice_identical": true,
+  "instrumentation_neutral": true
+ }
+}

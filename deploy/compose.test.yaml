@@ -1,0 +1,35 @@
+# ทดสอบ API + Postgres + worker บนเครื่องพัฒนา (ไม่ใช่ระบบใช้งาน) — เรียกผ่าน tools/refactor/api_tests.sh
+# เครือข่ายภายในเท่านั้น (ไม่ออกอินเทอร์เน็ต) workspace ส่งเข้าแบบอ่านอย่างเดียว ข้อมูล DB อยู่ใน tmpfs
+name: tfp-apitest
+services:
+  db:
+    image: postgres:17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24
+    environment:
+      POSTGRES_USER: tfp
+      POSTGRES_DB: tfp
+      POSTGRES_PASSWORD: ${TFP_TEST_DB_PASSWORD:?ตั้งรหัสผ่าน DB ทดสอบผ่าน api_tests.sh}
+    tmpfs: [/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U tfp -d tfp"]
+      interval: 2s
+      retries: 30
+    networks: [internal]
+  tests:
+    image: ${TFP_RUNTIME_IMAGE:?ระบุ image ของ backend runtime}
+    depends_on:
+      db: {condition: service_healthy}
+    working_dir: /src
+    volumes:
+      - ../:/src:ro
+      - ${TFP_TEST_OUT:?โฟลเดอร์ผล}:/out
+    environment:
+      PYTHONHASHSEED: "0"
+      PYTHONDONTWRITEBYTECODE: "1"
+      TFP_DATABASE_URL: postgresql://tfp:${TFP_TEST_DB_PASSWORD}@db:5432/tfp
+      TFP_SHEETS_FIXTURE: /src/private/baseline/sheets_raw.json
+      MPLCONFIGDIR: /tmp/matplotlib   # แคชฟอนต์ของ matplotlib (รายงาน Word) — โฟลเดอร์บ้านใน image เขียนไม่ได้
+    command: ["sh", "-c", "python -B -P -m pytest -p no:cacheprovider -v backend/tests_api > /out/pytest_api.txt 2>&1; echo $$? > /out/pytest_api.exit"]
+    networks: [internal]
+networks:
+  internal:
+    internal: true
